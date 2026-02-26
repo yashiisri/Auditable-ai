@@ -1,0 +1,1095 @@
+import { useState } from "react";
+import {
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Cell,
+} from "recharts";
+import { registerAI, uploadCSV, evaluateAI, sdccIngest } from "../services/api";
+
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: #0d1117; }
+  .dash-root { min-height: 100vh; background: #0d1117; color: #e6edf3; font-family: 'IBM Plex Sans','Segoe UI',system-ui,sans-serif; }
+
+  .dash-header { background:#161b22; border-bottom:1px solid #30363d; position:sticky; top:0; z-index:100; width:100%; }
+  .dash-header-inner { max-width:960px; margin:0 auto; padding:0 24px; height:60px; display:flex; align-items:center; gap:16px; }
+  .dash-logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .dash-logo-icon { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,#1f6feb,#8957e5); display:flex; align-items:center; justify-content:center; font-size:17px; }
+  .dash-logo-title { font-size:15px; font-weight:800; color:#e6edf3; letter-spacing:0.2px; line-height:1.2; }
+  .dash-logo-sub   { font-size:10px; color:#6e7681; letter-spacing:1px; font-weight:600; }
+  .dash-nav { margin-left:auto; display:flex; gap:6px; }
+  .dash-nav-step { padding:4px 14px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:0.3px; border:1px solid transparent; transition:all 0.2s; cursor:default; }
+  .dash-nav-step.active  { background:rgba(31,111,235,0.35); border-color:rgba(88,166,255,0.5); color:#58a6ff; }
+  .dash-nav-step.inactive{ color:#6e7681; }
+  @media(max-width:640px){ .dash-nav{ display:none; } }
+
+  .dash-content { max-width:960px; margin:0 auto; padding:36px 24px 64px; }
+  @media(max-width:500px){ .dash-content{ padding:20px 12px 48px; } }
+
+  .dash-page-title { font-size:28px; font-weight:800; color:#e6edf3; letter-spacing:-0.5px; margin:0 0 6px; }
+  .dash-page-sub   { font-size:14px; color:#8b949e; margin:0 0 32px; }
+
+  .dash-section { background:#161b22; border:1px solid #30363d; border-radius:14px; padding:26px 28px 22px; margin-bottom:18px; }
+  @media(max-width:500px){ .dash-section{ padding:18px 14px 16px; } }
+
+  .dash-step-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .dash-step-num    { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff; }
+  .dash-step-title  { font-size:17px; font-weight:700; color:#e6edf3; }
+
+  .dash-form-grid { display:grid; grid-template-columns:1fr 1fr 1fr 160px; gap:14px; margin-bottom:18px; }
+  @media(max-width:820px){ .dash-form-grid{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:500px){ .dash-form-grid{ grid-template-columns:1fr; } }
+
+  .dash-field-label { display:block; font-size:11px; font-weight:700; color:#8b949e; text-transform:uppercase; letter-spacing:0.9px; margin-bottom:6px; }
+  .dash-input { width:100%; padding:10px 13px; background:#1c2333; border:1px solid #30363d; border-radius:8px; color:#e6edf3; font-size:14px; font-family:inherit; transition:border-color 0.2s,box-shadow 0.2s; appearance:none; }
+  .dash-input::placeholder { color:#484f58; }
+  .dash-input:focus { outline:none; border-color:#58a6ff; box-shadow:0 0 0 3px rgba(88,166,255,0.15); }
+
+  .dash-btn { display:inline-flex; align-items:center; gap:7px; padding:11px 22px; border:none; border-radius:8px; font-size:14px; font-weight:700; letter-spacing:0.3px; font-family:inherit; cursor:pointer; color:#fff; transition:opacity 0.15s,transform 0.12s; white-space:nowrap; }
+  .dash-btn:hover:not(:disabled){ opacity:0.85; transform:translateY(-1px); }
+  .dash-btn:active:not(:disabled){ transform:translateY(0); }
+  .dash-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+  .dash-btn-blue   { background:linear-gradient(135deg,#1f6feb,#1a7fd4); }
+  .dash-btn-green  { background:linear-gradient(135deg,#238636,#2ea043); }
+  .dash-btn-purple { background:linear-gradient(135deg,#7c3aed,#9d5cff); }
+
+  .dash-sdcc-row { display:flex; align-items:center; gap:14px; padding:14px 18px; border-radius:10px; cursor:pointer; margin-bottom:14px; transition:background 0.2s,border-color 0.2s; border:1px solid; user-select:none; }
+  .dash-toggle { width:44px; height:24px; border-radius:12px; position:relative; flex-shrink:0; transition:background 0.2s; }
+  .dash-toggle-knob { position:absolute; top:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left 0.2s; }
+  .dash-sdcc-text-main { font-weight:700; color:#e6edf3; font-size:14px; margin-bottom:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .dash-sdcc-text-sub  { font-size:12px; color:#8b949e; }
+
+  .dash-info { background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.22); border-radius:9px; padding:13px 16px; font-size:13px; color:#e6edf3; line-height:1.65; }
+
+  .dash-file-row   { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px; }
+  .dash-file-label { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; background:#1c2333; border:1px solid #30363d; border-radius:8px; cursor:pointer; font-size:14px; color:#e6edf3; font-weight:600; font-family:inherit; transition:border-color 0.2s; max-width:260px; overflow:hidden; }
+  .dash-file-label:hover{ border-color:#58a6ff; }
+  .dash-file-label span.fname{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dash-file-meta  { font-size:12px; color:#8b949e; }
+
+  .dash-alert { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:9px; font-size:13px; margin-top:14px; line-height:1.5; border:1px solid; }
+  .dash-alert-icon { font-size:15px; flex-shrink:0; margin-top:1px; }
+  .dash-alert-red   { background:rgba(248,81,73,0.1);  border-color:rgba(248,81,73,0.3);  color:#ff7b72; }
+  .dash-alert-green { background:rgba(63,185,80,0.1);  border-color:rgba(63,185,80,0.3);  color:#3fb950; }
+
+  .dash-sdcc-result        { background:#1c2333; border:1px solid #30363d; border-radius:12px; padding:18px 20px; margin-top:14px; }
+  .dash-sdcc-result-header { font-weight:700; color:#e6edf3; font-size:14px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .dash-sdcc-stats         { display:flex; gap:24px; flex-wrap:wrap; margin-bottom:14px; }
+  .dash-sdcc-stat-label    { font-size:10px; color:#6e7681; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:600; }
+  .dash-sdcc-scores        { display:flex; gap:7px; flex-wrap:wrap; }
+  .dash-sdcc-chip          { background:#0d1117; border:1px solid #30363d; border-radius:7px; padding:5px 11px; font-size:12px; color:#8b949e; }
+  .dash-sdcc-chip.top      { color:#3fb950; font-weight:700; border-color:rgba(63,185,80,0.35); }
+
+  .dash-badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.2px; border:1px solid; }
+
+  .dash-card-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:14px; margin-bottom:28px; }
+  .dash-card       { background:#1c2333; border:1px solid #30363d; border-radius:12px; padding:18px 14px; text-align:center; position:relative; overflow:hidden; }
+  .dash-card-bar   { position:absolute; top:0; left:0; right:0; height:3px; border-radius:12px 12px 0 0; }
+  .dash-card-value { font-size:22px; font-weight:800; line-height:1; margin-bottom:6px; }
+  .dash-card-label { font-size:10px; color:#6e7681; text-transform:uppercase; letter-spacing:1.1px; font-weight:700; }
+
+  .dash-chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px; }
+  @media(max-width:700px){ .dash-chart-grid{ grid-template-columns:1fr; } }
+  .dash-chart-box  { background:#161b22; border:1px solid #30363d; border-radius:13px; padding:18px 16px 10px; }
+  .dash-chart-title{ font-size:10px; color:#6e7681; text-transform:uppercase; letter-spacing:1.2px; font-weight:700; margin-bottom:14px; }
+
+  .dash-flags        { background:rgba(248,81,73,0.05); border:1px solid rgba(248,81,73,0.22); border-radius:12px; padding:18px 20px; margin-bottom:18px; }
+  .dash-flags-header { font-weight:700; color:#ff7b72; font-size:14px; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .dash-flag-count   { background:rgba(248,81,73,0.2); color:#ff7b72; border-radius:20px; padding:1px 9px; font-size:12px; font-weight:800; }
+  .dash-flag-item    { display:flex; align-items:center; gap:10px; background:#1c2333; border-radius:8px; padding:10px 14px; font-size:13px; color:#e6edf3; margin-bottom:7px; border-left:3px solid rgba(248,81,73,0.5); }
+  .dash-flag-dot     { color:#f85149; font-size:9px; flex-shrink:0; }
+
+  .dash-metrics       { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:18px 20px; }
+  .dash-metrics-title { font-weight:700; color:#e6edf3; font-size:14px; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .dash-metrics-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(195px,1fr)); gap:10px; }
+  .dash-metric-item   { background:#1c2333; border:1px solid #30363d; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
+  .dash-metric-key    { color:#8b949e; }
+  .dash-metric-value  { color:#e6edf3; font-weight:700; }
+
+  .dash-results-header { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .dash-results-title  { font-size:21px; font-weight:800; color:#e6edf3; }
+  .dash-run-id         { margin-left:auto; font-size:12px; color:#6e7681; white-space:nowrap; }
+`;
+
+const C = {
+  green:"#3fb950", greenDim:"#238636", amber:"#d29922",
+  red:"#f85149", accent:"#58a6ff", accentDim:"#1f6feb",
+  purple:"#bc8cff", cyan:"#79c0ff", textDim:"#6e7681", textMid:"#8b949e",
+  surface:"#161b22", surfaceHi:"#1c2333", border:"#30363d",
+};
+
+const riskColor  = (l: string) => ({ "Low Risk": C.green, "Moderate Risk": C.amber, "High Risk": "#ff7b72", "Critical Risk": C.red }[l] ?? C.textMid);
+const scoreColor = (s: number) => s >= 8.5 ? C.green : s >= 7 ? C.amber : s >= 5 ? "#ff7b72" : C.red;
+const fmt = (k: string) => k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+function Tooltip2({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const v = payload[0].value;
+  return (
+    <div style={{ background:"#1c2333", border:"1px solid #30363d", borderRadius:8, padding:"10px 14px", fontSize:13 }}>
+      <div style={{ color:C.textMid, marginBottom:4 }}>{label}</div>
+      <div style={{ color:scoreColor(v), fontWeight:700, fontSize:16 }}>{v} <span style={{ fontSize:12, color:C.textDim }}>/ 10</span></div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const [aiName,       setAiName]       = useState("");
+  const [description,  setDescription]  = useState("");
+  const [domain,       setDomain]       = useState("");
+  const [riskLevel,    setRiskLevel]    = useState("Medium");
+  const [file,         setFile]         = useState<File | null>(null);
+  const [useSDCC,      setUseSDCC]      = useState(true);
+  const [results,      setResults]      = useState<any>(null);
+  const [logsIngested, setLogsIngested] = useState<number | null>(null);
+  const [sdccInfo,     setSdccInfo]     = useState<any>(null);
+  const [regError,     setRegError]     = useState("");
+  const [uploadError,  setUploadError]  = useState("");
+  const [evalError,    setEvalError]    = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [registered,   setRegistered]   = useState(false);
+  const [uploaded,     setUploaded]     = useState(false);
+
+  const step = results ? 3 : uploaded ? 2 : registered ? 1 : 0;
+
+  const handleRegister = async () => {
+    if (!aiName.trim()) return alert("Enter an AI name");
+    setRegError("");
+    try {
+      await registerAI({ name: aiName, description, domain, risk_level: riskLevel,
+        connector: { type: "internal", endpoint: "N/A", headers: {} } });
+      setRegistered(true);
+    } catch {
+      setRegError("Registration failed — that name may already exist in the database. Try a different unique name.");
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!aiName.trim()) return alert("Enter AI name first");
+    if (!file) return alert("Select a file first");
+    setLoading(true); setUploadError("");
+    try {
+      if (useSDCC) {
+        const res = await sdccIngest(aiName, file);
+        setLogsIngested(res.data.logs_ingested);
+        setSdccInfo(res.data.sdcc_classification);
+      } else {
+        const res = await uploadCSV(aiName, file);
+        setLogsIngested(res.data.logs_ingested);
+        setSdccInfo(null);
+      }
+      setUploaded(true);
+    } catch { setUploadError("Upload failed — check the file format and that the AI system is registered."); }
+    finally { setLoading(false); }
+  };
+
+  const handleEvaluate = async () => {
+    if (!aiName.trim()) return alert("Enter AI name first");
+    setLoading(true); setEvalError("");
+    try {
+      const res = await evaluateAI(aiName);
+      setResults(res.data);
+    } catch { setEvalError("Evaluation failed — make sure logs have been uploaded first."); }
+    finally { setLoading(false); }
+  };
+
+  const dimScores = results?.dimension_scores ?? {};
+  const chartData = Object.entries(dimScores)
+    .filter(([, v]) => v != null)
+    .map(([k, v]) => ({ dimension: fmt(k), name: fmt(k), score: Number((v as number).toFixed(2)), fullMark: 10 }));
+
+  const topSDCCScore = sdccInfo?.scores ? Math.max(...Object.values(sdccInfo.scores) as number[]) : -1;
+
+  const stepNumStyle = (color: string, border: string) => ({
+    background: color, border: `2px solid ${border}`,
+  });
+
+  return (
+    <div className="dash-root">
+      <style>{CSS}</style>
+
+      {/* Header */}
+      <header className="dash-header">
+        <div className="dash-header-inner">
+          <div className="dash-logo">
+            <div className="dash-logo-icon">🛡</div>
+            <div>
+              <div className="dash-logo-title">Trusted AI</div>
+              <div className="dash-logo-sub">GOVERNANCE PLATFORM</div>
+            </div>
+          </div>
+          <nav className="dash-nav">
+            {["Register", "Ingest", "Evaluate", "Results"].map((s, i) => (
+              <div key={s} className={`dash-nav-step ${i === step ? "active" : "inactive"}`}>{s}</div>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="dash-content">
+        <h1 className="dash-page-title">AI Governance Dashboard</h1>
+        <p className="dash-page-sub">Register your AI system, ingest interaction logs, and run a full Trusted AI evaluation.</p>
+
+        {/* Step 1 */}
+        <div className="dash-section">
+          <div className="dash-step-header">
+            <div className="dash-step-num" style={stepNumStyle(registered ? C.greenDim : C.accentDim, registered ? C.green : C.accent)}>
+              {registered ? "✓" : "1"}
+            </div>
+            <span className="dash-step-title">Register AI System</span>
+          </div>
+
+          <div className="dash-form-grid">
+            {[
+              { label: "AI Name *",    val: aiName,      set: setAiName,      ph: "e.g. sentiment-model-v2" },
+              { label: "Description",  val: description, set: setDescription, ph: "Brief description" },
+              { label: "Domain",       val: domain,      set: setDomain,      ph: "e.g. Healthcare, Finance" },
+            ].map(({ label, val, set, ph }) => (
+              <div key={label}>
+                <label className="dash-field-label">{label}</label>
+                <input className="dash-input" value={val} onChange={e => (set as any)(e.target.value)} placeholder={ph} />
+              </div>
+            ))}
+            <div>
+              <label className="dash-field-label">Risk Level</label>
+              <select className="dash-input" value={riskLevel} onChange={e => setRiskLevel(e.target.value)} style={{ cursor: "pointer" }}>
+                {["Low", "Medium", "High", "Critical"].map(r => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <button className="dash-btn dash-btn-blue" onClick={handleRegister}>
+            <span>+</span> Register AI System
+          </button>
+
+          {registered && (
+            <div className="dash-alert dash-alert-green">
+              <span className="dash-alert-icon">✓</span>
+              <span><strong>"{aiName}"</strong> registered successfully. Proceed to Step 2.</span>
+            </div>
+          )}
+          {regError && (
+            <div className="dash-alert dash-alert-red">
+              <span className="dash-alert-icon">⚠</span>
+              <span>{regError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Step 2 */}
+        <div className="dash-section">
+          <div className="dash-step-header">
+            <div className="dash-step-num" style={stepNumStyle(uploaded ? C.greenDim : C.accentDim, uploaded ? C.green : C.accent)}>
+              {uploaded ? "✓" : "2"}
+            </div>
+            <span className="dash-step-title">Ingest Interaction Logs</span>
+          </div>
+
+          <div
+            className="dash-sdcc-row"
+            style={{ background: useSDCC ? "rgba(31,111,235,0.12)" : C.surfaceHi, borderColor: useSDCC ? "rgba(88,166,255,0.35)" : C.border }}
+            onClick={() => setUseSDCC(v => !v)}
+          >
+            <div className="dash-toggle" style={{ background: useSDCC ? C.accent : C.border }}>
+              <div className="dash-toggle-knob" style={{ left: useSDCC ? 23 : 3 }} />
+            </div>
+            <div>
+              <div className="dash-sdcc-text-main">
+                Use SDCC
+                <span className="dash-badge" style={{ color: C.accent, borderColor: "rgba(88,166,255,0.35)", background: "rgba(88,166,255,0.12)" }}>
+                  Smart Data Classification & Collection
+                </span>
+              </div>
+              <div className="dash-sdcc-text-sub">
+                Auto-detects AI type · Accepts{" "}
+                <code style={{ background: "#0d1117", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>.csv</code> or{" "}
+                <code style={{ background: "#0d1117", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>.json</code>
+              </div>
+            </div>
+          </div>
+
+          {useSDCC && (
+            <div className="dash-info">
+              <strong style={{ color: C.accent }}>How SDCC works:</strong>{" "}
+              It reads your log column names and automatically identifies the AI model type —{" "}
+              <em style={{ color: C.cyan }}>Classification, Summarization, Automation, Image Classification</em>,
+              or <em style={{ color: C.cyan }}>General LLM</em> — then applies the correct metrics framework.
+            </div>
+          )}
+
+          <div className="dash-file-row">
+            <label className="dash-file-label">
+              <span>📂</span>
+              <span className="fname">{file ? file.name : "Choose File"}</span>
+              <input type="file" accept=".csv,.json" onChange={e => setFile(e.target.files?.[0] || null)} style={{ display: "none" }} />
+            </label>
+            {file && <span className="dash-file-meta">{(file.size / 1024).toFixed(1)} KB · {file.name.split(".").pop()?.toUpperCase()}</span>}
+            <button className="dash-btn dash-btn-green" onClick={handleUpload} disabled={loading}>
+              <span>↑</span>{loading ? "Uploading…" : useSDCC ? "Upload via SDCC" : "Upload CSV"}
+            </button>
+          </div>
+
+          {logsIngested !== null && (
+            <div className="dash-alert dash-alert-green">
+              <span className="dash-alert-icon">✓</span>
+              <span><strong>{logsIngested}</strong> log records ingested successfully.</span>
+            </div>
+          )}
+
+          {sdccInfo && (
+            <div className="dash-sdcc-result">
+              <div className="dash-sdcc-result-header"><span style={{ color: C.green }}>✦</span> SDCC Detection Result</div>
+              <div className="dash-sdcc-stats">
+                <div>
+                  <div className="dash-sdcc-stat-label">Detected Model Type</div>
+                  <span className="dash-badge" style={{ color: C.green, borderColor: "rgba(63,185,80,0.35)", background: "rgba(63,185,80,0.12)", fontSize: 13 }}>
+                    {fmt(sdccInfo.model_type)}
+                  </span>
+                </div>
+                <div>
+                  <div className="dash-sdcc-stat-label">Confidence</div>
+                  <div style={{ fontWeight: 800, fontSize: 22, color: C.green }}>{(sdccInfo.confidence * 100).toFixed(1)}%</div>
+                </div>
+              </div>
+              {sdccInfo.scores && (
+                <>
+                  <div className="dash-sdcc-stat-label" style={{ marginBottom: 8 }}>Type Scores</div>
+                  <div className="dash-sdcc-scores">
+                    {Object.entries(sdccInfo.scores as Record<string, number>)
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .map(([k, v]) => (
+                        <div key={k} className={`dash-sdcc-chip${(v as number) === topSDCCScore ? " top" : ""}`}>
+                          {fmt(k)}: <strong>{v as number}</strong>
+                        </div>
+                      ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="dash-alert dash-alert-red">
+              <span className="dash-alert-icon">⚠</span><span>{uploadError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Step 3 */}
+        <div className="dash-section">
+          <div className="dash-step-header">
+            <div className="dash-step-num" style={stepNumStyle(results ? C.greenDim : "#7c3aed", results ? C.green : "#9d5cff")}>
+              {results ? "✓" : "3"}
+            </div>
+            <span className="dash-step-title">Run Evaluation</span>
+          </div>
+          <p style={{ color: C.textMid, fontSize: 14, marginBottom: 18, lineHeight: 1.65 }}>
+            Runs a full Trusted AI audit across all relevant dimensions for the detected model type.
+            Scores are on a 0–10 scale and mapped to risk bands.
+          </p>
+          <button className="dash-btn dash-btn-purple" onClick={handleEvaluate} disabled={loading} style={{ padding: "13px 30px", fontSize: 15 }}>
+            <span>{loading ? "⏳" : "▶"}</span>{loading ? "Running Evaluation…" : "Run Evaluation"}
+          </button>
+          {evalError && (
+            <div className="dash-alert dash-alert-red">
+              <span className="dash-alert-icon">⚠</span><span>{evalError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Results */}
+        {results && (
+          <div>
+            <div className="dash-results-header">
+              <h2 className="dash-results-title">Evaluation Results</h2>
+              {results.model_type && (
+                <span className="dash-badge" style={{ color: C.purple, borderColor: "rgba(188,140,255,0.35)", background: "rgba(188,140,255,0.12)" }}>
+                  {fmt(results.model_type)}
+                </span>
+              )}
+              {results.run_id && <span className="dash-run-id">Run: …{results.run_id.toString().slice(-8)}</span>}
+            </div>
+
+            <div className="dash-card-grid">
+              {[
+                { label: "Overall Score", value: `${results.overall_trusted_ai_score ?? "—"} / 10`, color: scoreColor(results.overall_trusted_ai_score ?? 0) },
+                { label: "Risk Level",    value: results.risk_level ?? "—",  color: riskColor(results.risk_level) },
+                { label: "Sample Size",   value: String(results.sample_size ?? "—"), color: C.cyan },
+                ...(results.accuracy        != null ? [{ label: "Accuracy",    value: `${results.accuracy}%`,       color: C.green }] : []),
+                ...(results.average_latency != null ? [{ label: "Avg Latency", value: `${results.average_latency}s`, color: C.amber }] : []),
+              ].map(({ label, value, color }) => (
+                <div className="dash-card" key={label}>
+                  <div className="dash-card-bar" style={{ background: color }} />
+                  <div className="dash-card-value" style={{ color }}>{value}</div>
+                  <div className="dash-card-label">{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {chartData.length > 0 && (
+              <div className="dash-chart-grid">
+                <div className="dash-chart-box">
+                  <div className="dash-chart-title">Dimension Radar</div>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <RadarChart data={chartData}>
+                      <PolarGrid stroke="#30363d" />
+                      <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10, fill: C.textMid, fontWeight: 600 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fontSize: 9, fill: C.textDim }} />
+                      <Radar dataKey="score" stroke={C.accent} fill={C.accent} fillOpacity={0.18} strokeWidth={2} />
+                      <Tooltip content={<Tooltip2 />} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="dash-chart-box">
+                  <div className="dash-chart-title">Score Breakdown</div>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={chartData} layout="vertical" margin={{ left: 4, right: 28, top: 4, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#30363d" horizontal={false} />
+                      <XAxis type="number" domain={[0, 10]} tick={{ fontSize: 11, fill: C.textDim }} axisLine={{ stroke: "#30363d" }} tickLine={false} />
+                      <YAxis type="category" dataKey="name" width={148} tick={{ fontSize: 10, fill: C.textMid }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<Tooltip2 />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                      <Bar dataKey="score" radius={[0, 6, 6, 0]} maxBarSize={20}>
+                        {chartData.map((e, i) => <Cell key={i} fill={scoreColor(e.score)} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {results.risk_flags?.length > 0 && (
+              <div className="dash-flags">
+                <div className="dash-flags-header">
+                  ⚠ Risk Flags <span className="dash-flag-count">{results.risk_flags.length}</span>
+                </div>
+                {results.risk_flags.map((f: string, i: number) => (
+                  <div className="dash-flag-item" key={i}><span className="dash-flag-dot">◆</span>{f}</div>
+                ))}
+              </div>
+            )}
+
+            {results.extra_metrics && Object.keys(results.extra_metrics).length > 0 && (
+              <div className="dash-metrics">
+                <div className="dash-metrics-title"><span style={{ color: C.purple }}>◈</span> Model-Specific Metrics</div>
+                <div className="dash-metrics-grid">
+                  {Object.entries(results.extra_metrics as Record<string, unknown>)
+                    .filter(([, v]) => v != null && typeof v !== "object")
+                    .map(([k, v]) => (
+                      <div className="dash-metric-item" key={k}>
+                        <span className="dash-metric-key">{fmt(k)}</span>
+                        <span className="dash-metric-value">{String(v)}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import axios from "axios";
+
+const BASE_URL = "http://localhost:8000";
+
+const api = axios.create({ baseURL: BASE_URL });
+
+// ── Register AI ────────────────────────────────────────────────────────────
+export const registerAI = (data: {
+  name: string;
+  description: string;
+  domain: string;
+  risk_level: string;
+  connector: { type: string; endpoint: string; headers: object };
+}) => api.post("/register-ai", data);
+
+// ── Legacy CSV Upload ──────────────────────────────────────────────────────
+export const uploadCSV = (aiName: string, file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return api.post(`/upload-csv/${aiName}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+// ── SDCC Ingest (CSV or JSON) ──────────────────────────────────────────────
+export const sdccIngest = (aiName: string, file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return api.post(`/sdcc/ingest/${aiName}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+// ── Get SDCC Classification ────────────────────────────────────────────────
+export const getSDCCClassification = (aiName: string) =>
+  api.get(`/sdcc/classification/${aiName}`);
+
+// ── Run Evaluation ─────────────────────────────────────────────────────────
+export const evaluateAI = (aiName: string) =>
+  api.post(`/evaluate/${aiName}`);
+
+
+
+
+
+
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+  
+
+import { useState } from "react";
+import {
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Cell,
+} from "recharts";
+import { registerAI, uploadCSV, evaluateAI, sdccIngest } from "../services/api";
+
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: #0d1117; }
+  .dash-root { min-height: 100vh; background: #0d1117; color: #e6edf3; font-family: 'IBM Plex Sans','Segoe UI',system-ui,sans-serif; }
+
+  .dash-header { background:#161b22; border-bottom:1px solid #30363d; position:sticky; top:0; z-index:100; width:100%; }
+  .dash-header-inner { max-width:960px; margin:0 auto; padding:0 24px; height:60px; display:flex; align-items:center; gap:16px; }
+  .dash-logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .dash-logo-icon { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,#1f6feb,#8957e5); display:flex; align-items:center; justify-content:center; font-size:17px; }
+  .dash-logo-title { font-size:15px; font-weight:800; color:#e6edf3; letter-spacing:0.2px; line-height:1.2; }
+  .dash-logo-sub   { font-size:10px; color:#6e7681; letter-spacing:1px; font-weight:600; }
+  .dash-nav { margin-left:auto; display:flex; gap:6px; }
+  .dash-nav-step { padding:4px 14px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:0.3px; border:1px solid transparent; transition:all 0.2s; cursor:default; }
+  .dash-nav-step.active  { background:rgba(31,111,235,0.35); border-color:rgba(88,166,255,0.5); color:#58a6ff; }
+  .dash-nav-step.inactive{ color:#6e7681; }
+  @media(max-width:640px){ .dash-nav{ display:none; } }
+
+  .dash-content { max-width:960px; margin:0 auto; padding:36px 24px 64px; }
+  @media(max-width:500px){ .dash-content{ padding:20px 12px 48px; } }
+
+  .dash-page-title { font-size:28px; font-weight:800; color:#e6edf3; letter-spacing:-0.5px; margin:0 0 6px; }
+  .dash-page-sub   { font-size:14px; color:#8b949e; margin:0 0 32px; }
+
+  .dash-section { background:#161b22; border:1px solid #30363d; border-radius:14px; padding:26px 28px 22px; margin-bottom:18px; }
+  @media(max-width:500px){ .dash-section{ padding:18px 14px 16px; } }
+
+  .dash-step-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .dash-step-num    { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff; }
+  .dash-step-title  { font-size:17px; font-weight:700; color:#e6edf3; }
+
+  .dash-form-grid { display:grid; grid-template-columns:1fr 1fr 1fr 160px; gap:14px; margin-bottom:18px; }
+  @media(max-width:820px){ .dash-form-grid{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:500px){ .dash-form-grid{ grid-template-columns:1fr; } }
+
+  .dash-field-label { display:block; font-size:11px; font-weight:700; color:#8b949e; text-transform:uppercase; letter-spacing:0.9px; margin-bottom:6px; }
+  .dash-input { width:100%; padding:10px 13px; background:#1c2333; border:1px solid #30363d; border-radius:8px; color:#e6edf3; font-size:14px; font-family:inherit; transition:border-color 0.2s,box-shadow 0.2s; appearance:none; }
+  .dash-input::placeholder { color:#484f58; }
+  .dash-input:focus { outline:none; border-color:#58a6ff; box-shadow:0 0 0 3px rgba(88,166,255,0.15); }
+
+  .dash-btn { display:inline-flex; align-items:center; gap:7px; padding:11px 22px; border:none; border-radius:8px; font-size:14px; font-weight:700; letter-spacing:0.3px; font-family:inherit; cursor:pointer; color:#fff; transition:opacity 0.15s,transform 0.12s; white-space:nowrap; }
+  .dash-btn:hover:not(:disabled){ opacity:0.85; transform:translateY(-1px); }
+  .dash-btn:active:not(:disabled){ transform:translateY(0); }
+  .dash-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+  .dash-btn-blue   { background:linear-gradient(135deg,#1f6feb,#1a7fd4); }
+  .dash-btn-green  { background:linear-gradient(135deg,#238636,#2ea043); }
+  .dash-btn-purple { background:linear-gradient(135deg,#7c3aed,#9d5cff); }
+
+  .dash-sdcc-row { display:flex; align-items:center; gap:14px; padding:14px 18px; border-radius:10px; cursor:pointer; margin-bottom:14px; transition:background 0.2s,border-color 0.2s; border:1px solid; user-select:none; }
+  .dash-toggle { width:44px; height:24px; border-radius:12px; position:relative; flex-shrink:0; transition:background 0.2s; }
+  .dash-toggle-knob { position:absolute; top:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left 0.2s; }
+  .dash-sdcc-text-main { font-weight:700; color:#e6edf3; font-size:14px; margin-bottom:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .dash-sdcc-text-sub  { font-size:12px; color:#8b949e; }
+
+  .dash-info { background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.22); border-radius:9px; padding:13px 16px; font-size:13px; color:#e6edf3; line-height:1.65; }
+
+  .dash-file-row   { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px; }
+  .dash-file-label { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; background:#1c2333; border:1px solid #30363d; border-radius:8px; cursor:pointer; font-size:14px; color:#e6edf3; font-weight:600; font-family:inherit; transition:border-color 0.2s; max-width:260px; overflow:hidden; }
+  .dash-file-label:hover{ border-color:#58a6ff; }
+  .dash-file-label span.fname{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dash-file-meta  { font-size:12px; color:#8b949e; }
+
+  .dash-alert { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:9px; font-size:13px; margin-top:14px; line-height:1.5; border:1px solid; }
+  .dash-alert-icon { font-size:15px; flex-shrink:0; margin-top:1px; }
+  .dash-alert-red   { background:rgba(248,81,73,0.1);  border-color:rgba(248,81,73,0.3);  color:#ff7b72; }
+  .dash-alert-green { background:rgba(63,185,80,0.1);  border-color:rgba(63,185,80,0.3);  color:#3fb950; }
+
+  .dash-sdcc-result        { background:#1c2333; border:1px solid #30363d; border-radius:12px; padding:18px 20px; margin-top:14px; }
+  .dash-sdcc-result-header { font-weight:700; color:#e6edf3; font-size:14px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .dash-sdcc-stats         { display:flex; gap:24px; flex-wrap:wrap; margin-bottom:14px; }
+  .dash-sdcc-stat-label    { font-size:10px; color:#6e7681; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:600; }
+  .dash-sdcc-scores        { display:flex; gap:7px; flex-wrap:wrap; }
+  .dash-sdcc-chip          { background:#0d1117; border:1px solid #30363d; border-radius:7px; padding:5px 11px; font-size:12px; color:#8b949e; }
+  .dash-sdcc-chip.top      { color:#3fb950; font-weight:700; border-color:rgba(63,185,80,0.35); }
+
+  .dash-badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.2px; border:1px solid; }
+
+  .dash-card-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:14px; margin-bottom:28px; }
+  .dash-card       { background:#1c2333; border:1px solid #30363d; border-radius:12px; padding:18px 14px; text-align:center; position:relative; overflow:hidden; }
+  .dash-card-bar   { position:absolute; top:0; left:0; right:0; height:3px; border-radius:12px 12px 0 0; }
+  .dash-card-value { font-size:22px; font-weight:800; line-height:1; margin-bottom:6px; }
+  .dash-card-label { font-size:10px; color:#6e7681; text-transform:uppercase; letter-spacing:1.1px; font-weight:700; }
+
+  .dash-chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px; }
+  @media(max-width:700px){ .dash-chart-grid{ grid-template-columns:1fr; } }
+  .dash-chart-box  { background:#161b22; border:1px solid #30363d; border-radius:13px; padding:18px 16px 10px; }
+  .dash-chart-title{ font-size:10px; color:#6e7681; text-transform:uppercase; letter-spacing:1.2px; font-weight:700; margin-bottom:14px; }
+
+  .dash-flags        { background:rgba(248,81,73,0.05); border:1px solid rgba(248,81,73,0.22); border-radius:12px; padding:18px 20px; margin-bottom:18px; }
+  .dash-flags-header { font-weight:700; color:#ff7b72; font-size:14px; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .dash-flag-count   { background:rgba(248,81,73,0.2); color:#ff7b72; border-radius:20px; padding:1px 9px; font-size:12px; font-weight:800; }
+  .dash-flag-item    { display:flex; align-items:center; gap:10px; background:#1c2333; border-radius:8px; padding:10px 14px; font-size:13px; color:#e6edf3; margin-bottom:7px; border-left:3px solid rgba(248,81,73,0.5); }
+  .dash-flag-dot     { color:#f85149; font-size:9px; flex-shrink:0; }
+
+  .dash-metrics       { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:18px 20px; }
+  .dash-metrics-title { font-weight:700; color:#e6edf3; font-size:14px; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .dash-metrics-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(195px,1fr)); gap:10px; }
+  .dash-metric-item   { background:#1c2333; border:1px solid #30363d; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
+  .dash-metric-key    { color:#8b949e; }
+  .dash-metric-value  { color:#e6edf3; font-weight:700; }
+
+  .dash-results-header { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .dash-results-title  { font-size:21px; font-weight:800; color:#e6edf3; }
+  .dash-run-id         { margin-left:auto; font-size:12px; color:#6e7681; white-space:nowrap; }
+`;
+
+const C = {
+  green:"#3fb950", greenDim:"#238636", amber:"#d29922",
+  red:"#f85149", accent:"#58a6ff", accentDim:"#1f6feb",
+  purple:"#bc8cff", cyan:"#79c0ff", textDim:"#6e7681", textMid:"#8b949e",
+  surface:"#161b22", surfaceHi:"#1c2333", border:"#30363d",
+};
+
+const riskColor  = (l: string) => ({ "Low Risk": C.green, "Moderate Risk": C.amber, "High Risk": "#ff7b72", "Critical Risk": C.red }[l] ?? C.textMid);
+const scoreColor = (s: number) => s >= 8.5 ? C.green : s >= 7 ? C.amber : s >= 5 ? "#ff7b72" : C.red;
+const fmt = (k: string) => k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+function Tooltip2({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const v = payload[0].value;
+  return (
+    <div style={{ background:"#1c2333", border:"1px solid #30363d", borderRadius:8, padding:"10px 14px", fontSize:13 }}>
+      <div style={{ color:C.textMid, marginBottom:4 }}>{label}</div>
+      <div style={{ color:scoreColor(v), fontWeight:700, fontSize:16 }}>{v} <span style={{ fontSize:12, color:C.textDim }}>/ 10</span></div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const [aiName,       setAiName]       = useState("");
+  const [description,  setDescription]  = useState("");
+  const [domain,       setDomain]       = useState("");
+  const [riskLevel,    setRiskLevel]    = useState("Medium");
+  const [file,         setFile]         = useState<File | null>(null);
+  const [useSDCC,      setUseSDCC]      = useState(true);
+  const [results,      setResults]      = useState<any>(null);
+  const [logsIngested, setLogsIngested] = useState<number | null>(null);
+  const [sdccInfo,     setSdccInfo]     = useState<any>(null);
+  const [regError,     setRegError]     = useState("");
+  const [uploadError,  setUploadError]  = useState("");
+  const [evalError,    setEvalError]    = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [registered,   setRegistered]   = useState(false);
+  const [uploaded,     setUploaded]     = useState(false);
+
+  const step = results ? 3 : uploaded ? 2 : registered ? 1 : 0;
+
+  const handleRegister = async () => {
+    if (!aiName.trim()) return alert("Enter an AI name");
+    setRegError("");
+    try {
+      await registerAI({ name: aiName, description, domain, risk_level: riskLevel,
+        connector: { type: "internal", endpoint: "N/A", headers: {} } });
+      setRegistered(true);
+    } catch {
+      setRegError("Registration failed — that name may already exist in the database. Try a different unique name.");
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!aiName.trim()) return alert("Enter AI name first");
+    if (!file) return alert("Select a file first");
+    setLoading(true); setUploadError("");
+    try {
+      if (useSDCC) {
+        const res = await sdccIngest(aiName, file);
+        setLogsIngested(res.data.logs_ingested);
+        setSdccInfo(res.data.sdcc_classification);
+      } else {
+        const res = await uploadCSV(aiName, file);
+        setLogsIngested(res.data.logs_ingested);
+        setSdccInfo(null);
+      }
+      setUploaded(true);
+    } catch { setUploadError("Upload failed — check the file format and that the AI system is registered."); }
+    finally { setLoading(false); }
+  };
+
+  const handleEvaluate = async () => {
+    if (!aiName.trim()) return alert("Enter AI name first");
+    setLoading(true); setEvalError("");
+    try {
+      const res = await evaluateAI(aiName);
+      setResults(res.data);
+    } catch { setEvalError("Evaluation failed — make sure logs have been uploaded first."); }
+    finally { setLoading(false); }
+  };
+
+  const dimScores = results?.dimension_scores ?? {};
+  const chartData = Object.entries(dimScores)
+    .filter(([, v]) => v != null)
+    .map(([k, v]) => ({ dimension: fmt(k), name: fmt(k), score: Number((v as number).toFixed(2)), fullMark: 10 }));
+
+  const topSDCCScore = sdccInfo?.scores ? Math.max(...Object.values(sdccInfo.scores) as number[]) : -1;
+
+  const stepNumStyle = (color: string, border: string) => ({
+    background: color, border: `2px solid ${border}`,
+  });
+
+  return (
+    <div className="dash-root">
+      <style>{CSS}</style>
+
+      {/* Header */}
+      <header className="dash-header">
+        <div className="dash-header-inner">
+          <div className="dash-logo">
+            <div className="dash-logo-icon">🛡</div>
+            <div>
+              <div className="dash-logo-title">Trusted AI</div>
+              <div className="dash-logo-sub">GOVERNANCE PLATFORM</div>
+            </div>
+          </div>
+          <nav className="dash-nav">
+            {["Register", "Ingest", "Evaluate", "Results"].map((s, i) => (
+              <div key={s} className={`dash-nav-step ${i === step ? "active" : "inactive"}`}>{s}</div>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="dash-content">
+        <h1 className="dash-page-title">AI Governance Dashboard</h1>
+        <p className="dash-page-sub">Register your AI system, ingest interaction logs, and run a full Trusted AI evaluation.</p>
+
+        {/* Step 1 */}
+        <div className="dash-section">
+          <div className="dash-step-header">
+            <div className="dash-step-num" style={stepNumStyle(registered ? C.greenDim : C.accentDim, registered ? C.green : C.accent)}>
+              {registered ? "✓" : "1"}
+            </div>
+            <span className="dash-step-title">Register AI System</span>
+          </div>
+
+          <div className="dash-form-grid">
+            {[
+              { label: "AI Name *",    val: aiName,      set: setAiName,      ph: "e.g. sentiment-model-v2" },
+              { label: "Description",  val: description, set: setDescription, ph: "Brief description" },
+              { label: "Domain",       val: domain,      set: setDomain,      ph: "e.g. Healthcare, Finance" },
+            ].map(({ label, val, set, ph }) => (
+              <div key={label}>
+                <label className="dash-field-label">{label}</label>
+                <input className="dash-input" value={val} onChange={e => (set as any)(e.target.value)} placeholder={ph} />
+              </div>
+            ))}
+            <div>
+              <label className="dash-field-label">Risk Level</label>
+              <select className="dash-input" value={riskLevel} onChange={e => setRiskLevel(e.target.value)} style={{ cursor: "pointer" }}>
+                {["Low", "Medium", "High", "Critical"].map(r => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <button className="dash-btn dash-btn-blue" onClick={handleRegister}>
+            <span>+</span> Register AI System
+          </button>
+
+          {registered && (
+            <div className="dash-alert dash-alert-green">
+              <span className="dash-alert-icon">✓</span>
+              <span><strong>"{aiName}"</strong> registered successfully. Proceed to Step 2.</span>
+            </div>
+          )}
+          {regError && (
+            <div className="dash-alert dash-alert-red">
+              <span className="dash-alert-icon">⚠</span>
+              <span>{regError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Step 2 */}
+        <div className="dash-section">
+          <div className="dash-step-header">
+            <div className="dash-step-num" style={stepNumStyle(uploaded ? C.greenDim : C.accentDim, uploaded ? C.green : C.accent)}>
+              {uploaded ? "✓" : "2"}
+            </div>
+            <span className="dash-step-title">Ingest Interaction Logs</span>
+          </div>
+
+          <div
+            className="dash-sdcc-row"
+            style={{ background: useSDCC ? "rgba(31,111,235,0.12)" : C.surfaceHi, borderColor: useSDCC ? "rgba(88,166,255,0.35)" : C.border }}
+            onClick={() => setUseSDCC(v => !v)}
+          >
+            <div className="dash-toggle" style={{ background: useSDCC ? C.accent : C.border }}>
+              <div className="dash-toggle-knob" style={{ left: useSDCC ? 23 : 3 }} />
+            </div>
+            <div>
+              <div className="dash-sdcc-text-main">
+                Use SDCC
+                <span className="dash-badge" style={{ color: C.accent, borderColor: "rgba(88,166,255,0.35)", background: "rgba(88,166,255,0.12)" }}>
+                  Smart Data Classification & Collection
+                </span>
+              </div>
+              <div className="dash-sdcc-text-sub">
+                Auto-detects AI type · Accepts{" "}
+                <code style={{ background: "#0d1117", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>.csv</code> or{" "}
+                <code style={{ background: "#0d1117", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>.json</code>
+              </div>
+            </div>
+          </div>
+
+          {useSDCC && (
+            <div className="dash-info">
+              <strong style={{ color: C.accent }}>How SDCC works:</strong>{" "}
+              It reads your log column names and automatically identifies the AI model type —{" "}
+              <em style={{ color: C.cyan }}>Classification, Summarization, Automation, Image Classification</em>,
+              or <em style={{ color: C.cyan }}>General LLM</em> — then applies the correct metrics framework.
+            </div>
+          )}
+
+          <div className="dash-file-row">
+            <label className="dash-file-label">
+              <span>📂</span>
+              <span className="fname">{file ? file.name : "Choose File"}</span>
+              <input type="file" accept=".csv,.json" onChange={e => setFile(e.target.files?.[0] || null)} style={{ display: "none" }} />
+            </label>
+            {file && <span className="dash-file-meta">{(file.size / 1024).toFixed(1)} KB · {file.name.split(".").pop()?.toUpperCase()}</span>}
+            <button className="dash-btn dash-btn-green" onClick={handleUpload} disabled={loading}>
+              <span>↑</span>{loading ? "Uploading…" : useSDCC ? "Upload via SDCC" : "Upload CSV"}
+            </button>
+          </div>
+
+          {logsIngested !== null && (
+            <div className="dash-alert dash-alert-green">
+              <span className="dash-alert-icon">✓</span>
+              <span><strong>{logsIngested}</strong> log records ingested successfully.</span>
+            </div>
+          )}
+
+          {sdccInfo && (
+            <div className="dash-sdcc-result">
+              <div className="dash-sdcc-result-header"><span style={{ color: C.green }}>✦</span> SDCC Detection Result</div>
+              <div className="dash-sdcc-stats">
+                <div>
+                  <div className="dash-sdcc-stat-label">Detected Model Type</div>
+                  <span className="dash-badge" style={{ color: C.green, borderColor: "rgba(63,185,80,0.35)", background: "rgba(63,185,80,0.12)", fontSize: 13 }}>
+                    {fmt(sdccInfo.model_type)}
+                  </span>
+                </div>
+                <div>
+                  <div className="dash-sdcc-stat-label">Confidence</div>
+                  <div style={{ fontWeight: 800, fontSize: 22, color: C.green }}>{(sdccInfo.confidence * 100).toFixed(1)}%</div>
+                </div>
+              </div>
+              {sdccInfo.scores && (
+                <>
+                  <div className="dash-sdcc-stat-label" style={{ marginBottom: 8 }}>Type Scores</div>
+                  <div className="dash-sdcc-scores">
+                    {Object.entries(sdccInfo.scores as Record<string, number>)
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .map(([k, v]) => (
+                        <div key={k} className={`dash-sdcc-chip${(v as number) === topSDCCScore ? " top" : ""}`}>
+                          {fmt(k)}: <strong>{v as number}</strong>
+                        </div>
+                      ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="dash-alert dash-alert-red">
+              <span className="dash-alert-icon">⚠</span><span>{uploadError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Step 3 */}
+        <div className="dash-section">
+          <div className="dash-step-header">
+            <div className="dash-step-num" style={stepNumStyle(results ? C.greenDim : "#7c3aed", results ? C.green : "#9d5cff")}>
+              {results ? "✓" : "3"}
+            </div>
+            <span className="dash-step-title">Run Evaluation</span>
+          </div>
+          <p style={{ color: C.textMid, fontSize: 14, marginBottom: 18, lineHeight: 1.65 }}>
+            Runs a full Trusted AI audit across all relevant dimensions for the detected model type.
+            Scores are on a 0–10 scale and mapped to risk bands.
+          </p>
+          <button className="dash-btn dash-btn-purple" onClick={handleEvaluate} disabled={loading} style={{ padding: "13px 30px", fontSize: 15 }}>
+            <span>{loading ? "⏳" : "▶"}</span>{loading ? "Running Evaluation…" : "Run Evaluation"}
+          </button>
+          {evalError && (
+            <div className="dash-alert dash-alert-red">
+              <span className="dash-alert-icon">⚠</span><span>{evalError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Results */}
+        {results && (
+          <div>
+            <div className="dash-results-header">
+              <h2 className="dash-results-title">Evaluation Results</h2>
+              {results.model_type && (
+                <span className="dash-badge" style={{ color: C.purple, borderColor: "rgba(188,140,255,0.35)", background: "rgba(188,140,255,0.12)" }}>
+                  {fmt(results.model_type)}
+                </span>
+              )}
+              {results.run_id && <span className="dash-run-id">Run: …{results.run_id.toString().slice(-8)}</span>}
+            </div>
+
+            <div className="dash-card-grid">
+              {[
+                { label: "Overall Score", value: `${results.overall_trusted_ai_score ?? "—"} / 10`, color: scoreColor(results.overall_trusted_ai_score ?? 0) },
+                { label: "Risk Level",    value: results.risk_level ?? "—",  color: riskColor(results.risk_level) },
+                { label: "Sample Size",   value: String(results.sample_size ?? "—"), color: C.cyan },
+                ...(results.accuracy        != null ? [{ label: "Accuracy",    value: `${results.accuracy}%`,       color: C.green }] : []),
+                ...(results.average_latency != null ? [{ label: "Avg Latency", value: `${results.average_latency}s`, color: C.amber }] : []),
+              ].map(({ label, value, color }) => (
+                <div className="dash-card" key={label}>
+                  <div className="dash-card-bar" style={{ background: color }} />
+                  <div className="dash-card-value" style={{ color }}>{value}</div>
+                  <div className="dash-card-label">{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {chartData.length > 0 && (
+              <div className="dash-chart-grid">
+                <div className="dash-chart-box">
+                  <div className="dash-chart-title">Dimension Radar</div>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <RadarChart data={chartData}>
+                      <PolarGrid stroke="#30363d" />
+                      <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10, fill: C.textMid, fontWeight: 600 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fontSize: 9, fill: C.textDim }} />
+                      <Radar dataKey="score" stroke={C.accent} fill={C.accent} fillOpacity={0.18} strokeWidth={2} />
+                      <Tooltip content={<Tooltip2 />} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="dash-chart-box">
+                  <div className="dash-chart-title">Score Breakdown</div>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={chartData} layout="vertical" margin={{ left: 4, right: 28, top: 4, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#30363d" horizontal={false} />
+                      <XAxis type="number" domain={[0, 10]} tick={{ fontSize: 11, fill: C.textDim }} axisLine={{ stroke: "#30363d" }} tickLine={false} />
+                      <YAxis type="category" dataKey="name" width={148} tick={{ fontSize: 10, fill: C.textMid }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<Tooltip2 />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                      <Bar dataKey="score" radius={[0, 6, 6, 0]} maxBarSize={20}>
+                        {chartData.map((e, i) => <Cell key={i} fill={scoreColor(e.score)} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {results.risk_flags?.length > 0 && (
+              <div className="dash-flags">
+                <div className="dash-flags-header">
+                  ⚠ Risk Flags <span className="dash-flag-count">{results.risk_flags.length}</span>
+                </div>
+                {results.risk_flags.map((f: string, i: number) => (
+                  <div className="dash-flag-item" key={i}><span className="dash-flag-dot">◆</span>{f}</div>
+                ))}
+              </div>
+            )}
+
+            {results.extra_metrics && Object.keys(results.extra_metrics).length > 0 && (
+              <div className="dash-metrics">
+                <div className="dash-metrics-title"><span style={{ color: C.purple }}>◈</span> Model-Specific Metrics</div>
+                <div className="dash-metrics-grid">
+                  {Object.entries(results.extra_metrics as Record<string, unknown>)
+                    .filter(([, v]) => v != null && typeof v !== "object")
+                    .map(([k, v]) => (
+                      <div className="dash-metric-item" key={k}>
+                        <span className="dash-metric-key">{fmt(k)}</span>
+                        <span className="dash-metric-value">{String(v)}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+
+
+
+from fastapi import APIRouter, HTTPException
+from datetime import datetime
+from app.database import get_database
+from app.model.model import AISystemCreate
+from app.routes import csv_upload, evaluate
+from app.sdcc import sdcc_router
+
+router = APIRouter()
+
+
+@router.post("/register-ai")
+async def register_ai(ai: AISystemCreate):
+    db = get_database()
+    existing = await db.ai_systems.find_one({"name": ai.name})
+    if existing:
+        raise HTTPException(status_code=400, detail="AI system already exists")
+    document = ai.dict()
+    document["created_at"] = datetime.utcnow()
+    result = await db.ai_systems.insert_one(document)
+    return {
+        "id": str(result.inserted_id),
+        "message": "AI system registered successfully"
+    }
+
+
+router.include_router(csv_upload.router)
+router.include_router(evaluate.router)
+router.include_router(sdcc_router.router)
