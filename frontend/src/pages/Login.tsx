@@ -227,7 +227,7 @@ const Login = () => {
       const { access_token } = response.data;
       localStorage.setItem("token", access_token); // Store JWT
 
-      navigate("/dashboard");
+      navigate("/register-ai");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed. Please try again.");
     } finally {
