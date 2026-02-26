@@ -1,44 +1,79 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerAI, uploadCSV, sdccIngest, evaluateAI } from "../services/api";
+import { uploadCSV, sdccIngest, evaluateAI } from "../services/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [aiName, setAiName] = useState("");
-  const [description, setDescription] = useState("");
-  const [domain, setDomain] = useState("");
+
+  /* ---------------- BLACK BOX ---------------- */
+  const [mode, setMode] = useState<"api" | "ui">("api");
+  const [endpoint, setEndpoint] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [uiUrl, setUiUrl] = useState("");
+
+  /* ---------------- INGESTION ---------------- */
   const [file, setFile] = useState<File | null>(null);
   const [useSDCC, setUseSDCC] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [registered, setRegistered] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [logsCount, setLogsCount] = useState<number | null>(null);
-  const [registerSuccess, setRegisterSuccess] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [error, setError] = useState("");
   const [sdccSummary, setSdccSummary] = useState<any>(null);
-const [sdccResult, setSdccResult] = useState<any>(null);
+  const [error, setError] = useState("");
+
+  const aiName = localStorage.getItem("activeAI") || "";
+
+  /* ---------------- ERROR HANDLER ---------------- */
   const extractErr = (e: any): string => {
-    if (!e?.response) return "Cannot reach backend. Is the server running?";
-    const { status, data } = e.response;
-    if (data?.detail) return `[${status}] ${data.detail}`;
-    return `[${status}] ${e.message}`;
+    if (!e?.response) return "Cannot reach backend.";
+    return e.response?.data?.detail || "Operation failed.";
   };
 
-  const handleRegister = async () => {
-    if (!aiName.trim()) return alert("Please enter AI Name");
-    setError("");
+  /* ---------------- BLACK BOX RUN ---------------- */
+  const handleBlackBox = () => {
+    if (mode === "api" && (!endpoint || !apiKey)) {
+      alert("Provide API endpoint and API key.");
+      return;
+    }
+
+    if (mode === "ui" && !uiUrl) {
+      alert("Provide deployed UI URL.");
+      return;
+    }
+
+    alert("Black Box audit will trigger backend orchestration.");
+  };
+
+  /* ---------------- INGESTION ---------------- */
+  const handleUpload = async () => {
+    if (!aiName) {
+      alert("No AI registered. Please register AI first.");
+      return;
+    }
+
+    if (!file) {
+      alert("Select a file.");
+      return;
+    }
+
     setLoading(true);
+    setError("");
+
     try {
-      await registerAI({
-        name: aiName,
-        description,
-        domain,
-        connector: { type: "internal", endpoint: "N/A", headers: {} },
-      });
-      setRegistered(true);
-      setRegisterSuccess(true);
+      let res;
+
+      if (useSDCC) {
+        res = await sdccIngest(aiName, file);
+        setSdccSummary(res.data);
+        setLogsCount(res.data.logs_ingested ?? null);
+      } else {
+        res = await uploadCSV(aiName, file);
+        setLogsCount(res.data.logs_ingested ?? null);
+      }
+
+      setUploaded(true);
+      setUploadSuccess(true);
     } catch (e) {
       setError(extractErr(e));
     } finally {
@@ -46,47 +81,18 @@ const [sdccResult, setSdccResult] = useState<any>(null);
     }
   };
 
- const handleUpload = async () => {
-  if (!aiName.trim()) return alert("Please register AI first");
-  if (!file) return alert("Please select a file");
-
-  setError("");
-  setLoading(true);
-
-  try {
-    let res;
-
-    if (useSDCC) {
-      res = await sdccIngest(aiName, file);
-
-      // SDCC response structure
-      const data = res.data;
-
-      setSdccSummary(data); // 🔥 Save full SDCC response
-      setLogsCount(data.logs_ingested ?? null);
-    } else {
-      res = await uploadCSV(aiName, file);
-      setLogsCount(res?.data?.logs_ingested ?? null);
+  /* ---------------- EVALUATE ---------------- */
+  const handleEvaluate = async () => {
+    if (!uploaded) {
+      alert("Upload logs first.");
+      return;
     }
 
-    setUploaded(true);
-    setUploadSuccess(true);
-  } catch (e) {
-    setError(extractErr(e));
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleEvaluate = async () => {
-    if (!uploaded) return alert("Please upload logs first");
-    setError("");
     setLoading(true);
+
     try {
       const res = await evaluateAI(aiName);
-      navigate("/report", {
-        state: { data: res.data },
-      });
+      navigate("/report", { state: { data: res.data } });
     } catch (e) {
       setError(extractErr(e));
     } finally {
@@ -97,176 +103,145 @@ const [sdccResult, setSdccResult] = useState<any>(null);
   return (
     <div className="hero">
       <style>{CSS}</style>
+
       <div className="hero-content">
+
+        {/* TOP ROW */}
         <div className="card-grid">
-          {/* REGISTER CARD */}
+
+          {/* BLACK BOX */}
           <div className="glass-card">
-            <h2>1. Register AI System</h2>
-            <p className="card-desc">Enter basic information about your AI model.</p>
-
-            <label>AI Name *</label>
-            <input
-              placeholder="e.g. Sentiment Analyzer v2"
-              value={aiName}
-              onChange={(e) => setAiName(e.target.value)}
-              disabled={registered}
-            />
-
-            <label>Description</label>
-            <input
-              placeholder="Brief description (optional)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={registered}
-            />
-
-            <label>Domain / Use Case</label>
-            <input
-              placeholder="e.g. Customer Support, Healthcare"
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              disabled={registered}
-            />
-
-         
-
-            <button
-              onClick={handleRegister}
-              disabled={loading || registered}
-              className={registered ? "success-btn" : ""}
-            >
-              {loading
-                ? "Registering..."
-                : registered
-                ? "✓ AI Registered"
-                : "Register AI"}
-            </button>
-
-            {registerSuccess && (
-              <div className="success-message">
-                AI system <strong>{aiName}</strong> successfully registered!
-              </div>
-            )}
-          </div>
-
-          {/* UPLOAD CARD */}
-          <div className="glass-card">
-            <h2>2. Ingest Interaction Logs</h2>
-            <p className="card-desc">Upload conversation logs for evaluation.</p>
-
-            <div className="toggle-container">
-              <span className="toggle-label">Use SDCC (Smart Classification)</span>
-              <div className="toggle-switch" onClick={() => setUseSDCC(!useSDCC)}>
-                <div className={`toggle-knob ${useSDCC ? "on" : "off"}`}></div>
-              </div>
-            </div>
-            <p className="toggle-desc">
-              {useSDCC
-                ? "Auto-detects model type and optimizes ingestion"
-                : "Manual CSV/JSON upload"}
+            <h2>🛡 Black Box AI Audit</h2>
+            <p className="card-desc">
+              Connect external AI system and run Trusted AI evaluation.
             </p>
 
-            <label>Select File (.csv or .json)</label>
+            <div className="toggle-container">
+              <span className="toggle-label">Connection Mode</span>
+              <div
+                className="toggle-switch"
+                onClick={() => setMode(mode === "api" ? "ui" : "api")}
+              >
+                <div
+                  className={`toggle-knob ${mode === "api" ? "on" : "off"}`}
+                ></div>
+              </div>
+            </div>
+
+            <p className="toggle-desc">
+              {mode === "api"
+                ? "API Key + Endpoint Mode"
+                : "Deployed UI Mode"}
+            </p>
+
+            {mode === "api" ? (
+              <>
+                <label>API Endpoint</label>
+                <input
+                  value={endpoint}
+                  onChange={(e) => setEndpoint(e.target.value)}
+                  placeholder="https://api.company.com/v1/chat"
+                />
+
+                <label>API Key</label>
+                <input
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="sk-xxxx"
+                />
+              </>
+            ) : (
+              <>
+                <label>UI URL</label>
+                <input
+                  value={uiUrl}
+                  onChange={(e) => setUiUrl(e.target.value)}
+                  placeholder="https://chatbot.vercel.app"
+                />
+              </>
+            )}
+
+            <button onClick={handleBlackBox}>
+              Run Black Box Audit →
+            </button>
+          </div>
+
+          {/* INGESTION */}
+          <div className="glass-card">
+            <h2>📊 Data Ingestion (SDCC)</h2>
+
+            <div className="toggle-container">
+              <span className="toggle-label">Use SDCC</span>
+              <div
+                className="toggle-switch"
+                onClick={() => setUseSDCC(!useSDCC)}
+              >
+                <div
+                  className={`toggle-knob ${useSDCC ? "on" : "off"}`}
+                ></div>
+              </div>
+            </div>
+
+            <label>Select File</label>
             <input
               type="file"
               accept=".csv,.json"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
-              disabled={uploaded || loading}
             />
 
-            {file && (
-              <div className="file-name">
-                Selected: <strong>{file.name}</strong> ({(file.size / 1024).toFixed(1)} KB)
-              </div>
-            )}
-
-            <button
-              onClick={handleUpload}
-              disabled={loading || !registered || uploaded}
-              className={uploaded ? "success-btn" : ""}
-            >
-              {loading
-                ? "Uploading logs..."
-                : uploaded
-                ? "✓ Logs Ingested"
-                : "Upload Logs"}
+            <button onClick={handleUpload} disabled={loading}>
+              {loading ? "Uploading..." : "Upload Logs"}
             </button>
 
-            {uploadSuccess && logsCount !== null && (
+            {uploadSuccess && logsCount && (
               <div className="success-message">
-                Successfully ingested <strong>{logsCount}</strong> log records!
+                Ingested {logsCount} records successfully.
               </div>
             )}
-
-            {uploadSuccess && logsCount === null && (
-              <div className="success-message">
-                Logs successfully uploaded and processed!
-              </div>
-            )}
-           {sdccSummary && useSDCC && (
-  <div className="sdcc-enterprise">
-
-    {/* Executive Snapshot */}
-    <div className="sdcc-grid">
-      <div className="metric-card">
-        <span>Model Type</span>
-        <strong>{sdccSummary.model_type}</strong>
-      </div>
-
-      <div className="metric-card">
-        <span>Logs</span>
-        <strong>{sdccSummary.logs_ingested}</strong>
-      </div>
-
-      <div className="metric-card">
-        <span>Data Quality</span>
-        <strong>{sdccSummary.data_quality_score}%</strong>
-      </div>
-
-      <div className={`metric-card risk-${sdccSummary.structural_risk.toLowerCase()}`}>
-        <span>Structural Risk</span>
-        <strong>{sdccSummary.structural_risk}</strong>
-      </div>
-    </div>
-
-    {/* Diagnostics */}
-    <div className="sdcc-diagnostics">
-      <h4>Data Diagnostics</h4>
-      <p>Missing Ratio: {sdccSummary.diagnostics.missing_ratio}</p>
-      <p>Duplicates: {sdccSummary.diagnostics.duplicates}</p>
-      <p>Total Columns: {sdccSummary.diagnostics.total_columns}</p>
-      <p>Text Columns: {sdccSummary.diagnostics.text_columns}</p>
-      <p>Numeric Columns: {sdccSummary.diagnostics.numeric_columns}</p>
-      <p>Schema Confidence: {sdccSummary.diagnostics.schema_confidence}</p>
-    </div>
-
-    {/* Recommendation */}
-    <div className="sdcc-recommendation">
-      <strong>Recommendation:</strong>
-      <p>{sdccSummary.recommendation}</p>
-    </div>
-
-    <div className="sdcc-footer">
-      <span>Scan ID: {sdccSummary.scan_id}</span>
-      <span>Timestamp: {new Date(sdccSummary.timestamp).toLocaleString()}</span>
-    </div>
-
-  </div>
-)}
-  
-
-
           </div>
         </div>
 
-        {/* RUN EVALUATION BUTTON */}
+        {/* SDCC SUMMARY */}
+        {sdccSummary && useSDCC && (
+          <div className="sdcc-wrapper">
+            <div className="glass-card sdcc-enterprise">
+              <h2>📈 SDCC Structural Summary</h2>
+
+              <div className="sdcc-grid">
+                <div className="metric-card">
+                  <span>Model Type</span>
+                  <strong>{sdccSummary.model_type}</strong>
+                </div>
+
+                <div className="metric-card">
+                  <span>Logs</span>
+                  <strong>{sdccSummary.logs_ingested}</strong>
+                </div>
+
+                <div className="metric-card">
+                  <span>Data Quality</span>
+                  <strong>{sdccSummary.data_quality_score}%</strong>
+                </div>
+
+                <div
+                  className={`metric-card risk-${sdccSummary.structural_risk?.toLowerCase()}`}
+                >
+                  <span>Structural Risk</span>
+                  <strong>{sdccSummary.structural_risk}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* RUN EVALUATION */}
         <div className="center">
           <button
             className="run-btn"
             onClick={handleEvaluate}
-            disabled={loading || !uploaded}
+            disabled={!uploaded}
           >
-            {loading ? "Evaluating AI..." : "Run Full Evaluation →"}
+            Run Full Evaluation →
           </button>
         </div>
 
