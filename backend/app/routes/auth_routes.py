@@ -10,9 +10,7 @@ from app.dependencies import get_current_user
 router = APIRouter()
 
 
-# ---------------------------------------
-# REGISTER
-# ---------------------------------------
+# ── Register ──────────────────────────────────────────────────────────────
 @router.post("/register")
 def register(user: RegisterSchema):
     existing_user = users_collection.find_one({"email": user.email})
@@ -25,7 +23,7 @@ def register(user: RegisterSchema):
     new_user = {
         "name": user.name,
         "email": user.email,
-        "password": hashed_password,
+        "password": hashed_password,          # always bcrypt hash
         "role": "auditor",
         "is_active": True,
         "created_at": datetime.utcnow(),
@@ -34,13 +32,10 @@ def register(user: RegisterSchema):
     }
 
     users_collection.insert_one(new_user)
-
     return {"message": "User registered successfully"}
 
 
-# ---------------------------------------
-# LOGIN
-# ---------------------------------------
+# ── Login ─────────────────────────────────────────────────────────────────
 @router.post("/login", response_model=TokenResponse)
 def login(user: LoginSchema):
     db_user = users_collection.find_one({"email": user.email})
@@ -48,10 +43,18 @@ def login(user: LoginSchema):
     if not db_user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    if not verify_password(user.password, db_user["password"]):
+    stored_password = db_user.get("password", "")
+
+    # Guard: if the stored value is not a bcrypt hash, reject it cleanly
+    if not stored_password.startswith("$2b$") and not stored_password.startswith("$2a$"):
+        raise HTTPException(
+            status_code=400,
+            detail="Account has a corrupted password. Please re-register your account."
+        )
+
+    if not verify_password(user.password, stored_password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    # Update last login timestamp
     users_collection.update_one(
         {"_id": db_user["_id"]},
         {"$set": {"last_login": datetime.utcnow()}}
@@ -63,15 +66,10 @@ def login(user: LoginSchema):
         "role": db_user["role"]
     })
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-# ---------------------------------------
-# GET CURRENT USER (Protected)
-# ---------------------------------------
+# ── Get Profile ───────────────────────────────────────────────────────────
 @router.get("/me")
 def get_profile(current_user=Depends(get_current_user)):
     return {

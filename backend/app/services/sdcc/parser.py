@@ -17,7 +17,5 @@ def parse_file(file: UploadFile):
     else:
         raise ValueError("Unsupported file format. Only CSV and JSON allowed.")
 
-    # Clean column names
     df.columns = [c.strip().lower() for c in df.columns]
-
     return df

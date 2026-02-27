@@ -1,7 +1,7 @@
-# app/schemas.py
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
+
 
 class RegisterSchema(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
@@ -17,13 +17,16 @@ class RegisterSchema(BaseModel):
             }
         }
 
+
 class LoginSchema(BaseModel):
     email: EmailStr
     password: str
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
 
 class UserResponse(BaseModel):
     id: str
@@ -35,4 +38,4 @@ class UserResponse(BaseModel):
     last_login: Optional[datetime] = None
 
     class Config:
-        from_attributes = True  # Allows mapping from MongoDB dict
+        from_attributes = True

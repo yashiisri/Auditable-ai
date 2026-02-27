@@ -3,10 +3,8 @@ def calculate_risk(metrics, model_type):
 
     if metrics.get("total_logs", 0) < 50:
         risk_score += 30
-
     if not metrics.get("input_column") or not metrics.get("output_column"):
         risk_score += 40
-
     if model_type == "image_classification":
         risk_score += 10
 
@@ -17,7 +15,4 @@ def calculate_risk(metrics, model_type):
     else:
         level = "High"
 
-    return {
-        "risk_score": risk_score,
-        "risk_level": level
-    }
+    return {"risk_score": risk_score, "risk_level": level}
