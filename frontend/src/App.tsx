@@ -1,25 +1,36 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home       from "./pages/Home";
-import Login      from "./pages/Login";
-import Register   from "./pages/Register";
-import Dashboard  from "./pages/Dashboard";
-import Report     from "./pages/Report";
+
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Report from "./pages/Report";
 import RegisterAI from "./pages/RegisterAi";
+
 import ProtectedRoute from "./components/ProtectedRoute";
+import MainLayout from "./layout/MainLayout";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
-        <Route path="/"         element={<Home />} />
-        <Route path="/login"    element={<Login />} />
+
+        {/* PUBLIC PAGES (NO SIDEBAR) */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected — must be logged in */}
-        <Route path="/register-ai" element={<ProtectedRoute><RegisterAI /></ProtectedRoute>} />
-        <Route path="/dashboard"   element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/report"      element={<ProtectedRoute><Report /></ProtectedRoute>} />
+        {/* PROTECTED PAGES WITH SIDEBAR */}
+        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+
+          <Route path="/dashboard" element={<Dashboard />} />
+
+          <Route path="/register-ai" element={<RegisterAI />} />
+
+          <Route path="/report" element={<Report />} />
+
+        </Route>
+
       </Routes>
     </BrowserRouter>
   );

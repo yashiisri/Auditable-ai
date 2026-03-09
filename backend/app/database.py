@@ -12,3 +12,5 @@ db = client["trusted_ai_db"]
 users_collection = db["users"]
 ai_collection = db["ai_systems"]
 sdcc_collection = db["sdcc_results"]
+# NEW: Add reports collection
+reports_collection = db["reports"]
