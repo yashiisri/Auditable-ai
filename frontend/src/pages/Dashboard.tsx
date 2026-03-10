@@ -301,7 +301,7 @@ export default function Dashboard() {
                 <div className={`toggle-knob ${useSDCC ? "on" : "off"}`} />
               </div>
             </div>
-            <p className="toggle-desc">{useSDCC ? "SDCC structural analysis enabled" : "Raw CSV ingest mode"}</p>
+            <p className="toggle-desc">{useSDCC ? "SDCC structural analysis enabled" : "Raw file ingest mode"}</p>
 
             <label>Select File (.csv or .json)</label>
             <input
