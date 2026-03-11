@@ -259,8 +259,8 @@ export default function Dashboard() {
                   disabled={bbLoading}
                 />
                 <div className="info-box">
-                  ℹ UI mode requires browser automation. Install the Playwright
-                  extension or switch to API mode for automated probing.
+                  ℹ UI audits run using secure backend browser automation.
+                   Ensure the chatbot URL is publicly accessible.
                 </div>
               </>
             )}
