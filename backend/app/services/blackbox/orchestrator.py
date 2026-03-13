@@ -65,25 +65,52 @@ async def validate_connection(endpoint: str, api_key: str) -> dict:
         return {"ok": False, "reason": f"Unexpected error during validation: {str(e)[:120]}", "code": 500}
 
 
+# async def validate_ui_url(ui_url: str) -> dict:
+#     if not ui_url.startswith("http://") and not ui_url.startswith("https://"):
+#         return {"ok": False, "reason": "UI URL must start with http:// or https://"}
+#     try:
+#         async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+#             resp = await client.get(ui_url)
+#             if resp.status_code == 404:
+#                 return {"ok": False, "reason": "UI URL returned 404 — page not found."}
+#             if resp.status_code >= 400:
+#                 return {"ok": False, "reason": f"UI URL returned error status {resp.status_code}."}
+#             if resp.status_code == 200:
+#                 return {"ok": True}
+#             return {"ok": False, "reason": f"Unexpected status: {resp.status_code}"}
+#     except httpx.ConnectError:
+#         return {"ok": False, "reason": "Cannot reach this URL. Make sure the app is deployed and publicly accessible."}
+#     except httpx.TimeoutException:
+#         return {"ok": False, "reason": "URL timed out. App may be sleeping (e.g. free Render/Railway tier)."}
+#     except Exception as e:
+#         return {"ok": False, "reason": f"Error checking UI URL: {str(e)[:120]}"}
+
+
 async def validate_ui_url(ui_url: str) -> dict:
+    """
+    For UI mode, we do a lightweight format check only.
+    We do NOT make an HTTP request to validate — enterprise AI platforms
+    (ChatGPT, Claude, Gemini, etc.) return 403/401 to server-side requests
+    even without a login wall, because they block non-browser User-Agents.
+    Playwright's real Chromium browser bypasses this correctly.
+    """
     if not ui_url.startswith("http://") and not ui_url.startswith("https://"):
         return {"ok": False, "reason": "UI URL must start with http:// or https://"}
+    
+    if len(ui_url.strip()) < 10:
+        return {"ok": False, "reason": "UI URL is too short to be valid."}
+    
+    # Basic domain check — must have at least one dot in the host
     try:
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
-            resp = await client.get(ui_url)
-            if resp.status_code == 404:
-                return {"ok": False, "reason": "UI URL returned 404 — page not found."}
-            if resp.status_code >= 400:
-                return {"ok": False, "reason": f"UI URL returned error status {resp.status_code}."}
-            if resp.status_code == 200:
-                return {"ok": True}
-            return {"ok": False, "reason": f"Unexpected status: {resp.status_code}"}
-    except httpx.ConnectError:
-        return {"ok": False, "reason": "Cannot reach this URL. Make sure the app is deployed and publicly accessible."}
-    except httpx.TimeoutException:
-        return {"ok": False, "reason": "URL timed out. App may be sleeping (e.g. free Render/Railway tier)."}
-    except Exception as e:
-        return {"ok": False, "reason": f"Error checking UI URL: {str(e)[:120]}"}
+        from urllib.parse import urlparse
+        parsed = urlparse(ui_url)
+        if not parsed.netloc or "." not in parsed.netloc:
+            return {"ok": False, "reason": "UI URL does not appear to have a valid domain."}
+    except Exception:
+        return {"ok": False, "reason": "Could not parse UI URL."}
+    
+    # All good — let Playwright do the real validation when it launches
+    return {"ok": True}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

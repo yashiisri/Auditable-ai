@@ -1,96 +1,3 @@
-# # app/routes/reports.py
-# from fastapi import APIRouter, HTTPException, Depends
-# from fastapi.responses import StreamingResponse
-# from reportlab.lib.pagesizes import letter
-# from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-# from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-# from reportlab.lib import colors
-# from reportlab.lib.units import inch
-# from io import BytesIO
-# from bson import ObjectId
-# import datetime
-
-# from app.database import reports_collection
-# from app.dependencies import get_current_user
-# router = APIRouter(tags=["a"])
-# @router.get("/{report_id}/pdf")
-# async def download_report_pdf(report_id: str, current_user=Depends(get_current_user)):
-    
-#     report = reports_collection.find_one({"report_id": report_id})
-
-#     if not report:
-#         raise HTTPException(status_code=404, detail="Report not found")
-
-#     buffer = BytesIO()
-
-#     doc = SimpleDocTemplate(
-#         buffer,
-#         pagesize=letter,
-#         rightMargin=inch,
-#         leftMargin=inch,
-#         topMargin=inch,
-#         bottomMargin=inch
-#     )
-
-#     styles = getSampleStyleSheet()
-#     title_style = ParagraphStyle(name='Title', fontSize=20, leading=24, alignment=1, spaceAfter=30)
-#     heading_style = ParagraphStyle(name='Heading2', fontSize=14, leading=18, spaceBefore=20, spaceAfter=12)
-#     normal_style = styles['Normal']
-
-#     elements = []
-
-#     elements.append(Paragraph("Auditable AI™ Governance Audit Report", title_style))
-#     elements.append(Paragraph(f"Report ID: {report_id}", normal_style))
-#     elements.append(Spacer(1, 12))
-#     elements.append(Paragraph(f"AI System: {report.get('ai_name', 'N/A')}", normal_style))
-#     elements.append(Paragraph(f"Evaluated: {report.get('evaluated_at', 'N/A')}", normal_style))
-#     elements.append(Spacer(1, 24))
-
-#     elements.append(Paragraph("Overall Assessment", heading_style))
-
-#     data = [
-#         ["Overall Score", f"{report.get('overall_score', 'N/A')}/100"],
-#         ["Risk Level", report.get('risk_level', 'N/A')],
-#         ["Logs Evaluated", report.get('logs_evaluated', 'N/A')],
-#     ]
-
-#     table = Table(data, colWidths=[3*inch, 3*inch])
-#     table.setStyle(TableStyle([
-#         ('BACKGROUND', (0,0), (-1,0), colors.lightblue),
-#         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-#         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-#         ('GRID', (0,0), (-1,-1), 1, colors.black),
-#     ]))
-
-#     elements.append(table)
-#     elements.append(Spacer(1, 24))
-
-#     elements.append(Paragraph("Trusted AI Principles", heading_style))
-
-#     p_data = [["Principle", "Score"]]
-
-#     for p, d in report.get("trusted_ai_principles", {}).items():
-#         p_data.append([p, f"{d.get('score', 'N/A')}%"])
-
-#     p_table = Table(p_data, colWidths=[4*inch, 2*inch])
-#     p_table.setStyle(TableStyle([
-#         ('BACKGROUND', (0,0), (-1,0), colors.lightgreen),
-#         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-#         ('GRID', (0,0), (-1,-1), 1, colors.black),
-#     ]))
-
-#     elements.append(p_table)
-
-#     doc.build(elements)
-#     buffer.seek(0)
-
-#     return StreamingResponse(
-#         buffer,
-#         media_type="application/pdf",
-#         headers={"Content-Disposition": f"attachment; filename=report_{report_id}.pdf"}
-#     )
-
-# app/routes/reports.py
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import A4
@@ -235,6 +142,261 @@ def draw_score_bar(canvas_obj, x, y, width, height, score, color_hex="#00C896"):
     fill_w = max(4, (score / 100) * width)
     canvas_obj.setFillColor(colors.HexColor(color_hex))
     canvas_obj.roundRect(x, y, fill_w, height, height / 2, fill=1, stroke=0)
+
+
+def _pct(value: float) -> str:
+    return f"{round(value * 100)}%"
+
+
+def _derive_parameter_context(report: dict) -> dict:
+    diagnostics = report.get("diagnostics", {}) or {}
+    logs_count = report.get("logs_evaluated", 0) or 0
+    total_cols = diagnostics.get("total_columns", 1) or 1
+    text_cols = diagnostics.get("text_columns", 0) or 0
+    numeric_cols = diagnostics.get("numeric_columns", 0) or 0
+    schema_conf = diagnostics.get("schema_confidence", 0) or 0
+    missing_ratio = diagnostics.get("missing_ratio", 0) or 0
+    duplicates = diagnostics.get("duplicates", 0) or 0
+    column_names = [str(c).lower() for c in diagnostics.get("column_names", [])]
+
+    def has_any(keys):
+        return any(k in column_names for k in keys)
+
+    def clamp(v: float) -> int:
+        return max(0, min(100, int(round(v))))
+
+    return {
+        "diagnostics": diagnostics,
+        "logs_count": logs_count,
+        "total_cols": total_cols,
+        "text_cols": text_cols,
+        "numeric_cols": numeric_cols,
+        "schema_score": clamp(schema_conf * 100),
+        "completeness": clamp((1 - missing_ratio) * 100),
+        "duplicate_penalty": clamp(max(0, 100 - (duplicates / max(logs_count, 1)) * 500)),
+        "volume_score": clamp(min(logs_count / 100 * 100, 100)),
+        "column_diversity": clamp(min(total_cols / 10 * 100, 100)),
+        "has_input": has_any(["input", "prompt", "query", "text", "question"]),
+        "has_output": has_any(["output", "response", "answer", "prediction", "result"]),
+        "has_label": has_any(["label", "class", "target", "ground_truth"]),
+        "has_timestamp": has_any(["timestamp", "date", "time", "created_at"]),
+        "has_user_id": has_any(["user_id", "user", "session_id", "session"]),
+        "has_score": has_any(["score", "confidence", "probability", "prob"]),
+        "has_feedback": has_any(["feedback", "rating", "review", "human_eval"]),
+        "has_safety": has_any(["is_safe", "safety", "flagged", "moderated"]),
+        "has_pii": has_any(["contains_pii", "pii", "personal"]),
+        "has_version": has_any(["model_version", "version", "model_id"]),
+        "has_latency": has_any(["latency", "response_time", "duration"]),
+        "has_error": has_any(["error", "exception", "failed"]),
+        "has_halluc": has_any(["hallucination", "faithfulness", "groundedness"]),
+        "has_rouge": has_any(["rouge", "bleu", "meteor", "bertscore"]),
+        "model_type": report.get("model_type", "N/A"),
+    }
+
+
+def _parameter_explanation(param: str, report: dict) -> tuple[str, str]:
+    c = _derive_parameter_context(report)
+    io_bonus = 20 if (c["has_input"] and c["has_output"]) else (10 if (c["has_input"] or c["has_output"]) else 0)
+    model_bonus = 80 if c["model_type"] == "classification" else 60
+    details = {
+        "Schema Confidence": (
+            f"schema_confidence ({_pct(c['diagnostics'].get('schema_confidence', 0) or 0)}) x 100 = {c['schema_score']}",
+            "Measures how reliably the dataset schema could be inferred.",
+        ),
+        "Field Documentation": (
+            f"clamp(io_bonus {io_bonus} x 4 + schema_score {c['schema_score']} x 0.2)",
+            "Rewards clear input/output structure supported by a stable schema.",
+        ),
+        "Model Version Tracking": (
+            "100 if version/model_id field exists, else 30",
+            "Checks whether predictions can be tied to a tracked model version.",
+        ),
+        "Input/Output Coverage": (
+            f"clamp(io_bonus {io_bonus} x 4.5)",
+            "Measures whether both request and response fields are present in the logs.",
+        ),
+        "Column Completeness": (
+            f"clamp(column_diversity {c['column_diversity']} x 0.8 + schema_score {c['schema_score']} x 0.2)",
+            "Blends field breadth with schema quality.",
+        ),
+        "Model Interpretability": (
+            f"{model_bonus} based on model type",
+            "Uses the model family as a structural interpretability proxy.",
+        ),
+        "Prediction Confidence": (
+            "100 if confidence/probability field exists, else 40",
+            "Checks whether outputs carry explicit confidence scores.",
+        ),
+        "Reasoning Documentation": (
+            "100 with hallucination/faithfulness fields, 60 with ROUGE/BLEU metrics, else 35",
+            "Looks for evidence that reasoning quality or output quality is being tracked.",
+        ),
+        "Feedback Integration": (
+            "100 if feedback/rating fields exist, else 30",
+            "Measures whether human feedback is captured in the logs.",
+        ),
+        "Output Traceability": (
+            f"clamp(io_bonus {io_bonus} x 4 + {'20' if c['has_score'] else '0'})",
+            "Rewards outputs that can be traced back to inputs and scored outputs.",
+        ),
+        "Data Completeness": (
+            f"(1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)}) x 100 = {c['completeness']}",
+            "Represents the usable portion of the dataset after missing fields are considered.",
+        ),
+        "Label Balance": (
+            "80 if label/target field exists, else 50",
+            "Uses label availability as a proxy for assessing group and class balance.",
+        ),
+        "Demographic Coverage": (
+            f"clamp(60 + (text_columns {c['text_cols']} / total_columns {c['total_cols']}) x 40)",
+            "Estimates representational breadth from the share of text-like fields.",
+        ),
+        "Bias Indicator Fields": (
+            "100 with feedback fields, 60 with labels only, else 30",
+            "Checks whether fairness monitoring signals are available.",
+        ),
+        "Missing Data Equity": (
+            f"clamp((1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)} x 2) x 100)",
+            "Penalizes fairness confidence when missing data becomes materially high.",
+        ),
+        "Audit Log Volume": (
+            f"min(logs_evaluated {c['logs_count']} / 100 x 100, 100) = {c['volume_score']}",
+            "Uses record volume as a proxy for accountability coverage.",
+        ),
+        "Timestamp Coverage": (
+            "100 if timestamp/date field exists, else 20",
+            "Checks whether events can be ordered chronologically for audit.",
+        ),
+        "User Attribution": (
+            "High score if user/session identifiers exist; lower score otherwise",
+            "Checks whether events can be traced to a user or session.",
+        ),
+        "Model Version Control": (
+            "100 if version/model_id field exists, else 30",
+            "Measures whether outputs can be linked to a specific deployed model version.",
+        ),
+        "Error/Exception Logging": (
+            "100 if error/exception field exists, else 35",
+            "Checks whether system failures are explicitly captured.",
+        ),
+        "Completeness Score": (
+            f"(1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)}) x 100 = {c['completeness']}",
+            "Measures how complete the dataset is before integrity checks.",
+        ),
+        "Duplicate-Free Rate": (
+            f"clamp(100 - (duplicates {c['diagnostics'].get('duplicates', 0) or 0} / logs {max(c['logs_count'], 1)}) x 500) = {c['duplicate_penalty']}",
+            "Penalizes repeated records that reduce data trustworthiness.",
+        ),
+        "Schema Consistency": (
+            f"schema_confidence ({_pct(c['diagnostics'].get('schema_confidence', 0) or 0)}) x 100 = {c['schema_score']}",
+            "Direct structural integrity score derived from schema confidence.",
+        ),
+        "Data Type Diversity": (
+            f"balanced mix of numeric ({c['numeric_cols']}) and text ({c['text_cols']}) columns across {c['total_cols']} total columns",
+            "Rewards datasets that are not overly one-dimensional.",
+        ),
+        "Ground Truth Availability": (
+            "100 if labels or text-evaluation metrics exist, else 40",
+            "Checks whether outputs can be compared against an expected result.",
+        ),
+        "Consistency Score": (
+            f"(1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)}) x 90",
+            "A reliability proxy derived from dataset completeness.",
+        ),
+        "Performance Metrics": (
+            "100 if quality/confidence metrics exist, else 40",
+            "Checks for explicit quality metrics that support reliability tracking.",
+        ),
+        "Latency Monitoring": (
+            "100 if latency/duration field exists, else 30",
+            "Checks whether response time is monitored.",
+        ),
+        "Error Rate Tracking": (
+            "100 if error/exception field exists, else 35",
+            "Checks whether failures can be counted and monitored.",
+        ),
+        "Volume Sufficiency": (
+            f"min(logs_evaluated {c['logs_count']} / 100 x 100, 100) = {c['volume_score']}",
+            "Uses log volume to estimate statistical stability.",
+        ),
+        "Safety Flagging": (
+            "100 if safety/moderation field exists, else 25",
+            "Checks whether unsafe content outcomes are captured.",
+        ),
+        "Input Validation": (
+            f"clamp(schema_score {c['schema_score']} x {'0.8 + 20' if c['has_input'] else '0.6'})",
+            "Uses schema quality and input presence as a security proxy.",
+        ),
+        "Adversarial Robustness": (
+            "40 for general_llm, 55 for other model types",
+            "Applies a conservative baseline because direct red-team evidence is not available structurally.",
+        ),
+        "Content Moderation": (
+            "100 if moderation fields exist, else 30",
+            "Checks whether moderated outcomes are logged.",
+        ),
+        "PII Detection": (
+            "100 if PII-related field exists, else 20",
+            "Checks whether personal-data indicators are present.",
+        ),
+        "PII Field Tracking": (
+            "100 if PII-related field exists, else 20",
+            "Measures whether records containing personal data are explicitly marked.",
+        ),
+        "Data Minimisation": (
+            f"clamp(100 - (total_columns {c['total_cols']} / 20) x 40)",
+            "Penalizes overly broad schemas that may collect more than necessary.",
+        ),
+        "User Anonymisation": (
+            "50 if direct user identifiers exist, else 70",
+            "Rewards schemas that avoid direct user identifiers.",
+        ),
+        "Consent Management": (
+            "Fixed structural estimate of 40",
+            "Placeholder until explicit runtime consent signals are captured.",
+        ),
+        "Data Retention Signals": (
+            "100 if timestamp/date field exists, else 30",
+            "Checks whether retention windows can be enforced using time fields.",
+        ),
+        "Dataset Efficiency": (
+            f"clamp(100 - (logs_evaluated {c['logs_count']} / 10000) x 30)",
+            "Rewards leaner datasets with lower storage and processing burden.",
+        ),
+        "Feature Engineering": (
+            f"clamp(column_diversity {c['column_diversity']} x 0.7 + 30)",
+            "Uses schema breadth as a proxy for purposeful feature coverage.",
+        ),
+        "Compute Proxy Score": (
+            "80 for classification, 55 for other model types",
+            "Applies a lighter-compute bonus to structurally simpler model families.",
+        ),
+        "Redundancy Elimination": (
+            f"same duplicate penalty as integrity: {c['duplicate_penalty']}",
+            "Measures how effectively duplicated records are avoided.",
+        ),
+        "Resource Optimisation": (
+            f"clamp(schema_score {c['schema_score']} x 0.6 + 40)",
+            "Uses schema quality as a proxy for operational efficiency.",
+        ),
+        "Human Feedback Integration": (
+            "100 if feedback/rating field exists, else 25",
+            "Checks whether humans can review and influence outputs.",
+        ),
+        "Override/Escalation Fields": (
+            "60 if feedback/escalation style fields exist, else 20",
+            "Uses logged feedback signals as a proxy for human override paths.",
+        ),
+        "Decision Explainability": (
+            f"{model_bonus} based on model type",
+            "Uses the model family as a proxy for explainability in high-stakes decisions.",
+        ),
+        "Safety Override Signals": (
+            "100 if safety/moderation field exists, else 35",
+            "Checks whether safety interventions can be detected in logs.",
+        ),
+    }
+    return details.get(param, ("Derived from audit heuristics", "This sub-parameter is calculated from structural signals in the uploaded dataset."))
 
 
 # ─── Page Template ───────────────────────────────────────────────────────────
@@ -577,7 +739,8 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(HRFlowable(width="100%", thickness=1.5, color=KPMG_TEAL, spaceAfter=6))
     elements.append(Paragraph(
         "Each principle is evaluated across five sub-parameters. Scores reflect structural "
-        "signals present in the dataset such as field presence, completeness, volume, and diversity.",
+        "signals present in the dataset such as field presence, completeness, volume, and diversity. "
+        "Each sub-parameter below now includes how it was calculated and what the score means.",
         sec_sub))
 
     for i, (pname, pdata) in enumerate(principles.items(), 1):
@@ -644,6 +807,18 @@ def build_pdf(report: dict) -> BytesIO:
             Spacer(1, 2),
             desc_para,
             sub_tbl,
+            Spacer(1, 4),
+            Paragraph("<b>Sub-parameter drill-down</b>", body_bold),
+            *[
+                Paragraph(
+                    f"<b>{param}:</b> {detail} <font color='#6B7280'>Calculated as {calc}.</font>",
+                    small,
+                )
+                for param, (calc, detail) in [
+                    (param, _parameter_explanation(param, report))
+                    for param in params.keys()
+                ]
+            ],
             Spacer(1, 6 * mm),
         ])
         elements.append(block)
