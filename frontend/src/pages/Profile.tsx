@@ -411,7 +411,7 @@ export default function Profile() {
 
             <div style={{ display:"flex", gap:8, marginTop:10, flexWrap:"wrap" }}>
               <span className="tag" style={{ background:"rgba(0,200,150,0.12)", border:"1px solid rgba(0,200,150,0.3)", color:"#00C896" }}>
-                ✓ Premium Member
+                ✓ 
               </span>
               <span className="tag" style={{ background:"rgba(0,145,218,0.12)", border:"1px solid rgba(0,145,218,0.3)", color:"#4AACDF", textTransform:"capitalize" }}>
                 {profile?.role || "Auditor"}

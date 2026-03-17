@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { uploadCSV, sdccIngest, evaluateAI, runBlackBoxAudit } from "../services/api";
+import { sdccIngest, evaluateAI, runBlackBoxAudit } from "../services/api";
 
 /* ─────────────────────────────────────────────
    Types
@@ -25,7 +25,7 @@ interface BlackBoxResult {
   probes_run: number;
   category_scores: Record<string, number>;
   findings: BlackBoxFinding[];
-  message?: string; // UI mode
+  message?: string;
 }
 
 /* ─────────────────────────────────────────────
@@ -35,28 +35,27 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   /* ── Black Box state ── */
-  const [bbMode, setBbMode] = useState<"api" | "ui">("api");
+  const [bbMode, setBbMode]         = useState<"api" | "ui">("api");
   const [bbEndpoint, setBbEndpoint] = useState("");
-  const [bbApiKey, setBbApiKey] = useState("");
-  const [bbUiUrl, setBbUiUrl] = useState("");
-  const [bbLoading, setBbLoading] = useState(false);
-  const [bbResult, setBbResult] = useState<BlackBoxResult | null>(null);
-  const [bbError, setBbError] = useState("");
+  const [bbApiKey, setBbApiKey]     = useState("");
+  const [bbUiUrl, setBbUiUrl]       = useState("");
+  const [bbLoading, setBbLoading]   = useState(false);
+  const [bbResult, setBbResult]     = useState<BlackBoxResult | null>(null);
+  const [bbError, setBbError]       = useState("");
   const [bbProgress, setBbProgress] = useState(0);
 
   /* ── Ingestion state ── */
-  const [file, setFile] = useState<File | null>(null);
-  const [useSDCC, setUseSDCC] = useState(true);
+  const [file, setFile]               = useState<File | null>(null);
   const [ingestLoading, setIngestLoading] = useState(false);
-  const [uploaded, setUploaded] = useState(false);
-  const [logsCount, setLogsCount] = useState<number | null>(null);
+  const [uploaded, setUploaded]       = useState(false);
+  const [logsCount, setLogsCount]     = useState<number | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [sdccSummary, setSdccSummary] = useState<any>(null);
   const [ingestError, setIngestError] = useState("");
 
   /* ── Evaluate state ── */
   const [evalLoading, setEvalLoading] = useState(false);
-  const [evalError, setEvalError] = useState("");
+  const [evalError, setEvalError]     = useState("");
 
   const aiName = localStorage.getItem("activeAI") || "";
 
@@ -90,7 +89,6 @@ export default function Dashboard() {
     setBbResult(null);
     setBbProgress(0);
 
-    // Simulate probe progress bar (14 probes × ~300ms each ≈ ~5s)
     const totalProbes = 14;
     const interval = setInterval(() => {
       setBbProgress((p) => {
@@ -107,7 +105,6 @@ export default function Dashboard() {
         api_key: bbApiKey,
         ui_url: bbUiUrl,
       });
-
       clearInterval(interval);
       setBbProgress(totalProbes);
       setBbResult(res.data);
@@ -121,10 +118,12 @@ export default function Dashboard() {
 
   /* ─────────────────────────────────────────────
      INGESTION HANDLER
+     Always uses SDCC pipeline (/sdcc/ingest) —
+     the legacy /upload-csv endpoint was removed.
   ───────────────────────────────────────────── */
   const handleUpload = async () => {
     if (!aiName) { navigate("/register-ai"); return; }
-    if (!file) { setIngestError("Select a file first."); return; }
+    if (!file)   { setIngestError("Select a file first."); return; }
 
     setIngestLoading(true);
     setIngestError("");
@@ -132,15 +131,9 @@ export default function Dashboard() {
     setSdccSummary(null);
 
     try {
-      let res;
-      if (useSDCC) {
-        res = await sdccIngest(aiName, file);
-        setSdccSummary(res.data);
-        setLogsCount(res.data.logs_ingested ?? null);
-      } else {
-        res = await uploadCSV(aiName, file);
-        setLogsCount(res.data.logs_ingested ?? null);
-      }
+      const res = await sdccIngest(aiName, file);
+      setSdccSummary(res.data);
+      setLogsCount(res.data.logs_ingested ?? null);
       setUploaded(true);
       setUploadSuccess(true);
     } catch (e) {
@@ -167,17 +160,12 @@ export default function Dashboard() {
     }
   };
 
-  /* ─────────────────────────────────────────────
-     RENDER HELPERS
-  ───────────────────────────────────────────── */
+  /* ── Render helpers ── */
   const riskColor = (level: string) =>
     level === "Low" ? "#00C896" : level === "Moderate" ? "#ffb020" : "#ff4d4d";
 
-  const sevColor = (s: string) =>
-    s === "High" ? "#ff4d4d" : s === "Medium" ? "#ffb020" : "#00C896";
-
-  const totalProbes = 14;
-  const progressPct = Math.round((bbProgress / totalProbes) * 100);
+  const totalProbes  = 14;
+  const progressPct  = Math.round((bbProgress / totalProbes) * 100);
 
   /* ─────────────────────────────────────────────
      JSX
@@ -211,7 +199,10 @@ export default function Dashboard() {
             {/* Mode toggle */}
             <div className="toggle-container">
               <span className="toggle-label">Connection Mode</span>
-              <div className="toggle-switch" onClick={() => { setBbMode(bbMode === "api" ? "ui" : "api"); setBbResult(null); setBbError(""); }}>
+              <div
+                className="toggle-switch"
+                onClick={() => { setBbMode(bbMode === "api" ? "ui" : "api"); setBbResult(null); setBbError(""); }}
+              >
                 <div className={`toggle-knob ${bbMode === "api" ? "on" : "off"}`} />
               </div>
             </div>
@@ -221,27 +212,17 @@ export default function Dashboard() {
               <>
                 <label>External API Endpoint</label>
                 <input
-                  type="url"
-                  name="bb-endpoint"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck={false}
-                  value={bbEndpoint}
-                  onChange={(e) => setBbEndpoint(e.target.value)}
+                  type="url" name="bb-endpoint"
+                  autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                  value={bbEndpoint} onChange={(e) => setBbEndpoint(e.target.value)}
                   placeholder="https://api.openai.com/v1/chat/completions"
                   disabled={bbLoading}
                 />
                 <label>API Key</label>
                 <input
-                  type="text"
-                  name="bb-apikey"
-                  autoComplete="new-password"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck={false}
-                  value={bbApiKey}
-                  onChange={(e) => setBbApiKey(e.target.value)}
+                  type="text" name="bb-apikey"
+                  autoComplete="new-password" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                  value={bbApiKey} onChange={(e) => setBbApiKey(e.target.value)}
                   placeholder="sk-xxxx…"
                   disabled={bbLoading}
                 />
@@ -250,11 +231,8 @@ export default function Dashboard() {
               <>
                 <label>Deployed UI URL</label>
                 <input
-                  type="url"
-                  name="bb-uiurl"
-                  autoComplete="off"
-                  value={bbUiUrl}
-                  onChange={(e) => setBbUiUrl(e.target.value)}
+                  type="url" name="bb-uiurl" autoComplete="off"
+                  value={bbUiUrl} onChange={(e) => setBbUiUrl(e.target.value)}
                   placeholder="https://your-chatbot.vercel.app"
                   disabled={bbLoading}
                 />
@@ -271,7 +249,6 @@ export default function Dashboard() {
               {bbLoading ? "Probing AI…" : "Run Black Box Audit →"}
             </button>
 
-            {/* Progress bar while loading */}
             {bbLoading && (
               <div className="probe-progress">
                 <div className="probe-bar-track">
@@ -295,19 +272,18 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div className="toggle-container">
-              <span className="toggle-label">Use SDCC Pipeline</span>
-              <div className="toggle-switch" onClick={() => setUseSDCC(!useSDCC)}>
-                <div className={`toggle-knob ${useSDCC ? "on" : "off"}`} />
-              </div>
-            </div>
-            <p className="toggle-desc">{useSDCC ? "SDCC structural analysis enabled" : "Raw file ingest mode"}</p>
+            <p className="toggle-desc">SDCC structural analysis pipeline</p>
 
             <label>Select File (.csv or .json)</label>
             <input
               type="file"
               accept=".csv,.json"
-              onChange={(e) => { setFile(e.target.files?.[0] || null); setUploaded(false); setUploadSuccess(false); setSdccSummary(null); }}
+              onChange={(e) => {
+                setFile(e.target.files?.[0] || null);
+                setUploaded(false);
+                setUploadSuccess(false);
+                setSdccSummary(null);
+              }}
             />
 
             <button onClick={handleUpload} disabled={ingestLoading || !file}>
@@ -321,11 +297,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── BLACK BOX STRUCTURAL SUMMARY ── */}
+        {/* ── BLACK BOX RESULT SUMMARY ── */}
         {bbResult && bbResult.status !== "manual_required" && (
           <div className="glass-card sdcc-enterprise" style={{ marginBottom: "36px", animation: "fadeInUp 0.5s ease forwards" }}>
             <h2>🔍 Black Box Structural Summary</h2>
-
             <div className="sdcc-grid">
               <div className="metric-card">
                 <span>Probes Run</span>
@@ -348,7 +323,6 @@ export default function Dashboard() {
                 <strong>{bbResult.risk_level}</strong>
               </div>
             </div>
-
             <div className="sdcc-recommendation">
               💡 {bbResult.findings.length === 0
                 ? "All governance probes passed. AI system aligns with Trusted AI principles."
@@ -366,7 +340,7 @@ export default function Dashboard() {
         )}
 
         {/* ── SDCC SUMMARY ── */}
-        {sdccSummary && useSDCC && (
+        {sdccSummary && (
           <div className="glass-card sdcc-enterprise">
             <h2>📈 SDCC Structural Summary</h2>
             <div className="sdcc-grid">
@@ -386,6 +360,12 @@ export default function Dashboard() {
                 <span>Structural Risk</span>
                 <strong>{sdccSummary.structural_risk}</strong>
               </div>
+              {sdccSummary.detection_confidence !== undefined && (
+                <div className="metric-card">
+                  <span>Detection Confidence</span>
+                  <strong>{Math.round(sdccSummary.detection_confidence * 100)}%</strong>
+                </div>
+              )}
             </div>
             {sdccSummary.recommendation && (
               <div className="sdcc-recommendation">💡 {sdccSummary.recommendation}</div>
@@ -430,7 +410,6 @@ const CSS = `
 
 .hero-content { width: 100%; max-width: 1200px; }
 
-/* Top bar */
 .top-bar {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 36px; padding-bottom: 20px;
@@ -454,14 +433,12 @@ const CSS = `
 }
 .logout-btn:hover { background: rgba(255,77,77,0.18); transform: translateY(-2px); }
 
-/* Card grid */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
   gap: 36px; margin-bottom: 36px;
 }
 
-/* Glass card */
 .glass-card {
   background: linear-gradient(135deg, rgba(10,30,66,0.82), rgba(7,21,48,0.75));
   backdrop-filter: blur(20px);
@@ -497,7 +474,6 @@ const CSS = `
 .glass-card button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,200,150,0.35); }
 .glass-card button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Toggle */
 .toggle-container { display: flex; align-items: center; justify-content: space-between; }
 .toggle-label { font-size: 15px; font-weight: 600; color: #EAF2FB; }
 .toggle-switch {
@@ -515,7 +491,6 @@ const CSS = `
 .toggle-knob.on { left: 28px; background: linear-gradient(135deg, #00C896, #0091DA); }
 .toggle-desc { font-size: 13px; color: #9DBFE0; font-style: italic; }
 
-/* Info / warn / error boxes */
 .info-box {
   padding: 10px 14px; background: rgba(0,145,218,0.08);
   border: 1px solid rgba(0,145,218,0.25); border-radius: 10px;
@@ -538,7 +513,6 @@ const CSS = `
   color: #00E5AB; font-size: 14px; text-align: center;
 }
 
-/* Probe progress */
 .probe-progress { display: flex; flex-direction: column; gap: 6px; }
 .probe-bar-track {
   height: 6px; background: rgba(255,255,255,0.08);
@@ -551,88 +525,6 @@ const CSS = `
 }
 .probe-label { font-size: 12px; color: #9DBFE0; font-style: italic; }
 
-/* Black box results */
-.bb-results {
-  margin-bottom: 36px;
-  animation: fadeInUp 0.5s ease forwards;
-}
-.bb-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
-}
-.bb-header h2 { font-size: 22px; font-weight: 700; color: #EAF2FB; margin: 0 0 4px; }
-.muted { font-size: 13px; color: #9DBFE0; margin: 0; }
-
-.bb-score-pill {
-  display: flex; flex-direction: column; align-items: center;
-  border: 2px solid; border-radius: 16px; padding: 14px 24px;
-  min-width: 120px; text-align: center;
-}
-.score-num { font-size: 40px; font-weight: 800; line-height: 1; }
-.score-sub { font-size: 12px; color: #9DBFE0; margin-top: 4px; }
-
-/* Category bars */
-.cat-grid {
-  display: flex; flex-direction: column; gap: 10px;
-  margin-bottom: 24px;
-}
-.cat-card { display: flex; align-items: center; gap: 12px; }
-.cat-name { font-size: 13px; color: #9DBFE0; width: 120px; flex-shrink: 0; }
-.cat-bar-track {
-  flex: 1; height: 8px; background: rgba(255,255,255,0.08);
-  border-radius: 4px; overflow: hidden;
-}
-.cat-bar-fill {
-  height: 100%; border-radius: 4px;
-  transition: width 0.6s ease;
-}
-.cat-score { font-size: 13px; font-weight: 700; width: 40px; text-align: right; }
-
-/* Findings */
-.findings-title {
-  font-size: 18px; font-weight: 700; color: #EAF2FB;
-  margin: 4px 0 16px; display: flex; align-items: center; gap: 10px;
-}
-.finding-count {
-  background: rgba(255,77,77,0.2); color: #ff8787;
-  border-radius: 20px; padding: 2px 10px; font-size: 14px; font-weight: 600;
-}
-.no-findings {
-  padding: 16px; background: rgba(0,200,150,0.08);
-  border: 1px solid rgba(0,200,150,0.25); border-radius: 12px;
-  color: #00E5AB; text-align: center; font-size: 14px;
-}
-.findings-list { display: flex; flex-direction: column; gap: 14px; }
-.finding-card {
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px; padding: 18px 22px; transition: 0.25s;
-}
-.finding-card:hover { background: rgba(255,255,255,0.05); }
-.finding-top {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
-}
-.finding-category {
-  font-size: 13px; font-weight: 700; color: #4AACDF;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.severity-badge {
-  font-size: 12px; font-weight: 600; padding: 3px 12px;
-  border-radius: 20px; border: 1px solid;
-}
-.finding-probe { font-size: 13px; color: #9DBFE0; margin-bottom: 6px; }
-.finding-probe em { color: #D8E8F5; font-style: italic; }
-.finding-issue { font-size: 14px; color: #EAF2FB; margin-bottom: 8px; line-height: 1.5; }
-.response-preview {
-  background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px 14px;
-  font-size: 12px; color: #9DBFE0; margin-bottom: 8px; line-height: 1.5;
-}
-.preview-label { color: #4AACDF; font-weight: 600; margin-right: 8px; }
-.finding-rec { font-size: 13px; color: #9DBFE0; font-style: italic; }
-.ui-mode-msg { text-align: center; padding: 20px; }
-.ui-mode-msg h2 { color: #EAF2FB; margin-bottom: 12px; }
-.ui-mode-msg p { color: #9DBFE0; font-size: 14px; line-height: 1.6; }
-
-/* SDCC */
 .sdcc-enterprise { border-color: rgba(0,200,150,0.3); margin-bottom: 36px; }
 .sdcc-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;
@@ -652,7 +544,6 @@ const CSS = `
   font-size: 14px; color: #D8E8F5;
 }
 
-/* Run button */
 .center { text-align: center; }
 .run-btn {
   padding: 18px 60px; font-size: 17px; border-radius: 50px; border: none;

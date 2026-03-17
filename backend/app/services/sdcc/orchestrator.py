@@ -1,159 +1,34 @@
-# import pandas as pd
-# from datetime import datetime
-# import uuid
+"""
+services/sdcc/orchestrator.py
+==============================
+SDCC (Structural Data Completeness Check) pipeline entry point.
 
+Responsibilities (only these — no metric logic lives here)
+-------------------------------------------------------------
+1. Parse the uploaded file into a DataFrame
+2. Detect the model type using the weighted detector
+3. Compute universal data-quality diagnostics (completeness, duplicates, schema)
+4. Store a sample of the raw rows so the /evaluate endpoint can reuse them
+   without re-reading the file
 
-# def detect_model_type(df: pd.DataFrame):
-#     columns = [c.lower() for c in df.columns]
-#     if "label" in columns or "class" in columns:
-#         return "classification"
-#     if "summary" in columns:
-#         return "summarization"
-#     if "step" in columns or "action" in columns:
-#         return "automation"
-#     return "general_llm"
+Everything model-specific is in services/sdcc/models/<type>.py.
+"""
 
-
-# def compute_data_quality(df: pd.DataFrame):
-#     total_cells   = df.size
-#     missing       = df.isna().sum().sum()
-#     missing_ratio = missing / total_cells if total_cells > 0 else 0
-#     duplicates    = df.duplicated().sum()
-#     schema_conf   = 1 - (missing_ratio * 0.5)
-
-#     data_quality_score = int(
-#         ((1 - missing_ratio) * 70) + (schema_conf * 30)
-#     )
-
-#     return {
-#         "missing_ratio":      round(missing_ratio, 4),
-#         "duplicates":         int(duplicates),
-#         "schema_confidence":  round(schema_conf, 3),
-#         "data_quality_score": min(data_quality_score, 100)
-#     }
-
-
-# def extract_column_intelligence(df: pd.DataFrame):
-#     text_cols    = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c])]
-#     numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
-#     return {
-#         "total_columns":   len(df.columns),
-#         "text_columns":    len(text_cols),
-#         "numeric_columns": len(numeric_cols),
-#         "column_names":    list(df.columns)
-#     }
-
-
-# def compute_structural_risk(score):
-#     if score >= 85: return "Low"
-#     if score >= 65: return "Moderate"
-#     return "High"
-
-
-# def generate_recommendation(score, logs_count):
-#     if logs_count < 30:
-#         return "Dataset size may limit advanced statistical evaluation."
-#     if score < 60:
-#         return "Improve data completeness before governance audit."
-#     return "Dataset structurally suitable for Trusted AI evaluation."
-
-
-# def run_sdcc_pipeline(ai_name, file, current_user):
-#     df = pd.read_csv(file.file)
-
-#     logs_count       = len(df)
-#     model_type       = detect_model_type(df)
-#     quality_metrics  = compute_data_quality(df)
-#     column_info      = extract_column_intelligence(df)
-#     structural_risk  = compute_structural_risk(quality_metrics["data_quality_score"])
-#     recommendation   = generate_recommendation(quality_metrics["data_quality_score"], logs_count)
-
-#     return {
-#         "scan_id":           str(uuid.uuid4()),
-#         "timestamp":         datetime.utcnow().isoformat(),
-#         "model_type":        model_type,
-#         "logs_ingested":     logs_count,
-#         "data_quality_score": quality_metrics["data_quality_score"],
-#         "structural_risk":   structural_risk,
-#         "diagnostics": {
-#             "missing_ratio":     quality_metrics["missing_ratio"],
-#             "duplicates":        quality_metrics["duplicates"],
-#             "schema_confidence": quality_metrics["schema_confidence"],
-#             **column_info
-#         },
-#         "recommendation": recommendation
-#     }
-
-
+from __future__ import annotations
+import json
+import uuid
+from datetime import datetime
 
 import pandas as pd
-import json
-from datetime import datetime
 from fastapi import UploadFile
-import uuid
+
+from app.services.sdcc.detector import detect_model_type
 
 
-def detect_model_type(df: pd.DataFrame) -> str:
-    columns = [c.lower() for c in df.columns]
-    if "label" in columns or "class" in columns or "target" in columns:
-        return "classification"
-    if "summary" in columns or "rouge_score" in columns or "faithfulness" in columns:
-        return "summarization"
-    if "step" in columns or "action" in columns or "workflow" in columns:
-        return "automation"
-    if "image" in columns or "bbox" in columns or "pixel" in columns:
-        return "image_classification"
-    return "general_llm"
-
-
-def compute_data_quality(df: pd.DataFrame) -> dict:
-    total_cells   = df.size
-    missing       = df.isna().sum().sum()
-    missing_ratio = missing / total_cells if total_cells > 0 else 0
-    duplicates    = df.duplicated().sum()
-    schema_conf   = 1 - (missing_ratio * 0.5)
-
-    data_quality_score = int(
-        ((1 - missing_ratio) * 70) + (schema_conf * 30)
-    )
-
-    return {
-        "missing_ratio":      round(float(missing_ratio), 4),
-        "duplicates":         int(duplicates),
-        "schema_confidence":  round(float(schema_conf), 3),
-        "data_quality_score": min(data_quality_score, 100)
-    }
-
-
-def extract_column_intelligence(df: pd.DataFrame) -> dict:
-    text_cols    = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c])]
-    numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
-    return {
-        "total_columns":   len(df.columns),
-        "text_columns":    len(text_cols),
-        "numeric_columns": len(numeric_cols),
-        "column_names":    list(df.columns),
-    }
-
-
-def compute_structural_risk(score: int) -> str:
-    if score >= 85: return "Low"
-    if score >= 65: return "Moderate"
-    return "High"
-
-
-def generate_recommendation(score: int, logs_count: int) -> str:
-    if logs_count < 30:
-        return "Dataset size may limit advanced statistical evaluation. Aim for at least 100 records."
-    if score < 60:
-        return "Improve data completeness and reduce missing values before governance audit."
-    if score < 80:
-        return "Dataset is usable but has moderate quality issues. Consider enriching with additional fields."
-    return "Dataset structurally suitable for comprehensive Trusted AI evaluation."
-
+# ── File parser ───────────────────────────────────────────────────────────────
 
 def parse_upload(file: UploadFile) -> pd.DataFrame:
-    """Parse CSV or JSON upload into a DataFrame."""
+    """Parse a CSV or JSON upload into a normalised DataFrame."""
     filename = (file.filename or "").lower()
 
     if filename.endswith(".json"):
@@ -165,36 +40,94 @@ def parse_upload(file: UploadFile) -> pd.DataFrame:
         else:
             raise ValueError("JSON must be a list of objects or a dict.")
     else:
-        # Default: CSV
         df = pd.read_csv(file.file)
 
-    # Normalise column names
+    # Normalise: lowercase, strip whitespace, underscores for spaces
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
     return df
 
 
+# ── Data quality ──────────────────────────────────────────────────────────────
+
+def compute_data_quality(df: pd.DataFrame) -> dict:
+    total = df.size
+    missing = df.isna().sum().sum()
+    missing_ratio = float(missing / total) if total > 0 else 0.0
+    duplicates    = int(df.duplicated().sum())
+    schema_conf   = 1.0 - (missing_ratio * 0.5)
+
+    # 70% weight on completeness, 30% on schema confidence
+    dq_score = min(int(((1 - missing_ratio) * 70) + (schema_conf * 30)), 100)
+
+    text_cols = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c])]
+    num_cols  = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+
+    return {
+        "missing_ratio":      round(missing_ratio, 4),
+        "duplicates":         duplicates,
+        "schema_confidence":  round(schema_conf, 3),
+        "data_quality_score": dq_score,
+        "total_columns":      len(df.columns),
+        "text_columns":       len(text_cols),
+        "numeric_columns":    len(num_cols),
+        "column_names":       list(df.columns),
+    }
+
+
+def _structural_risk(dq_score: int) -> str:
+    if dq_score >= 85: return "Low"
+    if dq_score >= 65: return "Moderate"
+    return "High"
+
+
+def _recommendation(dq_score: int, logs_count: int, model_type: str) -> str:
+    if logs_count < 30:
+        return (
+            f"Dataset too small ({logs_count} records) for reliable {model_type} evaluation. "
+            "Aim for ≥ 100 records; 500+ recommended."
+        )
+    if dq_score < 60:
+        return (
+            "Significant data quality issues detected. Resolve missing values and duplicates "
+            "before running a governance audit."
+        )
+    if dq_score < 80:
+        return (
+            f"Dataset is usable for {model_type} evaluation but has moderate quality issues. "
+            "Enriching logs with model-specific metric columns will improve audit depth."
+        )
+    return f"Dataset structurally suitable for a comprehensive {model_type} Trusted AI evaluation."
+
+
+# ── Main entry point ──────────────────────────────────────────────────────────
+
 def run_sdcc_pipeline(ai_name: str, file: UploadFile, current_user: dict) -> dict:
     df = parse_upload(file)
 
-    logs_count      = len(df)
-    model_type      = detect_model_type(df)
-    quality_metrics = compute_data_quality(df)
-    column_info     = extract_column_intelligence(df)
-    structural_risk = compute_structural_risk(quality_metrics["data_quality_score"])
-    recommendation  = generate_recommendation(quality_metrics["data_quality_score"], logs_count)
+    model_type, detection_confidence = detect_model_type(df)
+    quality = compute_data_quality(df)
 
     return {
-        "scan_id":            str(uuid.uuid4()),
-        "timestamp":          datetime.utcnow().isoformat(),
-        "model_type":         model_type,
-        "logs_ingested":      logs_count,
-        "data_quality_score": quality_metrics["data_quality_score"],
-        "structural_risk":    structural_risk,
+        "scan_id":              str(uuid.uuid4()),
+        "timestamp":            datetime.utcnow().isoformat(),
+        "model_type":           model_type,
+        "detection_confidence": detection_confidence,
+        "logs_ingested":        len(df),
+        "data_quality_score":   quality["data_quality_score"],
+        "structural_risk":      _structural_risk(quality["data_quality_score"]),
         "diagnostics": {
-            "missing_ratio":     quality_metrics["missing_ratio"],
-            "duplicates":        quality_metrics["duplicates"],
-            "schema_confidence": quality_metrics["schema_confidence"],
-            **column_info
+            "missing_ratio":     quality["missing_ratio"],
+            "duplicates":        quality["duplicates"],
+            "schema_confidence": quality["schema_confidence"],
+            "total_columns":     quality["total_columns"],
+            "text_columns":      quality["text_columns"],
+            "numeric_columns":   quality["numeric_columns"],
+            "column_names":      quality["column_names"],
         },
-        "recommendation": recommendation,
+        "recommendation": _recommendation(
+            quality["data_quality_score"], len(df), model_type
+        ),
+        # Store up to 1 000 rows so /evaluate can recompute model metrics
+        # without the file being re-uploaded.
+        "sample_records": df.head(1_000).to_dict(orient="records"),
     }

@@ -14,6 +14,8 @@ interface ReportData {
   report_id: string;
   ai_name: string;
   model_type: string;
+  model_label?: string;
+  detection_confidence?: number;
   evaluated_at: string;
   overall_score: number;
   risk_level: string;
@@ -30,7 +32,16 @@ interface ReportData {
     numeric_columns: number;
     column_names: string[];
   };
-  findings: { category: string; severity: string; issue: string; recommendation: string }[];
+  model_metrics?: Record<string, {
+    value: number | null;
+    risk_level: string;
+    description: string;
+    unit: string;
+    threshold_low?: number;
+    threshold_moderate?: number;
+    higher_is_better?: boolean;
+  }>;
+  findings: { category: string; severity: string; issue: string; recommendation: string; type?: string }[];
   recommendation: string;
   framework_compliance: Record<string, string>;
 }
@@ -43,14 +54,14 @@ interface ParameterInsight {
 const ICONS: Record<string, string> = {
   Transparency: "🔍", Explainability: "💡", Fairness: "⚖️", Accountability: "📋",
   "Data Integrity": "🗄️", Reliability: "⚙️", Security: "🔒", Privacy: "🛡️",
-  Sustainability: "🌱", "Human-Centricity": "👤"
+  Sustainability: "🌱", "Safety": "🛡️"
 };
 
 const COLORS: Record<string, string> = {
   Transparency: "#00C8FF", Explainability: "#00E5A0", Fairness: "#FF6B9D",
   Accountability: "#FFB020", "Data Integrity": "#A78BFA", Reliability: "#34D399",
   Security: "#F87171", Privacy: "#60A5FA", Sustainability: "#4ADE80",
-  "Human-Centricity": "#FBBF24"
+  "Safety": "#FBBF24"
 };
 
 const FW: Record<string, { label: string; icon: string; desc: string }> = {
@@ -109,9 +120,10 @@ function deriveSignals(report: ReportData) {
   const hasVersion = hasAny(["model_version", "version", "model_id"]);
   const hasLatency = hasAny(["latency", "response_time", "duration"]);
   const hasError = hasAny(["error", "exception", "failed"]);
-  const hasHalluc = hasAny(["hallucination", "faithfulness", "groundedness"]);
-  const hasRouge = hasAny(["rouge", "bleu", "meteor", "bertscore"]);
-  const ioBonus = hasInput && hasOutput ? 20 : (hasInput || hasOutput ? 10 : 0);
+  const hasHalluc  = hasAny(["hallucination", "faithfulness", "groundedness"]);
+  const hasRouge   = hasAny(["rouge", "bleu", "meteor", "bertscore"]);
+  const hasOverride = hasAny(["human_override", "escalated", "manual_intervention", "human_review"]);
+  const ioBonus    = hasInput && hasOutput ? 20 : (hasInput || hasOutput ? 10 : 0);
   const modelBonus = report.model_type === "classification" ? 80 : 60;
 
   return {
@@ -139,6 +151,7 @@ function deriveSignals(report: ReportData) {
     hasError,
     hasHalluc,
     hasRouge,
+    hasOverride,
     ioBonus,
     modelBonus,
   };
@@ -327,21 +340,25 @@ function getParameterInsight(param: string, report: ReportData): ParameterInsigh
       detail: "Uses schema quality as a loose proxy for operational efficiency and maintainability.",
       calculation: `Calculated as clamp(schema_score ${s.schemaScore} x 0.6 + 40) = ${Math.max(0, Math.min(100, Math.round(s.schemaScore * 0.6 + 40)))}.`,
     },
-    "Human Feedback Integration": {
-      detail: "Checks whether human review signals are available to keep humans in the loop.",
-      calculation: `Set to ${s.hasFeedback ? "100 because feedback/rating fields were detected" : "25 because no human feedback field was detected"}.`,
+    "Harm Prevention Logging": {
+      detail: "Checks whether outputs that could harm people, businesses, or property are explicitly flagged and logged.",
+      calculation: `Set to ${s.hasSafety ? "100 because safety/moderation fields were detected" : "20 because no harm-prevention logging field was detected"}.`,
     },
-    "Override/Escalation Fields": {
-      detail: "Uses feedback-style fields as a structural proxy for human override paths.",
-      calculation: `Set to ${s.hasFeedback ? 60 : 20} based on whether escalation-adjacent feedback fields were detected.`,
+    "Safety Test Coverage": {
+      detail: "Checks whether structured safety evaluations have been run and their results are stored in the audit log.",
+      calculation: `Set to ${s.hasFeedback ? "100 because feedback/evaluation fields were detected" : "30 because no safety test result fields were detected"}.`,
     },
-    "Decision Explainability": {
-      detail: "Uses model family as a proxy for how easy consequential decisions are to explain.",
-      calculation: `Set to ${s.modelBonus}: classification models score 80, other detected model types score 60.`,
+    "Human Override Capability": {
+      detail: "Checks whether a human override mechanism exists and is logged — critical for preventing AI-caused harm.",
+      calculation: `Set to ${s.hasOverride ? "100 because override/escalation fields were detected" : s.hasFeedback ? "60 based on feedback-adjacent signals" : "20 because no override capability signals were detected"}.`,
     },
-    "Safety Override Signals": {
-      detail: "Checks whether safety interventions can be detected in the logs.",
-      calculation: `Set to ${s.hasSafety ? "100 because safety/moderation fields were detected" : "35 because no safety override signal was detected"}.`,
+    "Incident Response Signals": {
+      detail: "Checks whether safety incidents, near-misses, and escalations are captured in logs for post-incident review.",
+      calculation: `Set to ${s.hasError ? "100 because error/exception fields were detected" : "30 because no incident response fields were detected"}.`,
+    },
+    "Safeguard Effectiveness": {
+      detail: "Measures the proportion of flagged outputs that were successfully identified and mitigated by safety controls.",
+      calculation: `Set to ${s.hasSafety ? "100 because safety/moderation fields were detected" : "25 because no safeguard effectiveness data was found"}.`,
     },
   };
 
@@ -970,7 +987,13 @@ export default function Report() {
           <h1 style={S.title}>Governance Audit Report</h1>
           <div style={S.meta}>
             <span>📌 {r.ai_name}</span><span style={S.dot}> · </span>
-            <span>🧠 {r.model_type}</span><span style={S.dot}> · </span>
+            <span>🧠 {r.model_label || r.model_type}</span>
+            {r.detection_confidence !== undefined && (
+              <><span style={S.dot}> · </span><span style={{ color: r.detection_confidence >= 0.6 ? "#00C896" : "#ffb020" }}>
+                {Math.round(r.detection_confidence * 100)}% detection confidence
+              </span></>
+            )}
+            <span style={S.dot}> · </span>
             <span>📅 {fmt(r.evaluated_at)}</span><span style={S.dot}> · </span>
             <span style={{ fontFamily: "monospace", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
               ID: {r.report_id?.slice(0, 12)}…
@@ -1404,8 +1427,51 @@ export default function Report() {
         </section>
       )}
 
-      {/* RADIAL GRID */}
-      
+      {/* MODEL-SPECIFIC METRICS */}
+      {r.model_metrics && Object.values(r.model_metrics).some(m => m.value !== null) && (
+        <section style={{ ...S.sec, ...fadeStyle(0.33) }}>
+          <h2 style={S.secTitle}>🧪 Model-Specific Metrics</h2>
+          <p style={S.secSub}>
+            Measured metrics for <strong style={{ color: "#EAF2FB" }}>{r.model_label || r.model_type}</strong> — evaluated against model-appropriate thresholds.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+            {Object.entries(r.model_metrics)
+              .filter(([, m]) => m.value !== null)
+              .map(([key, m]) => {
+                const rc2 = m.risk_level === "Low" ? "#00C896" : m.risk_level === "Moderate" ? "#ffb020" : "#ff4d4d";
+                const displayVal = m.unit === "ms"
+                  ? `${Math.round(m.value!)}ms`
+                  : m.unit === "ratio" || m.unit === "score"
+                    ? m.value!.toFixed(3)
+                    : m.value!.toFixed(3);
+                return (
+                  <div key={key} style={{
+                    background: "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
+                    border: `1px solid ${rc2}44`,
+                    borderRadius: 16, padding: "18px 16px",
+                    display: "flex", flexDirection: "column", gap: 8,
+                  }}>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {key.replace(/_/g, " ")}
+                    </div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: rc2 }}>{displayVal}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: 11, color: rc2, background: `${rc2}15`, border: `1px solid ${rc2}33`, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
+                        {m.risk_level}
+                      </span>
+                      {m.threshold_low !== undefined && (
+                        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
+                          threshold: {m.threshold_low}{m.unit ? ` ${m.unit}` : ""}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>{m.description}</div>
+                  </div>
+                );
+              })}
+          </div>
+        </section>
+      )}
 
       {/* DIAGNOSTICS */}
       <section style={{ ...S.sec, ...fadeStyle(0.35) }}>
