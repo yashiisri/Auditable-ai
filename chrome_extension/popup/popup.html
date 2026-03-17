@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Governance Auditor</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+    :root {
+      --bg:#0a0f1a; --surface:#111827; --border:#1f2937;
+      --accent:#3b82f6; --green:#10b981; --warn:#f59e0b; --red:#ef4444;
+      --text:#f9fafb; --muted:#6b7280;
+      --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ width:360px; min-height:460px; background:var(--bg); color:var(--text); font-family:var(--sans); font-size:13px; }
+
+    .header{ padding:14px 18px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    .hicon{ width:28px; height:28px; background:var(--accent); border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .hicon svg{ width:15px; height:15px; }
+    .htxt h1{ font-size:13px; font-weight:600; letter-spacing:.03em; }
+    .htxt p{ font-size:11px; color:var(--muted); margin-top:1px; }
+    .hbadge{ margin-left:auto; font-family:var(--mono); font-size:10px; padding:2px 7px; border-radius:999px; background:#1f2937; color:var(--muted); border:1px solid var(--border); }
+
+    .tabs{ display:flex; border-bottom:1px solid var(--border); }
+    .tab{ flex:1; padding:9px 0; background:none; border:none; color:var(--muted); font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s; }
+    .tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
+
+    .panel{ display:none; padding:16px 18px; }
+    .panel.active{ display:block; }
+
+    .platform-badge{ display:flex; align-items:center; gap:8px; padding:9px 11px; background:var(--surface); border:1px solid var(--border); border-radius:7px; margin-bottom:14px; }
+    .pdot{ width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
+    .pdot.unknown{ background:var(--muted); }
+    .pname{ font-size:12px; font-weight:500; }
+    .purl{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:270px; }
+
+    .audit-btn{ width:100%; padding:11px; background:var(--accent); border:none; border-radius:8px; color:#fff; font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:14px; transition:all .15s; }
+    .audit-btn:hover:not(:disabled){ background:#2563eb; }
+    .audit-btn:disabled{ opacity:.5; cursor:not-allowed; }
+    .audit-btn.running{ background:#92400e; }
+
+    .progress-wrap{ margin-bottom:14px; display:none; }
+    .prog-label{ display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:5px; }
+    .prog-bg{ height:4px; background:var(--border); border-radius:999px; overflow:hidden; }
+    .prog-fill{ height:100%; background:var(--accent); border-radius:999px; transition:width .3s ease; width:0%; }
+    .probe-status{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .results-wrap{ display:none; }
+    .score-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .score-big{ font-family:var(--mono); font-size:38px; font-weight:600; line-height:1; }
+    .score-big.high{ color:var(--green); }
+    .score-big.medium{ color:var(--warn); }
+    .score-big.low{ color:var(--red); }
+    .risk-badge{ font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px; }
+    .risk-badge.Low{ background:rgba(16,185,129,.15); color:var(--green); }
+    .risk-badge.Moderate{ background:rgba(245,158,11,.15); color:var(--warn); }
+    .risk-badge.High{ background:rgba(239,68,68,.15); color:var(--red); }
+    .cat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
+    .cat-cell{ background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:8px 10px; }
+    .cat-name{ font-size:10px; color:var(--muted); font-weight:500; }
+    .cat-score{ font-family:var(--mono); font-size:20px; font-weight:600; margin-top:2px; }
+    .cat-score.high{ color:var(--green); }
+    .cat-score.medium{ color:var(--warn); }
+    .cat-score.low{ color:var(--red); }
+    .view-btn{ width:100%; padding:9px; background:none; border:1px solid var(--accent); border-radius:6px; color:var(--accent); font-family:var(--sans); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+    .view-btn:hover{ background:rgba(59,130,246,.08); }
+
+    .error-box{ background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:6px; padding:9px 11px; font-size:11.5px; color:#fca5a5; display:none; margin-bottom:10px; }
+
+    .field{ margin-bottom:13px; }
+    .field label{ display:block; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+    .field input{ width:100%; padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:11.5px; outline:none; transition:border-color .15s; }
+    .field input:focus{ border-color:var(--accent); }
+    .field input::placeholder{ color:var(--muted); }
+    .save-btn{ width:100%; padding:9px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+    .save-btn:hover{ border-color:var(--accent); color:var(--accent); }
+    .save-msg{ font-size:11px; color:var(--green); margin-top:7px; text-align:center; display:none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="hicon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+      </svg>
+    </div>
+    <div class="htxt"><h1>AI Governance Auditor</h1><p>Enterprise black-box audit</p></div>
+    <span class="hbadge">v1.0</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="audit">Audit</button>
+    <button class="tab" data-tab="config">Config</button>
+  </div>
+
+  <!-- AUDIT PANEL -->
+  <div class="panel active" id="panel-audit">
+
+    <div class="platform-badge">
+      <div class="pdot" id="pdot"></div>
+      <div>
+        <div class="pname" id="pname">Detecting…</div>
+        <div class="purl"  id="purl"></div>
+      </div>
+    </div>
+
+    <button class="audit-btn" id="audit-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      Start Audit (14 probes)
+    </button>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="prog-label">
+        <span id="prog-text">Starting…</span>
+        <span id="prog-count">0 / 14</span>
+      </div>
+      <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="probe-status" id="probe-status"></div>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <div class="results-wrap" id="results-wrap">
+      <div class="score-row">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">Overall Score</div>
+          <div class="score-big" id="score-big">—</div>
+        </div>
+        <span class="risk-badge" id="risk-badge">—</span>
+      </div>
+      <div class="cat-grid" id="cat-grid"></div>
+      <button class="view-btn" id="view-btn">View Full Report →</button>
+    </div>
+
+  </div>
+
+  <!-- CONFIG PANEL -->
+  <div class="panel" id="panel-config">
+    <div class="field">
+      <label>Backend URL</label>
+      <input type="text" id="backend-url" placeholder="https://your-api.com"/>
+    </div>
+    <div class="field">
+      <label>Audit Name (optional)</label>
+      <input type="text" id="audit-name" placeholder="My Enterprise AI"/>
+    </div>
+    <button class="save-btn" id="save-btn">Save Settings</button>
+    <div class="save-msg" id="save-msg">✓ Saved</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
