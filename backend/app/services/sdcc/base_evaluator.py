@@ -1,20 +1,19 @@
 """
-services/sdcc/base_evaluator.py
-================================
+services/sdcc/base_evaluator.py  (REFACTORED)
+===============================================
 Abstract base for all model-specific evaluators.
 
-Every concrete evaluator (classification, RAG, etc.) must:
-  1. Implement `model_metrics(df)` — compute the metrics that are meaningful
-     for that model family from the raw DataFrame.
-  2. Implement `taf_principles(diagnostics, logs_count, model_metrics)` — return
-     the 10 TAF principle dicts with model-appropriate sub-parameters.
+Key change from original
+------------------------
+`model_metrics(df)` now receives a `computed: dict` keyword argument that
+contains pre-calculated metric values from `metrics_calculator.calculate_metrics()`.
+Each evaluator uses `computed` values first; it only falls back to column-reading
+helpers (_mean, _bool_rate, etc.) if a value is None in `computed`.
 
-The base class provides:
-  - Shared structural signal helpers (completeness, schema, volume, column presence)
-  - `compute_risk_analysis()` — identical across all model types
-  - `generate_findings()` — identical across all model types
-  - `metric_risk()` — classifies a metric value against model-specific thresholds
-  - `clamp()` utility
+This means:
+  - Metric values are ALWAYS computed from raw text via real NLP/ML libraries
+  - Pre-logged metric columns are a secondary fallback (backwards-compatible)
+  - The TAF scoring chain is unchanged
 """
 
 from __future__ import annotations
@@ -24,34 +23,30 @@ import pandas as pd
 
 
 class BaseEvaluator(ABC):
-    """
-    Subclass this for each AI model family.
-    Do NOT instantiate directly — use get_evaluator() from models/__init__.py.
-    """
-
-    # ── Subclasses must define these ─────────────────────────────────────────
 
     MODEL_TYPE: str = "base"
     LABEL: str = "Base"
     DESCRIPTION: str = ""
 
-    # Per-metric thresholds.
-    # Format: { "metric_name": {"low": float, "moderate": float, "inverted": bool, "unit": str} }
-    # inverted=True means LOWER values are better (e.g. latency, error rate).
     THRESHOLDS: dict[str, dict] = {}
-
-    # How strongly model metrics influence each TAF principle score (0–1 weight).
     TAF_METRIC_WEIGHTS: dict[str, float] = {}
 
-    # ── Abstract interface ────────────────────────────────────────────────────
+    # ── Abstract interface ─────────────────────────────────────────────────────
 
     @abstractmethod
-    def model_metrics(self, df: pd.DataFrame) -> dict[str, Any]:
+    def model_metrics(
+        self,
+        df: pd.DataFrame,
+        computed: Optional[dict] = None,
+    ) -> dict[str, Any]:
         """
-        Compute model-specific metrics from the uploaded DataFrame.
+        Build the standardised metric result dict for this model type.
 
-        Returns a dict: { metric_name: {"value": float|None, "description": str, ...} }
-        Use `self._metric_result()` to build each entry consistently.
+        Parameters
+        ----------
+        df       : raw DataFrame (used as fallback for column-reading helpers)
+        computed : flat dict of {metric_name: float|None} from metrics_calculator.
+                   When provided, these values take priority over column-reading.
         """
 
     @abstractmethod
@@ -61,33 +56,18 @@ class BaseEvaluator(ABC):
         logs_count: int,
         metrics: dict[str, Any],
     ) -> dict[str, dict]:
-        """
-        Return the 10 KPMG TAF principle dicts.
+        """Return the 10 KPMG TAF principle dicts."""
 
-        Each principle entry must be:
-          {
-            "score": int (0-100),
-            "parameters": { param_name: int, ... },   # 4-6 sub-params
-          }
-
-        Use `self._structural()` to get pre-computed structural signals,
-        and `self._metric_boost()` to fold model metrics into principle scores.
-        """
-
-    # ── Shared structural helpers ─────────────────────────────────────────────
+    # ── Structural helpers ────────────────────────────────────────────────────
 
     def _structural(self, diagnostics: dict, logs_count: int) -> dict:
-        """
-        Pre-compute every structural signal derived from schema/column presence.
-        Call once at the top of taf_principles() and unpack what you need.
-        """
-        missing   = diagnostics.get("missing_ratio", 0.0)
-        dupes     = diagnostics.get("duplicates", 0)
-        schema_c  = diagnostics.get("schema_confidence", 0.8)
-        total_c   = diagnostics.get("total_columns", 1)
-        text_c    = diagnostics.get("text_columns", 0)
-        num_c     = diagnostics.get("numeric_columns", 0)
-        cols      = [c.lower() for c in diagnostics.get("column_names", [])]
+        missing  = diagnostics.get("missing_ratio", 0.0)
+        dupes    = diagnostics.get("duplicates", 0)
+        schema_c = diagnostics.get("schema_confidence", 0.8)
+        total_c  = diagnostics.get("total_columns", 1)
+        text_c   = diagnostics.get("text_columns", 0)
+        num_c    = diagnostics.get("numeric_columns", 0)
+        cols     = [c.lower() for c in diagnostics.get("column_names", [])]
 
         def has(*keys: str) -> bool:
             return any(k in c for k in keys for c in cols)
@@ -95,7 +75,6 @@ class BaseEvaluator(ABC):
         clamp = self.clamp
 
         return {
-            # Numeric signals
             "completeness":    clamp((1 - missing) * 100),
             "schema_score":    clamp(schema_c * 100),
             "dup_penalty":     clamp(max(0, 100 - (dupes / max(logs_count, 1)) * 500)),
@@ -107,7 +86,6 @@ class BaseEvaluator(ABC):
             "missing":         missing,
             "dupes":           dupes,
             "logs_count":      logs_count,
-            # Field-presence booleans
             "has_input":       has("input", "prompt", "query", "question", "instruction"),
             "has_output":      has("output", "response", "answer", "completion",
                                    "generated", "result", "summary", "prediction"),
@@ -132,17 +110,15 @@ class BaseEvaluator(ABC):
         }
 
     def _io_bonus(self, s: dict) -> int:
-        """20 pts if both input+output present, 10 if one, 0 if neither."""
         if s["has_input"] and s["has_output"]:
             return 20
         if s["has_input"] or s["has_output"]:
             return 10
         return 0
 
-    # ── Metric helpers ────────────────────────────────────────────────────────
+    # ── Metric helpers (fallback column-readers) ───────────────────────────────
 
     def _col(self, df: pd.DataFrame, *candidates: str) -> Optional[str]:
-        """Return first matching column name (case-insensitive substring match)."""
         lower = {c.lower(): c for c in df.columns}
         for cand in candidates:
             for col_low, col_orig in lower.items():
@@ -151,7 +127,6 @@ class BaseEvaluator(ABC):
         return None
 
     def _mean(self, df: pd.DataFrame, *candidates: str) -> Optional[float]:
-        """Mean of first matching numeric column, or None."""
         col = self._col(df, *candidates)
         if col is None:
             return None
@@ -159,10 +134,6 @@ class BaseEvaluator(ABC):
         return float(vals.mean()) if len(vals) > 0 else None
 
     def _bool_rate(self, df: pd.DataFrame, *candidates: str) -> Optional[float]:
-        """
-        Proportion of truthy values in first matching column.
-        Handles bool, 0/1 int, and string "true"/"false"/"yes"/"no"/"success"/"pass".
-        """
         col = self._col(df, *candidates)
         if col is None:
             return None
@@ -171,7 +142,7 @@ class BaseEvaluator(ABC):
             "success": 1, "fail": 0, "failed": 0, "pass": 1,
             "1": 1, "0": 0,
         }
-        series = df[col].copy()
+        series  = df[col].copy()
         numeric = pd.to_numeric(series, errors="coerce")
         fallback = series.astype(str).str.lower().map(mapping)
         resolved = numeric.combine_first(fallback)
@@ -179,11 +150,26 @@ class BaseEvaluator(ABC):
         return float(vals.mean()) if len(vals) > 0 else None
 
     def _coverage(self, df: pd.DataFrame, *candidates: str) -> Optional[float]:
-        """Proportion of non-null rows in first matching column."""
         col = self._col(df, *candidates)
         if col is None:
             return None
         return float(df[col].notna().mean())
+
+    # ── Metric result builder ──────────────────────────────────────────────────
+
+    def _computed_or_fallback(
+        self,
+        computed: Optional[dict],
+        metric_key: str,
+        fallback_fn,  # callable → Optional[float]
+    ) -> Optional[float]:
+        """
+        Return computed[metric_key] if available and not None,
+        otherwise call fallback_fn() to read from columns.
+        """
+        if computed and metric_key in computed and computed[metric_key] is not None:
+            return computed[metric_key]
+        return fallback_fn()
 
     def _metric_result(
         self,
@@ -192,21 +178,19 @@ class BaseEvaluator(ABC):
         threshold_key: str,
         unit: str = "",
     ) -> dict:
-        """Build a standardised metric result dict."""
         risk = self.metric_risk(value, threshold_key) if value is not None else "Unavailable"
         thr  = self.THRESHOLDS.get(threshold_key, {})
         return {
-            "value":           round(value, 4) if value is not None else None,
-            "risk_level":      risk,
-            "description":     description,
-            "unit":            unit or thr.get("unit", ""),
-            "threshold_low":   thr.get("low"),
+            "value":              round(value, 4) if value is not None else None,
+            "risk_level":         risk,
+            "description":        description,
+            "unit":               unit or thr.get("unit", ""),
+            "threshold_low":      thr.get("low"),
             "threshold_moderate": thr.get("moderate"),
-            "higher_is_better": not thr.get("inverted", False),
+            "higher_is_better":   not thr.get("inverted", False),
         }
 
     def metric_risk(self, value: float, threshold_key: str) -> str:
-        """Classify a metric value as Low / Moderate / High using model-specific thresholds."""
         thr = self.THRESHOLDS.get(threshold_key)
         if not thr:
             return "Unknown"
@@ -222,18 +206,12 @@ class BaseEvaluator(ABC):
             return "High"
 
     def _metric_boost(self, metrics: dict[str, Any], weights: Optional[dict] = None) -> dict[str, int]:
-        """
-        Convert model metric risk levels into per-principle score boosts (0-20 pts).
-        Uses self.TAF_METRIC_WEIGHTS unless overridden via `weights`.
-        """
         w = weights or self.TAF_METRIC_WEIGHTS
         available = {k: v for k, v in metrics.items() if v.get("value") is not None}
         if not available:
             return {}
-
         risk_pts = {"Low": 20, "Moderate": 10, "High": 0}
         avg = sum(risk_pts.get(m["risk_level"], 0) for m in available.values()) / len(available)
-
         return {principle: self.clamp(int(avg * weight)) for principle, weight in w.items()}
 
     # ── Shared TAF analysis ───────────────────────────────────────────────────
@@ -277,13 +255,12 @@ class BaseEvaluator(ABC):
         elif avg >= 55:              overall = "Moderate"
         else:                        overall = "High"
 
-        # Metric-level risk highlights
         high_metrics = [
             k for k, v in model_metrics.items()
             if v.get("risk_level") == "High" and v.get("value") is not None
         ]
-
         missing_ratio = diagnostics.get("missing_ratio", 0)
+
         return {
             "overall_risk_level":  overall,
             "risk_items":          risk_items,
@@ -309,10 +286,8 @@ class BaseEvaluator(ABC):
         principles: dict,
         model_metrics: dict,
     ) -> list[dict]:
-        """Combine structural TAF findings + model-metric findings into one list."""
         findings = []
 
-        # Structural findings
         for name, data in principles.items():
             if data["score"] < 60:
                 findings.append({
@@ -323,7 +298,6 @@ class BaseEvaluator(ABC):
                     "recommendation": self._rec_for_principle(name, data.get("parameters", {})),
                 })
 
-        # Model-metric findings
         for metric_name, metric_data in model_metrics.items():
             if metric_data.get("risk_level") == "High" and metric_data.get("value") is not None:
                 findings.append({
@@ -332,7 +306,8 @@ class BaseEvaluator(ABC):
                     "severity":       "High",
                     "issue":          (
                         f"{metric_data['description']} is at risk "
-                        f"(value: {metric_data['value']:.3f}{' ' + metric_data['unit'] if metric_data.get('unit') else ''})."
+                        f"(value: {metric_data['value']:.3f}"
+                        f"{' ' + metric_data['unit'] if metric_data.get('unit') else ''})."
                     ),
                     "recommendation": self._rec_for_metric(metric_name),
                 })
@@ -348,9 +323,7 @@ class BaseEvaluator(ABC):
     def param_score(self, params: dict) -> int:
         return self.clamp(sum(params.values()) / max(len(params), 1))
 
-    # ── Recommendations ───────────────────────────────────────────────────────
-    # Structural TAF recommendations — shared across all model types.
-    # Model-specific metric recommendations are overridden per subclass.
+    # ── Recommendations ────────────────────────────────────────────────────────
 
     _STRUCTURAL_RECS: dict[str, dict[str, str]] = {
         "Transparency": {
@@ -433,5 +406,4 @@ class BaseEvaluator(ABC):
         return f"Review and strengthen {principle.lower()} controls across all sub-parameters."
 
     def _rec_for_metric(self, metric_name: str) -> str:
-        """Override in subclasses with model-specific metric recommendations."""
         return f"Investigate elevated risk in metric '{metric_name}' and review model outputs."

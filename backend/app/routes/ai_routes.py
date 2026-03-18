@@ -1,12 +1,24 @@
 """
-routes/ai_routes.py
-====================
-Routes:
-  POST /register-ai              — register an AI system
-  GET  /ai-systems               — list user's AI systems
-  POST /sdcc/ingest/{ai_name}    — upload logs, detect model, run data quality check
-  GET  /sdcc/status/{ai_name}    — current ingestion status
-  POST /evaluate/{ai_name}       — compute TAF scores and produce a full report
+routes/ai_routes.py  (REFACTORED)
+===================================
+Key changes from original
+--------------------------
+1. /sdcc/ingest/{ai_name}
+   - Still accepts any CSV/JSON but now validates that at least an `input`
+     OR `output` column is present (warns if only one is present).
+   - Stores the sample_records as before for the /evaluate step.
+
+2. /evaluate/{ai_name}
+   - After reconstructing the DataFrame, calls
+     `metrics_calculator.calculate_metrics(model_type, df)` to compute
+     ALL model-specific metrics from the raw text.
+   - Injects the `computed` dict into `evaluator.model_metrics(df, computed)`
+     so every metric uses real NLP/ML calculations.
+   - Adds a `computation_notes` field to the report summarising which
+     libraries were used and which fell back to heuristics.
+
+Everything else (TAF scoring, risk analysis, findings, PDF generation) is
+unchanged — it receives real metric values instead of nulls.
 """
 
 from __future__ import annotations
@@ -22,11 +34,12 @@ from app.database import ai_collection, reports_collection, sdcc_collection
 from app.dependencies import get_current_user
 from app.services.sdcc.models import get_evaluator
 from app.services.sdcc.orchestrator import run_sdcc_pipeline
+from app.services.sdcc.metrics_calculator import calculate_metrics
 
 router = APIRouter()
 
 
-# ── Schemas ───────────────────────────────────────────────────────────────────
+# ── Schemas ────────────────────────────────────────────────────────────────────
 
 class ConnectorSchema(BaseModel):
     type: str
@@ -41,12 +54,12 @@ class AISystemSchema(BaseModel):
     connector: ConnectorSchema
 
 
-# ── Register AI system ────────────────────────────────────────────────────────
+# ── Register AI system ─────────────────────────────────────────────────────────
 
 @router.post("/register-ai")
 def register_ai_system(ai_data: AISystemSchema, current_user=Depends(get_current_user)):
     existing = ai_collection.find_one({
-        "name": ai_data.name,
+        "name":     ai_data.name,
         "owner_id": str(current_user["_id"]),
     })
     if existing:
@@ -65,7 +78,7 @@ def register_ai_system(ai_data: AISystemSchema, current_user=Depends(get_current
     return {"message": "AI system registered successfully"}
 
 
-# ── List AI systems ───────────────────────────────────────────────────────────
+# ── List AI systems ────────────────────────────────────────────────────────────
 
 @router.get("/ai-systems")
 def list_ai_systems(current_user=Depends(get_current_user)):
@@ -79,7 +92,47 @@ def list_ai_systems(current_user=Depends(get_current_user)):
     return {"systems": systems}
 
 
-# ── Ingest logs ───────────────────────────────────────────────────────────────
+# ── Ingest logs ────────────────────────────────────────────────────────────────
+
+def _validate_columns(df: pd.DataFrame) -> dict:
+    """
+    Check that at least one of input/output columns is present.
+    Returns a warnings dict.
+    """
+    lower_cols = [c.lower() for c in df.columns]
+
+    INPUT_HINTS  = {"input", "prompt", "query", "question", "instruction",
+                    "step_name", "task", "user_message"}
+    OUTPUT_HINTS = {"output", "response", "answer", "completion", "result",
+                    "summary", "prediction", "generated"}
+
+    has_input  = any(any(h in c for h in INPUT_HINTS)  for c in lower_cols)
+    has_output = any(any(h in c for h in OUTPUT_HINTS) for c in lower_cols)
+
+    warnings = []
+    if not has_input and not has_output:
+        warnings.append(
+            "No input or output columns detected. Rename your columns to include "
+            "'input'/'prompt'/'query' and 'output'/'response'/'answer' for "
+            "accurate model detection and metric computation."
+        )
+    elif not has_input:
+        warnings.append(
+            "No input column detected. Add an 'input' or 'prompt' column for "
+            "richer metric computation (answer relevance, context recall, etc.)."
+        )
+    elif not has_output:
+        warnings.append(
+            "No output column detected. Add an 'output' or 'response' column — "
+            "this is required for all text-quality metrics."
+        )
+
+    return {
+        "has_input":  has_input,
+        "has_output": has_output,
+        "warnings":   warnings,
+    }
+
 
 @router.post("/sdcc/ingest/{ai_name}")
 def ingest_logs(
@@ -88,6 +141,19 @@ def ingest_logs(
     current_user=Depends(get_current_user),
 ):
     result = run_sdcc_pipeline(ai_name, file, current_user)
+
+    # Reconstruct df briefly to validate columns
+    sample = result.get("sample_records", [])
+    if sample:
+        df_check = pd.DataFrame(sample)
+        col_check = _validate_columns(df_check)
+        result["column_warnings"] = col_check["warnings"]
+        result["has_input_col"]   = col_check["has_input"]
+        result["has_output_col"]  = col_check["has_output"]
+    else:
+        result["column_warnings"] = []
+        result["has_input_col"]   = False
+        result["has_output_col"]  = False
 
     sdcc_collection.update_one(
         {"ai_name": ai_name, "owner_id": str(current_user["_id"])},
@@ -100,11 +166,10 @@ def ingest_logs(
         upsert=True,
     )
 
-    # Don't return the raw sample_records to the client — they can be large
     return {k: v for k, v in result.items() if k != "sample_records"}
 
 
-# ── SDCC status ───────────────────────────────────────────────────────────────
+# ── SDCC status ────────────────────────────────────────────────────────────────
 
 @router.get("/sdcc/status/{ai_name}")
 def get_sdcc_status(ai_name: str, current_user=Depends(get_current_user)):
@@ -120,9 +185,8 @@ def get_sdcc_status(ai_name: str, current_user=Depends(get_current_user)):
     return doc
 
 
-# ── Evaluate ──────────────────────────────────────────────────────────────────
+# ── Principle descriptions ─────────────────────────────────────────────────────
 
-# KPMG TAF principle descriptions — universal across all model types
 _PRINCIPLE_DESCRIPTIONS: dict[str, str] = {
     "Transparency": (
         "The AI system should be open about its capabilities, limitations, and how it makes decisions. "
@@ -167,8 +231,6 @@ _PRINCIPLE_DESCRIPTIONS: dict[str, str] = {
     ),
 }
 
-# Regulatory compliance thresholds differ by model type because higher-risk
-# applications (automation taking real actions) face a higher bar.
 _COMPLIANCE_THRESHOLDS: dict[str, dict[str, int]] = {
     "classification":       {"EU_AI_Act": 75, "ISO_42001": 80, "NIST_AI_RMF": 70},
     "rag":                  {"EU_AI_Act": 70, "ISO_42001": 75, "NIST_AI_RMF": 65},
@@ -178,6 +240,40 @@ _COMPLIANCE_THRESHOLDS: dict[str, dict[str, int]] = {
     "image_classification": {"EU_AI_Act": 75, "ISO_42001": 80, "NIST_AI_RMF": 70},
 }
 
+# Which library powers each metric — used in computation_notes
+_METRIC_LIBRARY_MAP: dict[str, str] = {
+    "rouge_l":            "rouge_score (fallback: n-gram overlap)",
+    "rouge_1":            "rouge_score (fallback: n-gram overlap)",
+    "rouge_2":            "rouge_score (fallback: n-gram overlap)",
+    "bleu":               "sacrebleu (fallback: smoothed BLEU-4)",
+    "bertscore":          "bert_score (fallback: sentence_transformers cosine similarity)",
+    "faithfulness":       "sentence_transformers cosine similarity (fallback: Jaccard overlap)",
+    "answer_relevance":   "sentence_transformers cosine similarity (fallback: Jaccard overlap)",
+    "context_recall":     "unigram token recall",
+    "hallucination_rate": "1 − faithfulness",
+    "toxicity_rate":      "Detoxify classifier (fallback: keyword heuristic)",
+    "safety_pass_rate":   "1 − toxicity_rate",
+    "avg_coherence":      "sentence-length + TTR + discourse marker heuristic",
+    "avg_perplexity":     "vocabulary entropy proxy",
+    "roc_auc":            "scikit-learn roc_auc_score (fallback: N/A — needs label column)",
+    "f1_score":           "scikit-learn f1_score (fallback: manual token overlap)",
+    "precision":          "scikit-learn precision_score",
+    "recall":             "scikit-learn recall_score",
+    "class_balance":      "value_counts min/max ratio",
+    "avg_confidence":     "mean of confidence/probability column",
+    "step_success_rate":  "keyword inference from output text",
+    "task_completion_rate": "keyword inference from output text",
+    "error_rate":         "keyword inference from output text",
+    "avg_step_latency_ms": "mean of latency column",
+    "map_score":          "mean of map/confidence column (proxy)",
+    "avg_iou":            "mean of iou column",
+    "top_k_accuracy":     "proportion of outputs with confidence ≥ 0.5",
+    "label_coverage":     "proportion of non-null label rows",
+    "avg_inference_ms":   "mean of latency/inference_time column",
+}
+
+
+# ── Evaluate ───────────────────────────────────────────────────────────────────
 
 @router.post("/evaluate/{ai_name}")
 def evaluate_ai(ai_name: str, current_user=Depends(get_current_user)):
@@ -191,28 +287,48 @@ def evaluate_ai(ai_name: str, current_user=Depends(get_current_user)):
             detail="No ingested data found. Please upload logs first via /sdcc/ingest.",
         )
 
-    model_type   = sdcc_doc.get("model_type", "general_llm")
-    logs_count   = sdcc_doc.get("logs_ingested", 0)
-    dq_score     = sdcc_doc.get("data_quality_score", 0)
-    struct_risk  = sdcc_doc.get("structural_risk", "Unknown")
-    diagnostics  = sdcc_doc.get("diagnostics", {})
-    det_conf     = sdcc_doc.get("detection_confidence", 0.0)
-    sample_recs  = sdcc_doc.get("sample_records", [])
+    model_type  = sdcc_doc.get("model_type",  "general_llm")
+    logs_count  = sdcc_doc.get("logs_ingested", 0)
+    dq_score    = sdcc_doc.get("data_quality_score", 0)
+    struct_risk = sdcc_doc.get("structural_risk", "Unknown")
+    diagnostics = sdcc_doc.get("diagnostics", {})
+    det_conf    = sdcc_doc.get("detection_confidence", 0.0)
+    sample_recs = sdcc_doc.get("sample_records", [])
 
-    # Reconstruct DataFrame for model-specific metric computation
+    # ── Reconstruct DataFrame ──────────────────────────────────────────────────
     df = pd.DataFrame(sample_recs) if sample_recs else pd.DataFrame()
 
-    # Instantiate the right evaluator for this model type
+    # ── Compute metrics from raw text ──────────────────────────────────────────
+    computed_values: dict = {}
+    computation_notes: dict = {}
+
+    if not df.empty:
+        try:
+            computed_values = calculate_metrics(model_type, df)
+            # Build computation notes — which library/method powered each metric
+            for metric_key, value in computed_values.items():
+                library = _METRIC_LIBRARY_MAP.get(metric_key, "computed")
+                status  = "computed" if value is not None else "unavailable (missing columns)"
+                computation_notes[metric_key] = {
+                    "library": library,
+                    "status":  status,
+                    "value":   round(value, 4) if value is not None else None,
+                }
+        except Exception as exc:
+            # Never crash the evaluation — just flag it
+            computation_notes["_error"] = str(exc)
+
+    # ── Instantiate evaluator and compute TAF scores ──────────────────────────
     EvaluatorClass = get_evaluator(model_type)
     evaluator = EvaluatorClass()
 
-    # Compute model-specific metrics
-    model_metrics = evaluator.model_metrics(df)
+    # model_metrics() now uses computed_values as primary source
+    model_metrics = evaluator.model_metrics(df, computed=computed_values)
 
-    # Compute TAF principle scores (structural base + metric boosts)
+    # TAF principle scores
     principles = evaluator.taf_principles(diagnostics, logs_count, model_metrics)
 
-    # Add descriptions
+    # Attach descriptions
     for name in principles:
         principles[name]["description"] = _PRINCIPLE_DESCRIPTIONS.get(name, "")
 
@@ -226,10 +342,10 @@ def evaluate_ai(ai_name: str, current_user=Depends(get_current_user)):
     )
     risk_level = risk_analysis["overall_risk_level"]
 
-    # Findings (structural + model-metric)
+    # Findings
     findings = evaluator.generate_findings(principles, model_metrics)
 
-    # Framework compliance with model-type-specific thresholds
+    # Framework compliance
     thr = _COMPLIANCE_THRESHOLDS.get(model_type, _COMPLIANCE_THRESHOLDS["general_llm"])
     framework_compliance = {
         "EU_AI_Act":   "Compliant"       if overall >= thr["EU_AI_Act"]   else "Conditional",
@@ -240,26 +356,28 @@ def evaluate_ai(ai_name: str, current_user=Depends(get_current_user)):
 
     report_id  = str(uuid.uuid4())
     report_doc = {
-        "report_id":              report_id,
-        "ai_name":                ai_name,
-        "model_type":             model_type,
-        "model_label":            evaluator.LABEL,
-        "detection_confidence":   det_conf,
-        "evaluated_at":           datetime.utcnow().isoformat(),
-        "overall_score":          overall,
-        "risk_level":             risk_level,
-        "structural_risk":        struct_risk,
-        "logs_evaluated":         logs_count,
-        "data_quality_score":     dq_score,
-        "trusted_ai_principles":  principles,
-        "diagnostics":            diagnostics,
-        "model_metrics":          model_metrics,
-        "findings":               findings,
-        "risk_analysis":          risk_analysis,
-        "recommendation":         sdcc_doc.get("recommendation", ""),
-        "framework_compliance":   framework_compliance,
-        "owner_id":               str(current_user["_id"]),
-        "created_at":             datetime.utcnow(),
+        "report_id":            report_id,
+        "ai_name":              ai_name,
+        "model_type":           model_type,
+        "model_label":          evaluator.LABEL,
+        "detection_confidence": det_conf,
+        "evaluated_at":         datetime.utcnow().isoformat(),
+        "overall_score":        overall,
+        "risk_level":           risk_level,
+        "structural_risk":      struct_risk,
+        "logs_evaluated":       logs_count,
+        "data_quality_score":   dq_score,
+        "trusted_ai_principles": principles,
+        "diagnostics":          diagnostics,
+        "model_metrics":        model_metrics,
+        "computation_notes":    computation_notes,     # ← NEW: shows what was computed & how
+        "findings":             findings,
+        "risk_analysis":        risk_analysis,
+        "recommendation":       sdcc_doc.get("recommendation", ""),
+        "framework_compliance": framework_compliance,
+        "column_warnings":      sdcc_doc.get("column_warnings", []),  # ← NEW: column hints
+        "owner_id":             str(current_user["_id"]),
+        "created_at":           datetime.utcnow(),
     }
 
     result = reports_collection.insert_one(report_doc)

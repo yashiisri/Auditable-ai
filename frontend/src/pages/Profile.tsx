@@ -131,8 +131,34 @@ export default function Profile() {
 
   const loadAuditHistory = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/blackbox/history-all`, { headers: authHeader() });
-      setAudits(res.data.history || []);
+      const [bbRes, repRes] = await Promise.allSettled([
+        axios.get(`${BASE_URL}/blackbox/history-all`, { headers: authHeader() }),
+        axios.get(`${BASE_URL}/reports`,              { headers: authHeader() }),
+      ]);
+
+      const bbList: AuditRecord[] =
+        bbRes.status === "fulfilled" ? (bbRes.value.data.history || []) : [];
+
+      // Normalise evaluate-pipeline reports → AuditRecord shape
+      const rawReports: any[] =
+        repRes.status === "fulfilled" ? (repRes.value.data.reports || []) : [];
+
+      const repList: AuditRecord[] = rawReports.map((r) => ({
+        audit_id:      r.report_id,
+        ai_name:       r.ai_name,
+        overall_score: r.overall_score ?? 0,
+        risk_level:    r.risk_level    ?? "Unknown",
+        status:        "completed",
+        created_at:    r.evaluated_at  ?? r.created_at ?? new Date().toISOString(),
+        mode:          "evaluate",
+        findings:      r.findings,
+      }));
+
+      // Merge and sort newest-first
+      const merged = [...bbList, ...repList].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+      setAudits(merged);
     } catch {
       setAudits([]);
     } finally {
@@ -162,10 +188,26 @@ export default function Profile() {
   };
 
   const handleAuditClick = async (audit: AuditRecord) => {
+    // Evaluate-pipeline reports — fetch full report doc and open in /report
+    if (audit.mode === "evaluate") {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/reports/${audit.audit_id}`,
+          { headers: authHeader() },
+        );
+        navigate("/report", { state: { data: res.data } });
+      } catch {
+        // Fallback: pass whatever we have and let Report normalise it
+        navigate("/report", { state: { data: audit } });
+      }
+      return;
+    }
+
+    // Black-box audits — existing logic unchanged
     try {
       const res = await axios.get(
         `${BASE_URL}/blackbox/audit/${audit.audit_id}`,
-        { headers: authHeader() }
+        { headers: authHeader() },
       );
       navigate("/report", { state: { data: res.data } });
     } catch {
@@ -411,7 +453,7 @@ export default function Profile() {
 
             <div style={{ display:"flex", gap:8, marginTop:10, flexWrap:"wrap" }}>
               <span className="tag" style={{ background:"rgba(0,200,150,0.12)", border:"1px solid rgba(0,200,150,0.3)", color:"#00C896" }}>
-                ✓ 
+                ✓ Active
               </span>
               <span className="tag" style={{ background:"rgba(0,145,218,0.12)", border:"1px solid rgba(0,145,218,0.3)", color:"#4AACDF", textTransform:"capitalize" }}>
                 {profile?.role || "Auditor"}
@@ -517,7 +559,7 @@ export default function Profile() {
                         <div style={{ fontSize:11, color:"#9DBFE0" }}>
                           {fmtDate(audit.created_at)}
                           {audit.probes_run ? ` · ${audit.probes_run} probes` : ""}
-                          {audit.mode ? ` · ${audit.mode.toUpperCase()}` : ""}
+                          {audit.mode ? ` · ${audit.mode === "evaluate" ? "Evaluate" : audit.mode.toUpperCase()}` : ""}
                         </div>
                       </div>
 

@@ -28,6 +28,24 @@ interface BlackBoxResult {
   message?: string;
 }
 
+interface ComputationNote {
+  library: string;
+  status: string;
+  value: number | null;
+}
+
+interface SdccSummary {
+  model_type: string;
+  logs_ingested: number;
+  data_quality_score: number;
+  structural_risk: string;
+  detection_confidence?: number;
+  recommendation?: string;
+  column_warnings?: string[];
+  has_input_col?: boolean;
+  has_output_col?: boolean;
+}
+
 /* ─────────────────────────────────────────────
    Component
 ───────────────────────────────────────────── */
@@ -45,17 +63,19 @@ export default function Dashboard() {
   const [bbProgress, setBbProgress] = useState(0);
 
   /* ── Ingestion state ── */
-  const [file, setFile]               = useState<File | null>(null);
+  const [file, setFile]                   = useState<File | null>(null);
   const [ingestLoading, setIngestLoading] = useState(false);
-  const [uploaded, setUploaded]       = useState(false);
-  const [logsCount, setLogsCount]     = useState<number | null>(null);
+  const [uploaded, setUploaded]           = useState(false);
+  const [logsCount, setLogsCount]         = useState<number | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [sdccSummary, setSdccSummary] = useState<any>(null);
-  const [ingestError, setIngestError] = useState("");
+  const [sdccSummary, setSdccSummary]     = useState<SdccSummary | null>(null);
+  const [ingestError, setIngestError]     = useState("");
 
   /* ── Evaluate state ── */
-  const [evalLoading, setEvalLoading] = useState(false);
-  const [evalError, setEvalError]     = useState("");
+  const [evalLoading, setEvalLoading]         = useState(false);
+  const [evalError, setEvalError]             = useState("");
+  const [computationNotes, setComputationNotes] = useState<Record<string, ComputationNote> | null>(null);
+  const [showNotes, setShowNotes]             = useState(false);
 
   const aiName = localStorage.getItem("activeAI") || "";
 
@@ -99,11 +119,11 @@ export default function Dashboard() {
 
     try {
       const res = await runBlackBoxAudit({
-        ai_name: aiName || "external-ai",
-        mode: bbMode,
+        ai_name:  aiName || "external-ai",
+        mode:     bbMode,
         endpoint: bbEndpoint,
-        api_key: bbApiKey,
-        ui_url: bbUiUrl,
+        api_key:  bbApiKey,
+        ui_url:   bbUiUrl,
       });
       clearInterval(interval);
       setBbProgress(totalProbes);
@@ -118,8 +138,6 @@ export default function Dashboard() {
 
   /* ─────────────────────────────────────────────
      INGESTION HANDLER
-     Always uses SDCC pipeline (/sdcc/ingest) —
-     the legacy /upload-csv endpoint was removed.
   ───────────────────────────────────────────── */
   const handleUpload = async () => {
     if (!aiName) { navigate("/register-ai"); return; }
@@ -129,6 +147,7 @@ export default function Dashboard() {
     setIngestError("");
     setUploadSuccess(false);
     setSdccSummary(null);
+    setComputationNotes(null);
 
     try {
       const res = await sdccIngest(aiName, file);
@@ -150,8 +169,13 @@ export default function Dashboard() {
     if (!uploaded) return;
     setEvalLoading(true);
     setEvalError("");
+    setComputationNotes(null);
     try {
       const res = await evaluateAI(aiName);
+      // Stash computation notes before navigating so user can optionally review
+      if (res.data.computation_notes) {
+        setComputationNotes(res.data.computation_notes);
+      }
       navigate("/report", { state: { data: res.data } });
     } catch (e) {
       setEvalError(extractErr(e));
@@ -164,8 +188,15 @@ export default function Dashboard() {
   const riskColor = (level: string) =>
     level === "Low" ? "#00C896" : level === "Moderate" ? "#ffb020" : "#ff4d4d";
 
-  const totalProbes  = 14;
-  const progressPct  = Math.round((bbProgress / totalProbes) * 100);
+  const totalProbes = 14;
+  const progressPct = Math.round((bbProgress / totalProbes) * 100);
+
+  /* Categorise computation notes */
+  const noteEntries = computationNotes
+    ? Object.entries(computationNotes).filter(([k]) => k !== "_error")
+    : [];
+  const computedCount   = noteEntries.filter(([, n]) => n.status === "computed").length;
+  const unavailableCount = noteEntries.filter(([, n]) => n.status !== "computed").length;
 
   /* ─────────────────────────────────────────────
      JSX
@@ -182,7 +213,10 @@ export default function Dashboard() {
             <h1 className="brand-title">Auditable AI™</h1>
             {aiName && <span className="ai-pill">Auditing: {aiName}</span>}
           </div>
-          <button className="logout-btn" onClick={handleLogout}>Logout →</button>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button className="profile-btn" onClick={() => navigate("/profile")}>👤 Profile</button>
+            <button className="logout-btn" onClick={handleLogout}>Logout →</button>
+          </div>
         </div>
 
         {/* ── ROW 1: Black Box + Ingestion ── */}
@@ -214,8 +248,8 @@ export default function Dashboard() {
                 <input
                   type="url" name="bb-endpoint"
                   autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                  value={bbEndpoint} onChange={(e) => setBbEndpoint(e.target.value)}
                   placeholder="https://api.openai.com/v1/chat/completions"
+                  value={bbEndpoint} onChange={(e) => setBbEndpoint(e.target.value)}
                   disabled={bbLoading}
                 />
                 <label>API Key</label>
@@ -238,7 +272,7 @@ export default function Dashboard() {
                 />
                 <div className="info-box">
                   ℹ UI audits run using secure backend browser automation.
-                   Ensure the chatbot URL is publicly accessible.
+                  Ensure the chatbot URL is publicly accessible.
                 </div>
               </>
             )}
@@ -272,7 +306,16 @@ export default function Dashboard() {
               </div>
             )}
 
-            <p className="toggle-desc">SDCC structural analysis pipeline</p>
+            {/* Column hints */}
+            <div className="info-box" style={{ fontSize: 12, lineHeight: 1.6 }}>
+              <strong style={{ color: "#4AACDF" }}>Required columns:</strong>{" "}
+              <code>input</code> (or <code>prompt</code> / <code>query</code>) and{" "}
+              <code>output</code> (or <code>response</code> / <code>answer</code>).{" "}
+              Optional: <code>reference</code>, <code>context</code>, <code>label</code>, <code>confidence</code>, <code>latency</code>.
+              The model type is auto-detected from your data content.
+            </div>
+
+            <p className="toggle-desc">SDCC structural analysis + metric computation pipeline</p>
 
             <label>Select File (.csv or .json)</label>
             <input
@@ -283,6 +326,7 @@ export default function Dashboard() {
                 setUploaded(false);
                 setUploadSuccess(false);
                 setSdccSummary(null);
+                setComputationNotes(null);
               }}
             />
 
@@ -294,6 +338,29 @@ export default function Dashboard() {
               <div className="success-message">✅ Ingested {logsCount} records successfully.</div>
             )}
             {ingestError && <div className="error-inline">{ingestError}</div>}
+
+            {/* Column warnings from backend */}
+            {sdccSummary?.column_warnings && sdccSummary.column_warnings.length > 0 && (
+              <div className="warn-box" style={{ marginTop: 4 }}>
+                {sdccSummary.column_warnings.map((w, i) => (
+                  <div key={i} style={{ marginBottom: i < sdccSummary.column_warnings!.length - 1 ? 6 : 0 }}>
+                    ⚠ {w}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Input/output column status */}
+            {sdccSummary && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span className={`col-badge ${sdccSummary.has_input_col ? "col-ok" : "col-warn"}`}>
+                  {sdccSummary.has_input_col ? "✓" : "✗"} input col
+                </span>
+                <span className={`col-badge ${sdccSummary.has_output_col ? "col-ok" : "col-warn"}`}>
+                  {sdccSummary.has_output_col ? "✓" : "✗"} output col
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -373,11 +440,69 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* ── COMPUTATION NOTES (shown after evaluate returns) ── */}
+        {computationNotes && noteEntries.length > 0 && (
+          <div className="glass-card sdcc-enterprise" style={{ marginBottom: 36 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2 style={{ margin: 0 }}>🔬 Metric Computation Summary</h2>
+              <button
+                className="toggle-notes-btn"
+                onClick={() => setShowNotes((v) => !v)}
+              >
+                {showNotes ? "Hide details ▲" : "Show details ▼"}
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 20, marginTop: 14 }}>
+              <div className="metric-card" style={{ flex: 1 }}>
+                <span>Computed</span>
+                <strong style={{ color: "#00C896" }}>{computedCount}</strong>
+              </div>
+              <div className="metric-card" style={{ flex: 1 }}>
+                <span>Unavailable</span>
+                <strong style={{ color: "#ffb020" }}>{unavailableCount}</strong>
+              </div>
+              <div className="metric-card" style={{ flex: 1 }}>
+                <span>Total Metrics</span>
+                <strong>{noteEntries.length}</strong>
+              </div>
+            </div>
+
+            {unavailableCount > 0 && (
+              <div className="info-box" style={{ marginTop: 8, fontSize: 12 }}>
+                💡 {unavailableCount} metric(s) couldn't be computed — missing required columns.
+                Add <code>reference</code>, <code>context</code>, <code>label</code>, or <code>confidence</code> columns to enable them.
+              </div>
+            )}
+
+            {showNotes && (
+              <div className="notes-grid" style={{ marginTop: 16 }}>
+                {noteEntries.map(([key, note]) => (
+                  <div key={key} className={`note-card ${note.status === "computed" ? "note-ok" : "note-miss"}`}>
+                    <div className="note-key">{key.replace(/_/g, " ")}</div>
+                    <div className="note-val">
+                      {note.value !== null ? note.value.toFixed(4) : "—"}
+                    </div>
+                    <div className="note-lib">{note.library}</div>
+                    <div className={`note-status ${note.status === "computed" ? "ok" : "miss"}`}>
+                      {note.status === "computed" ? "✓ computed" : "✗ unavailable"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── RUN FULL EVALUATION ── */}
         <div className="center" style={{ marginTop: "40px" }}>
           <button className="run-btn" onClick={handleEvaluate} disabled={!uploaded || evalLoading}>
-            {evalLoading ? "Evaluating…" : "Run Full Evaluation →"}
+            {evalLoading ? "Computing metrics & evaluating…" : "Run Full Evaluation →"}
           </button>
+          {evalLoading && (
+            <p className="hint-text" style={{ marginTop: 12 }}>
+              Computing ROUGE, BLEU, BERTScore, faithfulness, toxicity and other metrics from your data…
+            </p>
+          )}
           {!uploaded && <p className="hint-text">Upload logs above to enable evaluation</p>}
           {evalError && <div className="error-inline" style={{ marginTop: "16px" }}>{evalError}</div>}
         </div>
@@ -425,6 +550,13 @@ const CSS = `
   background: rgba(0,145,218,0.15); border: 1px solid rgba(0,145,218,0.35);
   border-radius: 20px; padding: 4px 14px; font-size: 13px; color: #4AACDF;
 }
+.profile-btn {
+  padding: 10px 22px; border-radius: 10px;
+  border: 1px solid rgba(0,145,218,0.35); background: rgba(0,145,218,0.08);
+  color: #4AACDF; font-weight: 600; font-size: 14px; cursor: pointer;
+  transition: all 0.25s;
+}
+.profile-btn:hover { background: rgba(0,145,218,0.18); transform: translateY(-2px); }
 .logout-btn {
   padding: 10px 22px; border-radius: 10px;
   border: 1px solid rgba(255,77,77,0.35); background: rgba(255,77,77,0.08);
@@ -496,6 +628,10 @@ const CSS = `
   border: 1px solid rgba(0,145,218,0.25); border-radius: 10px;
   font-size: 13px; color: #9DBFE0; line-height: 1.5;
 }
+.info-box code {
+  background: rgba(0,145,218,0.2); border-radius: 4px; padding: 1px 5px;
+  font-size: 11px; color: #4AACDF; font-family: 'IBM Plex Mono', monospace;
+}
 .warn-box {
   padding: 10px 14px; background: rgba(255,176,32,0.1);
   border: 1px solid rgba(255,176,32,0.3); border-radius: 10px;
@@ -512,6 +648,14 @@ const CSS = `
   border: 1px solid rgba(0,200,150,0.3); border-radius: 10px;
   color: #00E5AB; font-size: 14px; text-align: center;
 }
+
+/* Column status badges */
+.col-badge {
+  font-size: 11px; font-weight: 600; padding: 4px 10px;
+  border-radius: 20px;
+}
+.col-ok   { background: rgba(0,200,150,0.12); border: 1px solid rgba(0,200,150,0.3);  color: #00C896; }
+.col-warn { background: rgba(255,176,32,0.12); border: 1px solid rgba(255,176,32,0.3); color: #ffb020; }
 
 .probe-progress { display: flex; flex-direction: column; gap: 6px; }
 .probe-bar-track {
@@ -543,6 +687,34 @@ const CSS = `
   border-left: 4px solid #00C896; border-radius: 10px;
   font-size: 14px; color: #D8E8F5;
 }
+
+/* Computation notes */
+.toggle-notes-btn {
+  background: rgba(0,145,218,0.12); border: 1px solid rgba(0,145,218,0.3);
+  color: #4AACDF; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+  font-size: 12px; font-weight: 600; font-family: 'IBM Plex Sans', sans-serif;
+  transition: 0.2s;
+}
+.toggle-notes-btn:hover { background: rgba(0,145,218,0.22); }
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.note-card {
+  padding: 14px; border-radius: 12px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.04);
+}
+.note-ok   { border-color: rgba(0,200,150,0.25); }
+.note-miss { border-color: rgba(255,176,32,0.2); }
+.note-key  { font-size: 11px; color: #9DBFE0; text-transform: capitalize; margin-bottom: 4px; }
+.note-val  { font-size: 20px; font-weight: 800; color: #EAF2FB; margin-bottom: 4px; }
+.note-lib  { font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 6px; line-height: 1.4; }
+.note-status { font-size: 11px; font-weight: 600; }
+.note-status.ok   { color: #00C896; }
+.note-status.miss { color: #ffb020; }
 
 .center { text-align: center; }
 .run-btn {

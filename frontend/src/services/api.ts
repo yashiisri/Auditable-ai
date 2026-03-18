@@ -31,7 +31,6 @@ export const registerAI = (data: {
 }) => api.post("/register-ai", data);
 
 // ── SDCC Ingest ───────────────────────────────────────────────────────────
-// Single upload endpoint — replaces the removed /upload-csv/ legacy route
 export const sdccIngest = (aiName: string, file: File) => {
   const fd = new FormData();
   fd.append("file", file);
@@ -41,6 +40,15 @@ export const sdccIngest = (aiName: string, file: File) => {
 // ── Evaluate ──────────────────────────────────────────────────────────────
 export const evaluateAI = (aiName: string) =>
   api.post(`/evaluate/${aiName}`);
+
+// ── Reports (evaluate pipeline) ───────────────────────────────────────────
+// Returns all evaluation reports for the current user.
+export const getReports = () =>
+  api.get("/reports");
+
+// Returns a single report by report_id.
+export const getReportById = (reportId: string) =>
+  api.get(`/reports/${reportId}`);
 
 // ── Black Box Audit ───────────────────────────────────────────────────────
 export const runBlackBoxAudit = (data: {

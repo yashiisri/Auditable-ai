@@ -1056,7 +1056,47 @@ def build_pdf(report: dict) -> BytesIO:
     return buffer
 
 
-# ─── API Endpoint ─────────────────────────────────────────────────────────────
+# ─── List reports for current user ────────────────────────────────────────────
+@router.get("")
+def list_reports(current_user=Depends(get_current_user)):
+    """Return all evaluate-pipeline reports owned by the current user,
+    newest first, without the heavy trusted_ai_principles sub-parameter
+    detail (to keep payloads small for the list view)."""
+    docs = list(
+        reports_collection.find(
+            {"owner_id": str(current_user["_id"])},
+            {
+                "_id": 0,
+                "sample_records": 0,
+                # Omit large nested blobs from the list view
+                "trusted_ai_principles": 0,
+                "risk_analysis.risk_items": 0,
+            },
+        ).sort("created_at", -1).limit(50)
+    )
+    for d in docs:
+        if isinstance(d.get("created_at"), datetime.datetime):
+            d["created_at"] = d["created_at"].isoformat()
+    return {"reports": docs}
+
+
+# ─── Single report by report_id ───────────────────────────────────────────────
+@router.get("/{report_id}")
+def get_report(report_id: str, current_user=Depends(get_current_user)):
+    """Return a single full report by its report_id.
+    Ownership is enforced — users can only fetch their own reports."""
+    doc = reports_collection.find_one(
+        {"report_id": report_id, "owner_id": str(current_user["_id"])},
+        {"_id": 0, "sample_records": 0},
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Report not found.")
+    if isinstance(doc.get("created_at"), datetime.datetime):
+        doc["created_at"] = doc["created_at"].isoformat()
+    return doc
+
+
+# ─── PDF download ──────────────────────────────────────────────────────────────
 @router.get("/{report_id}/pdf")
 async def download_report_pdf(report_id: str, current_user=Depends(get_current_user)):
     report = reports_collection.find_one({"report_id": report_id})

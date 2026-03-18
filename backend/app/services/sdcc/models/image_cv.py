@@ -1,25 +1,6 @@
 """
-services/sdcc/models/image_cv.py
-==================================
-Evaluator for Computer Vision models — object detection, image classification,
-segmentation, and related tasks.
-
-Model-specific metrics
------------------------
-  - map_score         Mean Average Precision (object detection / segmentation)
-  - avg_iou           Mean Intersection-over-Union for bounding box predictions
-  - top_k_accuracy    Top-K classification accuracy
-  - avg_confidence    Mean prediction confidence score
-  - label_coverage    Proportion of records with ground-truth labels
-  - avg_inference_ms  Mean model inference time  (lower is better)
-
-TAF emphasis
-------------
-  Reliability (mAP/IoU) and Fairness (demographic/class coverage in visual data)
-  are the highest-weighted principles for CV models, reflecting the well-known
-  risks of dataset bias and poor edge-case performance.
+services/sdcc/models/image_cv.py  (REFACTORED)
 """
-
 from __future__ import annotations
 import pandas as pd
 from app.services.sdcc.base_evaluator import BaseEvaluator
@@ -42,46 +23,51 @@ class ImageCVEvaluator(BaseEvaluator):
 
     TAF_METRIC_WEIGHTS = {
         "Reliability":    0.35,
-        "Fairness":       0.30,   # demographic bias in CV is a major risk
+        "Fairness":       0.30,
         "Data Integrity": 0.20,
         "Explainability": 0.15,
     }
 
-    def model_metrics(self, df: pd.DataFrame) -> dict:
+    def model_metrics(self, df: pd.DataFrame, computed: dict | None = None) -> dict:
+        c = computed or {}
+
+        map_val   = c.get("map_score")        or self._mean(df, "map", "mean_average_precision", "map_score")
+        iou_val   = c.get("avg_iou")          or self._mean(df, "iou", "intersection_over_union", "mean_iou")
+        topk_val  = c.get("top_k_accuracy")   or self._mean(df, "top_k", "top_k_accuracy", "top5_acc")
+        conf_val  = c.get("avg_confidence")   or self._mean(df, "confidence_score", "confidence", "detection_score")
+        lbl_val   = c.get("label_coverage")   or self._coverage(df, "label", "ground_truth", "annotation", "category")
+        lat_val   = c.get("avg_inference_ms") or self._mean(df, "latency", "inference_time", "duration_ms")
+
         return {
             "map_score": self._metric_result(
-                self._mean(df, "map", "mean_average_precision", "ap",
-                           "map_score", "map_50"),
-                "Mean Average Precision — primary performance metric for object detection",
+                map_val,
+                "Mean Average Precision — primary detection performance metric "
+                "(from map/confidence columns or computed proxy)",
                 "map_score",
             ),
             "avg_iou": self._metric_result(
-                self._mean(df, "iou", "intersection_over_union", "iou_score",
-                           "mean_iou", "miou"),
-                "Mean Intersection-over-Union for bounding box predictions",
+                iou_val,
+                "Mean Intersection-over-Union for bounding box predictions (computed)",
                 "avg_iou",
             ),
             "top_k_accuracy": self._metric_result(
-                self._mean(df, "top_k", "top_k_accuracy", "top5_acc",
-                           "top_k_acc", "top1_acc"),
-                "Top-K classification accuracy across all test images",
+                topk_val,
+                "Top-K classification accuracy — proportion of outputs with confidence ≥ 0.5 "
+                "(computed from confidence column)",
                 "top_k_accuracy",
             ),
             "avg_confidence": self._metric_result(
-                self._mean(df, "confidence_score", "confidence", "score",
-                           "probability", "detection_score"),
+                conf_val,
                 "Mean prediction confidence / detection score",
                 "avg_confidence",
             ),
             "label_coverage": self._metric_result(
-                self._coverage(df, "label", "ground_truth", "true_class",
-                                "class_name", "annotation", "category"),
+                lbl_val,
                 "Proportion of images with ground-truth labels available for validation",
                 "label_coverage",
             ),
             "avg_inference_ms": self._metric_result(
-                self._mean(df, "latency", "inference_time", "duration_ms",
-                           "inference_ms", "elapsed_ms"),
+                lat_val,
                 "Mean model inference time per image in milliseconds",
                 "avg_inference_ms",
             ),
@@ -94,46 +80,42 @@ class ImageCVEvaluator(BaseEvaluator):
         c = self.clamp
         p = self.param_score
 
-        map_val   = metrics.get("map_score", {}).get("value")
-        iou_val   = metrics.get("avg_iou", {}).get("value")
-        topk_val  = metrics.get("top_k_accuracy", {}).get("value")
-        conf_val  = metrics.get("avg_confidence", {}).get("value")
-        lbl_val   = metrics.get("label_coverage", {}).get("value")
+        map_val  = metrics.get("map_score",      {}).get("value")
+        iou_val  = metrics.get("avg_iou",         {}).get("value")
+        topk_val = metrics.get("top_k_accuracy",  {}).get("value")
+        conf_val = metrics.get("avg_confidence",  {}).get("value")
+        lbl_val  = metrics.get("label_coverage",  {}).get("value")
 
-        map_score  = c((map_val or 0) * 100)  if map_val is not None  else 30
-        iou_score  = c((iou_val or 0) * 100)  if iou_val is not None  else 30
+        map_score  = c((map_val  or 0) * 100) if map_val  is not None else 30
+        iou_score  = c((iou_val  or 0) * 100) if iou_val  is not None else 30
         topk_score = c((topk_val or 0) * 100) if topk_val is not None else 30
         conf_score = c((conf_val or 0) * 100) if conf_val is not None else 30
-        lbl_score  = c((lbl_val or 0) * 100)  if lbl_val is not None  else 20
+        lbl_score  = c((lbl_val  or 0) * 100) if lbl_val  is not None else 20
 
-        # 1. Transparency
         t = {
-            "Schema Confidence":       s["schema_score"],
-            "Field Documentation":     c(io * 4 + s["schema_score"] * 0.2),
-            "Model Version Tracking":  100 if s["has_version"] else 30,
-            "Image ID Logging":        100 if s["has_input"] else 20,
-            "Label Column Present":    lbl_score,
+            "Schema Confidence":      s["schema_score"],
+            "Field Documentation":    c(io * 4 + s["schema_score"] * 0.2),
+            "Model Version Tracking": 100 if s["has_version"] else 30,
+            "Image ID Logging":       100 if s["has_input"] else 20,
+            "Label Column Present":   lbl_score,
         }
 
-        # 2. Explainability — CV models are notoriously difficult to explain
         e = {
-            "Model Interpretability":  40,   # deep CV models are low-interpretability
+            "Model Interpretability":  40,
             "Prediction Confidence":   conf_score,
             "Detection Score Logging": c(io * 4 + (20 if s["has_score"] else 0)),
             "Feedback Integration":    100 if s["has_feedback"] else 30,
             "Output Traceability":     c(io * 4.5),
         }
 
-        # 3. Fairness — demographic and lighting bias are primary CV fairness risks
         f = {
-            "Data Completeness":       s["completeness"],
-            "Class/Category Balance":  lbl_score,
-            "Demographic Coverage":    c(60 + s["text_ratio"] * 0.4),
-            "Bias Indicator Fields":   100 if s["has_feedback"] else 30,
-            "Missing Data Equity":     c((1 - s["missing"] * 2) * 100),
+            "Data Completeness":      s["completeness"],
+            "Class/Category Balance": lbl_score,
+            "Demographic Coverage":   c(60 + s["text_ratio"] * 0.4),
+            "Bias Indicator Fields":  100 if s["has_feedback"] else 30,
+            "Missing Data Equity":    c((1 - s["missing"] * 2) * 100),
         }
 
-        # 4. Accountability
         a = {
             "Audit Log Volume":        s["volume_score"],
             "Timestamp Coverage":      100 if s["has_timestamp"] else 20,
@@ -142,7 +124,6 @@ class ImageCVEvaluator(BaseEvaluator):
             "Error/Exception Logging": 100 if s["has_error"] else 35,
         }
 
-        # 5. Data Integrity — label coverage is THE data integrity metric for CV
         di = {
             "Completeness Score":    s["completeness"],
             "Duplicate-Free Rate":   s["dup_penalty"],
@@ -151,7 +132,6 @@ class ImageCVEvaluator(BaseEvaluator):
             "Annotation Quality":    c(lbl_score * 0.7 + conf_score * 0.3),
         }
 
-        # 6. Reliability — mAP and IoU are the primary reliability metrics for CV
         r = {
             "mAP Score":           map_score,
             "Mean IoU":            iou_score,
@@ -160,41 +140,36 @@ class ImageCVEvaluator(BaseEvaluator):
             "Volume Sufficiency":  s["volume_score"],
         }
 
-        # 7. Security
         sec = {
             "Safety Flagging":        100 if s["has_safety"] else 25,
             "Input Validation":       c(s["schema_score"] * 0.8 + (20 if s["has_input"] else 0)),
-            "Adversarial Robustness": 45,   # CV models are vulnerable to adversarial patches
+            "Adversarial Robustness": 45,
             "Content Moderation":     100 if s["has_safety"] else 30,
             "PII Detection":          100 if s["has_pii"] else 20,
         }
 
-        # 8. Privacy — images may contain faces and biometric data
         pr = {
-            "PII/Biometric Field Tracking": 100 if s["has_pii"] else 15,   # lower default: images have inherent PII risk
+            "PII/Biometric Field Tracking": 100 if s["has_pii"] else 15,
             "Data Minimisation":            c(100 - (s["total_cols"] / 20) * 40),
             "Face/Biometric Anonymisation": 100 if s["has_pii"] else 20,
             "Consent Management":           40,
             "Data Retention Signals":       100 if s["has_timestamp"] else 30,
         }
 
-        # 9. Sustainability
         su = {
             "Dataset Efficiency":    c(100 - (logs_count / 10_000) * 30),
             "Feature Engineering":   c(s["col_diversity"] * 0.7 + 30),
-            "Compute Proxy Score":   35,   # CV inference is very compute-intensive (GPU required)
+            "Compute Proxy Score":   35,
             "Redundancy Elimination": s["dup_penalty"],
             "Resource Optimisation": c(s["schema_score"] * 0.6 + 40),
         }
 
-        # 10. Safety — CV misidentification in surveillance/medical/autonomous vehicles causes direct harm
-        # Low confidence + poor label coverage = unsafe deployment conditions
         sf = {
             "Harm Prevention Logging":    100 if s["has_safety"] else 20,
-            "Misidentification Controls": conf_score,   # low confidence = high misidentification risk
+            "Misidentification Controls": conf_score,
             "Human Override Capability":  100 if s["has_override"] else (60 if s["has_feedback"] else 20),
             "Incident Response Signals":  100 if s["has_error"] else 30,
-            "Safeguard Effectiveness":    lbl_score,   # unlabelled images = unvalidated safety
+            "Safeguard Effectiveness":    lbl_score,
         }
 
         raw = {
