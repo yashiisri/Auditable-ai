@@ -52,6 +52,7 @@ import Profile    from "./pages/Profile";        // ← NEW
 import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout     from "./layout/MainLayout";
 
+
 function App() {
   return (
     <BrowserRouter>
@@ -67,6 +68,7 @@ function App() {
           <Route path="/register-ai" element={<RegisterAI />} />
           <Route path="/report"      element={<Report />}     />
           <Route path="/profile"     element={<Profile />}    />  {/* ← NEW */}
+       
         </Route>
       </Routes>
     </BrowserRouter>

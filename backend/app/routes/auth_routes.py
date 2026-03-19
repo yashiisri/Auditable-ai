@@ -174,3 +174,10 @@ def update_profile(payload: UpdateProfileSchema, current_user=Depends(get_curren
         raise HTTPException(status_code=400, detail="Nothing to update.")
     users_collection.update_one({"_id": current_user["_id"]}, {"$set": updates})
     return {"message": "Profile updated successfully", **updates}
+
+
+
+
+
+
+
