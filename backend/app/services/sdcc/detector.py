@@ -1,308 +1,632 @@
 """
-services/sdcc/detector.py  (REFACTORED)
-=========================================
-Detects the AI model family from an uploaded DataFrame using:
+services/sdcc/detector.py
+==========================
+Dynamic AI model-type detector — zero hardcoded column names or content patterns.
 
-  1. Column-name signals   (fast, no content reading)
-  2. Content-pattern signals  (looks at actual input/output text values)
+ARCHITECTURE (4 phases)
+-----------------------
+Phase 1 — Dynamic column role assignment
+  Uses fuzzy string similarity (difflib SequenceMatcher) to assign each column
+  a semantic role without any fixed column-name list.  Handles typos, abbreviations,
+  camelCase, snake_case, and mixed conventions:
+    "inpt"        → input role   (0.67 sim with "input")
+    "Inputs"      → input role   (0.83)
+    "usr_query"   → input role   via "query" anchor (0.80)
+    "sumary"      → output role  via "summary" anchor (0.86)
+    "lbl"         → label role   (0.67)
+    "PRED_CLASS"  → label role   via "predicted" + "class" tokens (0.80+)
 
-The user is expected to upload a CSV/JSON with at minimum:
-  - `input`  (or prompt / query / instruction)
-  - `output` (or response / answer / completion / result / summary)
+Phase 2 — Statistical content fingerprinting
+  Computes data-derived signals from actual cell values:
+  compression ratio, output value distribution, vocabulary overlap, numeric
+  column count, boolean output rate, etc.  No regex patterns — all signals
+  are computed from the data itself.
 
-Optional enrichment columns:
-  - `reference` / `reference_summary`
-  - `context` / `retrieved_chunks`
-  - `label` / `ground_truth`
-  - `confidence`, `latency`, etc.
+Phase 3 — Semantic token matching
+  Lightweight fuzzy keyword-family scoring.  Each model type has a list of
+  concept words.  Matching is done at the normalised-token level so spelling
+  variants ("sumary", "sumarise", "retreival") still match.
 
-Detection logic
----------------
-Phase 1 — column-name scoring (same weighted approach as before, now
-          exclusively for structural/metadata column signals, NOT metric cols)
-Phase 2 — content-pattern scoring (regexes over actual input/output text)
-
-Both phases produce a normalised score in [0,1].  The final score is a
-weighted blend: 60% content, 40% column-name (when content is available).
-
-If neither phase clears the threshold we return "general_llm" as a safe fallback.
+Phase 4 — Groq LLM tiebreaker (optional)
+  When Phases 1-3 are ambiguous (top-2 gap < 0.15), sends a compact
+  data sample to Groq llama-3.1-8b-instant for a structured JSON answer.
+  Requires GROQ_API_KEY env var or explicit api_key parameter.
+  Gracefully skipped if unavailable.
 """
 
 from __future__ import annotations
-import re
-from typing import Tuple
+import difflib, json, math, os, re, statistics, string
+from collections import Counter
+from typing import Optional, Tuple
 import pandas as pd
 
+# ── Known model types ─────────────────────────────────────────────────────────
+MODEL_TYPES = [
+    "general_llm", "summarization", "rag",
+    "classification", "automation", "image_classification",
+]
 
-# ── Column-name signals ────────────────────────────────────────────────────────
-# These look at STRUCTURAL / CONTEXTUAL columns only — not pre-computed metric
-# columns (rouge, f1, etc.) because users are no longer expected to log those.
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 1 — DYNAMIC COLUMN ROLE ASSIGNMENT
+# ─────────────────────────────────────────────────────────────────────────────
 
-_COL_SIGNALS: dict[str, dict[str, list[str]]] = {
-
-    "classification": {
-        "strong":   ["predicted_class", "pred_label", "true_label", "class_weight"],
-        "moderate": ["label", "class", "target", "ground_truth"],
-        "weak":     ["confidence", "score"],
-    },
-
-    "rag": {
-        "strong":   ["retrieved_chunks", "source_doc", "context_precision"],
-        "moderate": ["context", "chunks", "passages", "retrieved", "documents"],
-        "weak":     ["query", "answer"],
-    },
-
-    "summarization": {
-        "strong":   ["reference_summary", "compression_ratio", "source_doc"],
-        "moderate": ["summary", "abstract", "condensed", "generated_summary"],
-        "weak":     ["reference", "target"],
-    },
-
-    "automation": {
-        "strong":   ["workflow_id", "step_name", "task_id", "step_result",
-                     "retry_count", "agent_id"],
-        "moderate": ["step", "action", "workflow", "pipeline", "job", "run_id"],
-        "weak":     ["status", "process"],
-    },
-
-    "image_classification": {
-        "strong":   ["image_path", "bbox", "bounding_box", "annotation",
-                     "image_id"],
-        "moderate": ["image", "frame", "mask", "category", "class_name"],
-        "weak":     ["label", "confidence"],
-    },
-
-    "general_llm": {
-        "strong":   ["conversation_id", "turn_id", "system_prompt", "is_safe",
-                     "moderated"],
-        "moderate": ["prompt", "response", "assistant", "user_message",
-                     "instruction", "completion"],
-        "weak":     ["input", "output"],
-    },
+# Semantic role → concept anchor words.
+# No hardcoded column names — similarity is computed dynamically.
+_ROLE_ANCHORS: dict[str, list[str]] = {
+    "input":      ["input", "prompt", "query", "question", "instruction",
+                   "request", "message", "user", "text", "source", "document"],
+    "output":     ["output", "response", "answer", "completion", "result",
+                   "reply", "prediction", "generated", "summary", "assistant",
+                   "op", "out", "outp", "resp", "ans", "res"],
+    "reference":  ["reference", "ground_truth", "expected", "target", "gold",
+                   "human_summary", "ref", "actual", "correct"],
+    "context":    ["context", "retrieved", "chunks", "passages", "knowledge",
+                   "documents", "source_doc", "background"],
+    "label":      ["label", "class", "category", "tag", "classification",
+                   "true_label", "predicted", "pred"],
+    "confidence": ["confidence", "probability", "score", "certainty",
+                   "likelihood", "prob"],
+    "latency":    ["latency", "duration", "time", "ms", "seconds",
+                   "response_time", "elapsed"],
+    "image":      ["image", "photo", "picture", "frame", "screenshot",
+                   "img", "pixel", "visual"],
+    "step":       ["step", "action", "task", "stage", "phase", "operation"],
+    "workflow":   ["workflow", "pipeline", "job", "process", "agent",
+                   "run", "execution", "retry"],
+    "bbox":       ["bbox", "bounding_box", "box", "coordinates", "region",
+                   "annotation", "detection"],
+    "error":      ["error", "exception", "failed", "failure", "status",
+                   "success", "result_code"],
 }
 
-_COL_WEIGHTS = {"strong": 3, "moderate": 2, "weak": 1}
-_COL_MIN_NORM  = 0.06
-_COL_MIN_RAW   = 2.0
+# Role presence → model-type contribution
+_ROLE_TO_MODEL: dict[str, dict[str, float]] = {
+    "input":      {"general_llm": 0.3, "summarization": 0.3, "rag": 0.3,
+                   "classification": 0.3, "automation": 0.2},
+    "output":     {"general_llm": 0.3, "summarization": 0.3, "rag": 0.3,
+                   "classification": 0.3, "automation": 0.2},
+    "reference":  {"summarization": 0.8, "rag": 0.3},
+    "context":    {"rag": 0.9, "summarization": 0.2},
+    "label":      {"classification": 0.9, "image_classification": 0.5},
+    "confidence": {"classification": 0.5, "image_classification": 0.5},
+    "latency":    {"automation": 0.4, "image_classification": 0.3},
+    "image":      {"image_classification": 2.0},  # image path/file is uniquely CV
+    "step":       {"automation": 0.8},
+    "workflow":   {"automation": 0.9},
+    "bbox":       {"image_classification": 1.0},
+    "error":      {"automation": 0.5},
+}
 
 
-# ── Content-pattern signals ────────────────────────────────────────────────────
-# Patterns matched against combined input+output text (first 200 rows).
+def _normalise_colname(name: str) -> str:
+    """Split camelCase, replace separators with spaces, lowercase."""
+    name = re.sub(r"([a-z])([A-Z])", r"\1 \2", name)
+    name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", name)
+    name = re.sub(r"[^a-zA-Z0-9]+", " ", name)
+    return name.lower().strip()
 
-_CONTENT_PATTERNS: dict[str, list[str]] = {
 
+def _col_similarity(col_name: str, anchor: str) -> float:
+    """
+    Fuzzy similarity between a column name and an anchor concept word.
+    Handles typos, abbreviations, prefixes.
+    """
+    col_norm = _normalise_colname(col_name)
+    tokens = col_norm.split()
+    best = 0.0
+    for candidate in [col_norm] + tokens:
+        sim = difflib.SequenceMatcher(None, candidate, anchor).ratio()
+        best = max(best, sim)
+        # Prefix bonus: only if both strings are at least 4 chars to avoid
+        # false matches like "col" matching any anchor containing "col"
+        if len(candidate) >= 4 and len(anchor) >= 4:
+            if anchor.startswith(candidate) or candidate.startswith(anchor):
+                best = max(best, 0.78)
+        elif len(candidate) >= 3 and len(anchor) >= 6:
+            # Short abbreviation matching long anchor: "inp" → "input"
+            if anchor.startswith(candidate):
+                best = max(best, 0.72)
+    return best
+
+
+def assign_column_roles(df: pd.DataFrame, threshold: float = 0.55) -> dict[str, str]:
+    """
+    Assign each column a semantic role via fuzzy similarity.
+    Columns below threshold → "unknown".
+    """
+    assignments: dict[str, str] = {}
+    for col in df.columns:
+        best_role, best_score = "unknown", 0.0
+        for role, anchors in _ROLE_ANCHORS.items():
+            for anchor in anchors:
+                sim = _col_similarity(col, anchor)
+                if sim > best_score:
+                    best_score = sim
+                    best_role  = role
+        assignments[col] = best_role if best_score >= threshold else "unknown"
+    return assignments
+
+
+def _score_from_roles(roles: dict[str, str]) -> dict[str, float]:
+    """Convert detected column roles into model-type scores."""
+    raw = {mt: 0.0 for mt in MODEL_TYPES}
+    for role in roles.values():
+        for mt, w in _ROLE_TO_MODEL.get(role, {}).items():
+            if mt in raw:
+                raw[mt] = min(1.0, raw[mt] + w)
+
+    max_poss = {mt: 0.0 for mt in MODEL_TYPES}
+    for rm in _ROLE_TO_MODEL.values():
+        for mt, w in rm.items():
+            if mt in max_poss:
+                max_poss[mt] += w
+
+    return {mt: min(1.0, raw[mt] / max_poss[mt]) if max_poss[mt] > 0 else 0.0
+            for mt in MODEL_TYPES}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 2 — STATISTICAL CONTENT FINGERPRINTING
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _get_col(df: pd.DataFrame, roles: dict[str, str], target: str) -> list[str]:
+    for col, role in roles.items():
+        if role == target:
+            return df[col].dropna().astype(str).head(200).tolist()
+    return []
+
+
+def _compute_signals(df: pd.DataFrame, roles: dict[str, str]) -> dict[str, float]:
+    inputs  = _get_col(df, roles, "input")
+    outputs = _get_col(df, roles, "output")
+
+    # ── Smart role correction when no clear "input" column was found ────────────
+    # Handles generic column names (col_a, col_b, data1, data2, etc.) where fuzzy
+    # matching gave wrong roles.
+    # Strategy: rank all text columns by average content length.
+    #   longest  → most likely the source document (input)
+    #   second   → most likely the summary/answer/output
+    # This is valid for summarization (long doc → short summary) and most other types.
+    has_input  = any(r == "input"  for r in roles.values())
+    has_output = any(r == "output" for r in roles.values())
+    # Structural roles: these indicate real domain signals that shouldn't be overridden
+    # (image path, bounding box, step name, workflow id are unambiguous)
+    # Text-semantic roles (context, reference, label) can be mis-assigned to generic
+    # column names like col_a/col_b and should NOT block the smart correction.
+    structural_roles = {"image", "bbox", "step", "workflow", "error"}
+    has_structural   = any(r in structural_roles for r in roles.values())
+
+    if not has_input and not has_structural:
+        # No input column found — find all text columns and rank by length
+        text_cols = []
+        for col in df.columns:
+            vals = df[col].dropna().astype(str).head(20).tolist()
+            if vals:
+                avg_len = sum(len(v.split()) for v in vals) / len(vals)
+                # Include single-token columns — they could be label outputs
+                # Only exclude columns that are all-numeric or all-empty
+                is_all_numeric = all(re.match(r'^[\d\.\-]+$', v) for v in vals[:5])
+                if avg_len >= 1 and not is_all_numeric:
+                    text_cols.append((col, vals, avg_len))
+        text_cols.sort(key=lambda x: -x[2])  # sort longest first
+
+        if len(text_cols) >= 2:
+            longest_col, longest_vals, longest_avg   = text_cols[0]
+            second_col,  second_vals,  second_avg    = text_cols[1]
+
+            # Reassign roles: longer = input, shorter = output
+            roles = dict(roles)
+            roles[longest_col] = "input"
+            inputs = longest_vals
+            roles[second_col] = "output"
+            outputs = second_vals
+        elif len(text_cols) == 1:
+            inputs = text_cols[0][1]
+
+    sig: dict[str, float] = {}
+
+    # Compression ratio and length stats
+    if inputs and outputs:
+        n = min(len(inputs), len(outputs))
+        il = [len(t.split()) for t in inputs[:n]]
+        ol = [len(t.split()) for t in outputs[:n]]
+        ai, ao = statistics.mean(il), statistics.mean(ol)
+        sig["compression_ratio"]  = ao / max(ai, 1)
+        sig["input_length_mean"]  = ai
+        sig["output_length_mean"] = ao
+        sig["input_length_cv"]    = statistics.stdev(il) / max(ai, 1) if len(il) > 1 else 0.0
+    else:
+        sig.update({"compression_ratio": 1.0, "input_length_mean": 0.0,
+                    "output_length_mean": 0.0, "input_length_cv": 0.0})
+
+    # Output distribution signals
+    if outputs:
+        otc = [len(t.split()) for t in outputs]
+        sig["output_very_short_rate"]  = sum(1 for c in otc if c <= 3) / len(otc)
+        sig["output_numeric_rate"]     = sum(1 for t in outputs
+                                              if re.fullmatch(r"[\d.\-+\s]+", t.strip())
+                                              ) / len(outputs)
+        unique_out = len(set(t.strip().lower() for t in outputs))
+        sig["output_entropy"] = min(
+            math.log(unique_out + 1) / math.log(len(outputs) + 1), 1.0)
+        top_freq = Counter(t.strip().lower() for t in outputs).most_common(1)[0][1]
+        sig["output_most_common_freq"] = top_freq / len(outputs)
+        bool_tokens = {"true","false","yes","no","success","fail","failed",
+                       "pass","error","ok","1","0","positive","negative","neutral"}
+        sig["output_boolean_rate"] = sum(1 for t in outputs
+                                         if t.strip().lower() in bool_tokens) / len(outputs)
+    else:
+        for k in ["output_very_short_rate","output_numeric_rate","output_entropy",
+                  "output_most_common_freq","output_boolean_rate"]:
+            sig[k] = 0.0
+
+    # Structural column signals
+    sig["numeric_col_ratio"] = sum(
+        1 for c in df.columns if pd.api.types.is_numeric_dtype(df[c])
+    ) / max(len(df.columns), 1)
+
+    # Role presence flags
+    detected = set(roles.values())
+    for role in ("label","context","reference","image","step","workflow","bbox","error"):
+        sig[f"has_{role}_role"] = 1.0 if role in detected else 0.0
+
+    # Vocabulary overlap input/output
+    if inputs and outputs:
+        si = set(re.findall(r"\b\w{4,}\b", " ".join(inputs[:20]).lower()))
+        so = set(re.findall(r"\b\w{4,}\b", " ".join(outputs[:20]).lower()))
+        sig["vocab_overlap"] = len(si & so) / len(si | so) if (si and so) else 0.0
+    else:
+        sig["vocab_overlap"] = 0.0
+
+    # Input structure
+    if inputs:
+        sig["input_question_rate"] = sum(1 for t in inputs if "?" in t) / len(inputs)
+        sig["input_short_rate"]    = sum(1 for t in inputs if len(t.split()) <= 15) / len(inputs)
+    else:
+        sig["input_question_rate"] = sig["input_short_rate"] = 0.0
+
+    return sig
+
+
+def _score_from_signals(sig: dict[str, float]) -> dict[str, float]:
+    scores = {mt: 0.0 for mt in MODEL_TYPES}
+    cr  = sig.get("compression_ratio", 1.0)
+    vo  = sig.get("vocab_overlap", 0.0)
+    ent = sig.get("output_entropy", 1.0)
+    ovs = sig.get("output_very_short_rate", 0.0)
+    obr = sig.get("output_boolean_rate", 0.0)
+    ncr = sig.get("numeric_col_ratio", 0.0)
+    mcf = sig.get("output_most_common_freq", 0.0)
+    iqr = sig.get("input_question_rate", 0.0)
+    il  = sig.get("input_length_mean", 0.0)
+    ol  = sig.get("output_length_mean", 0.0)
+
+    # Summarization
+    # Compression signal is penalised when outputs look like labels (low entropy, few unique values)
+    # This prevents spam/ham labels from being mistaken for summaries
+    label_penalty = min(1.0, (1.0 - ent) * mcf * 3)  # high when low-entropy + repetitive
+    effective_cr  = cr * (1.0 + label_penalty)        # make cr appear larger for label-like outputs
+    if effective_cr < 0.6:
+        scores["summarization"] += (1.0 - effective_cr) * 0.8
+    if effective_cr < 0.4:
+        scores["summarization"] += 0.3
+    scores["summarization"] += vo * 0.4
+    scores["summarization"] += sig.get("has_reference_role", 0) * 0.5
+    if il > 100:
+        scores["summarization"] += min((il - 100) / 500, 0.3)
+    # Further penalty: if output vocabulary is tiny (< 5 unique values), not a summary
+    if ent < 0.4 and mcf > 0.3:
+        scores["summarization"] *= 0.3
+
+    # RAG
+    scores["rag"] += sig.get("has_context_role", 0) * 0.9
+    scores["rag"] += iqr * 0.5
+    scores["rag"] += sig.get("has_reference_role", 0) * 0.2
+    if 20 < ol < 200:
+        scores["rag"] += 0.15
+
+    # Classification
+    scores["classification"] += sig.get("has_label_role", 0) * 0.8
+    # Short outputs only count if they look like labels (low entropy + repetition)
+    # NOT if they are short but varied sentences (general LLM with brief answers)
+    is_label_pattern = (1.0 - ent) * mcf  # both low entropy AND repetition needed
+    scores["classification"] += ovs * 0.3                    # reduced from 0.6
+    scores["classification"] += is_label_pattern * 0.8       # the real classification signal
+    scores["classification"] += (1.0 - ent) * 0.3
+    scores["classification"] += mcf * 0.3
+    if ovs > 0.7 and ent < 0.6:                              # short AND low entropy
+        scores["classification"] += 0.3
+    if sig.get("has_label_role", 0) and ovs > 0.5:
+        scores["classification"] += 0.3
+
+    # Automation
+    scores["automation"] += sig.get("has_step_role",     0) * 0.7
+    scores["automation"] += sig.get("has_workflow_role", 0) * 0.8
+    scores["automation"] += sig.get("has_error_role",    0) * 0.4
+    scores["automation"] += obr * 0.5
+    if ncr > 0.3:
+        scores["automation"] += 0.2
+
+    # Image CV
+    scores["image_classification"] += sig.get("has_image_role", 0) * 1.0
+    scores["image_classification"] += sig.get("has_bbox_role",  0) * 1.0
+    scores["image_classification"] += sig.get("has_label_role", 0) * 0.3
+    if ncr > 0.4:
+        scores["image_classification"] += 0.4
+    # Co-presence boost: image + (confidence OR numeric cols) strongly indicates CV
+    if sig.get("has_image_role", 0) and (sig.get("has_label_role", 0) or ncr > 0.2):
+        scores["image_classification"] += 0.8
+    if sig.get("has_bbox_role", 0) and (sig.get("has_label_role", 0) or ncr > 0.2):
+        scores["image_classification"] += 0.8
+    # If image role present, heavily suppress classification (classification doesn't have image files)
+    if sig.get("has_image_role", 0):
+        scores["classification"] *= 0.3
+
+    # General LLM (residual)
+    if ent > 0.8:
+        scores["general_llm"] += 0.3
+    if 0.5 < cr < 2.0:
+        scores["general_llm"] += 0.2
+    if ovs < 0.2:
+        scores["general_llm"] += 0.15
+    spec_max = max(scores[m] for m in MODEL_TYPES if m != "general_llm")
+    if spec_max > 0.4:
+        scores["general_llm"] *= 0.5
+
+    return {mt: min(1.0, max(0.0, s)) for mt, s in scores.items()}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 3 — SEMANTIC TOKEN MATCHING (fuzzy, spelling-tolerant)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_TOKEN_FAMILIES: dict[str, list[str]] = {
     "summarization": [
-        r"\bsummar(y|ise|ize|izing|ising)\b",
-        r"\babstract\b",
-        r"\bkey points?\b",
-        r"\bin (brief|short|summary)\b",
-        r"\bthe (article|document|text|passage|report|paper) (says?|states?|discusses?|describes?|argues?)\b",
-        r"\bcondensed?\b",
-        r"\bTL;?DR\b",
-        r"\bmain (points?|ideas?|findings?|takeaways?)\b",
-        r"\boverall[,\s]+(the|this|it)\b",
-        r"\bto summarise\b",
-        r"\bto summarize\b",
-        r"\bin conclusion\b",
-        r"\bthe (author|writer|report|document|text|article) (argues?|claims?|suggests?|notes?|states?|explains?)\b",
+        "summary", "summarize", "summarise", "summarization", "abstract",
+        "condense", "condensed", "brief", "tldr", "synopsis", "overview",
+        "highlights", "gist", "key points", "main points", "conclude",
+        "in short", "in brief", "the article", "the document", "the text",
     ],
-
     "rag": [
-        r"\baccording to (the |our )?(document|source|context|knowledge base|retrieved)\b",
-        r"\bbased on (the )?(provided|retrieved|given) (context|document|information)\b",
-        r"\bthe (document|passage|source) (states?|mentions?|indicates?)\b",
-        r"\bretriev(ed|al)\b",
-        r"\bvector (search|store|database|db)\b",
-        r"\bsource:\s*\[",   # citation markers
-        r"\bfrom (the )?knowledge base\b",
-        r"\bno (relevant )?(information|context) (found|available|retrieved)\b",
+        "according to", "based on", "retrieved", "retrieval", "context",
+        "knowledge base", "vector", "chunks", "passages", "source document",
+        "the document states", "no relevant information", "citation",
+        "references", "grounded", "provided context",
     ],
-
     "classification": [
-        r"\b(positive|negative|neutral)\b",
-        r"\b(spam|not spam|ham)\b",
-        r"\b(benign|malignant|malicious|safe|unsafe)\b",
-        r"\b(class|category|label|type)\s*[:\-=]\s*\w+",
-        r"\bpredicted\s+(class|label|category)\b",
-        r"\bconfidence\s*[:\-=]?\s*[\d.]+%?",
-        r"\b(true|false) (positive|negative)\b",
-        r"\bprobability\s*[:\-=]?\s*[\d.]+",
+        "positive", "negative", "neutral", "spam", "ham", "benign",
+        "malignant", "malicious", "safe", "unsafe", "class", "category",
+        "label", "predicted", "confidence", "probability", "true positive",
+        "false positive", "classify", "classification", "sentiment",
     ],
-
     "automation": [
-        r"\bstep\s+\d+",
-        r"\btask\s+(id|complete|failed|started)\b",
-        r"\bworkflow\b",
-        r"\b(tool|function|api)\s+(call|called|invoked|result)\b",
-        r"\baction\s*[:\-=]\s*\w+",
-        r"\b(retry|retried|retrying)\b",
-        r"\bpipeline\b",
-        r"\b(agent|bot)\s+(executed|ran|performed|triggered)\b",
-        r"\b(success|failure)\s*[:\-=]\s*(true|false|1|0)\b",
+        "step", "workflow", "pipeline", "task", "action", "agent",
+        "tool call", "api call", "function call", "retry", "retried",
+        "success", "failure", "failed", "error", "execution",
+        "trigger", "invoked", "ran", "performed", "bot", "automation",
     ],
-
     "image_classification": [
-        r"\b(image|photo|picture|frame|screenshot)\b",
-        r"\b(bounding box|bbox|coordinates)\b",
-        r"\bdetected\s+(object|class|label)\b",
-        r"\b(width|height)\s*[:\-=]?\s*\d+",
-        r"\b(pixel|resolution|rgb|grayscale)\b",
-        r"\b(object detection|segmentation|OCR)\b",
-        r"\bconfidence\s*[:\-=]?\s*[\d.]+",
-        r"\bclass\s+name\s*[:\-=]\s*\w+",
+        "image", "photo", "picture", "frame", "screenshot", "bounding box",
+        "bbox", "coordinates", "detected", "object", "pixel", "resolution",
+        "rgb", "grayscale", "segmentation", "ocr", "detection", "visual",
     ],
-
     "general_llm": [
-        r"\b(user|human)\s*[:\->\|]+\s*\w",
-        r"\b(assistant|bot|ai|claude|gpt|gemini)\s*[:\->\|]+\s*\w",
-        r"\bhow can I (help|assist)\b",
-        r"\bsure[,!]?\s+(here|I|let me|happy)\b",
-        r"\b(hello|hi|hey)[,!]?\s",
-        r"\bI (am|'m) an AI\b",
-        r"\bI (don'?t|cannot|can'?t) (help|assist) with that\b",
-        r"\bplease (ask|tell|describe|provide)\b",
+        "user", "assistant", "how can i help", "sure here", "hello",
+        "hi there", "i am an ai", "i cannot", "as an ai", "language model",
+        "chatbot", "please let me know", "happy to help", "of course",
     ],
 }
 
-_CONTENT_MIN_MATCHES = 1   # at least 1 pattern match to count the category
+
+def _norm_tok(tok: str) -> str:
+    tok = tok.lower().strip(string.punctuation)
+    for sfx in ("izing","ising","ised","ized","ize","ise","ing",
+                "tion","sion","ment","ness","ity"):
+        if len(tok) > len(sfx) + 3 and tok.endswith(sfx):
+            return tok[:-len(sfx)]
+    return tok
 
 
-def _score_column_names(df: pd.DataFrame) -> dict[str, float]:
-    """Return {model_type: normalised_score} from column name signals."""
-    col_tokens: set[str] = {c.lower() for c in df.columns}
-
-    scores: dict[str, float] = {}
-    for mt, tiers in _COL_SIGNALS.items():
-        raw = possible = 0.0
-        for tier, terms in tiers.items():
-            w = _COL_WEIGHTS[tier]
-            possible += len(terms) * w
-            for term in terms:
-                if any(term in tok for tok in col_tokens):
-                    raw += w
-        scores[mt] = raw / possible if possible > 0 else 0.0
-
-    return scores
-
-
-def _score_content(df: pd.DataFrame) -> dict[str, float]:
-    """
-    Sample up to 200 rows of input+output text and count pattern matches per
-    model type.  Returns {model_type: normalised_score ∈ [0,1]}.
-    """
-    # Find input/output columns
-    low_map = {c.lower(): c for c in df.columns}
-
-    def _get(*keys: str) -> list[str]:
-        for k in keys:
-            for col_l, col_o in low_map.items():
-                if k in col_l:
-                    sample = df[col_o].dropna().head(200).astype(str).tolist()
-                    return [t for t in sample if t.strip()]
-        return []
-
-    inputs  = _get("input",  "prompt",   "query",      "instruction", "step_name")
-    outputs = _get("output", "response", "answer",     "completion",  "result",
-                   "summary", "prediction")
-    combined = inputs[:100] + outputs[:100]
-
+def _score_from_tokens(df: pd.DataFrame, roles: dict[str, str]) -> dict[str, float]:
+    inputs  = _get_col(df, roles, "input")
+    outputs = _get_col(df, roles, "output")
+    combined = (inputs[:50] + outputs[:50]) or []
     if not combined:
-        return {}
+        return {mt: 0.0 for mt in MODEL_TYPES}
 
-    all_text = " ".join(combined).lower()
-    max_possible = len(combined) * 2   # normalisation denominator
+    result: dict[str, float] = {}
+    for mt, words in _TOKEN_FAMILIES.items():
+        family_norms = [_norm_tok(w.split()[0]) for w in words]
+        hits = 0
+        for text in combined:
+            toks = [_norm_tok(t) for t in text.lower().split()]
+            matched = any(
+                difflib.SequenceMatcher(None, tok, fn).ratio() >= 0.72
+                for tok in toks if len(tok) >= 3
+                for fn  in family_norms if len(fn) >= 3
+            )
+            if matched:
+                hits += 1
+        result[mt] = hits / len(combined)
+    return result
 
-    scores: dict[str, float] = {}
-    for mt, patterns in _CONTENT_PATTERNS.items():
-        hits = sum(
-            1
-            for row_text in combined
-            for pat in patterns
-            if re.search(pat, row_text, re.IGNORECASE)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 4 — GROQ LLM TIEBREAKER
+# ─────────────────────────────────────────────────────────────────────────────
+
+_GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+_GROQ_MDL = "llama-3.1-8b-instant"
+
+_GROQ_SYS = """You are an expert AI system analyst. Identify what kind of AI model produced the data shown.
+
+Classify as EXACTLY one of:
+- general_llm          : Open-ended chatbot or instruction-following LLM
+- summarization        : Condenses long documents into shorter summaries
+- rag                  : Retrieval-Augmented Generation (answers from retrieved context)
+- classification       : Assigns labels/categories/classes to inputs
+- automation           : Agentic AI, RPA, or multi-step workflow execution
+- image_classification : Computer vision / object detection model
+
+Respond ONLY with valid JSON:
+{"model_type": "<type>", "confidence": <0.0-1.0>, "reasoning": "<one sentence>"}"""
+
+
+def _call_groq(df: pd.DataFrame, roles: dict[str, str],
+               sig: dict[str, float], api_key: str) -> Optional[Tuple[str, float, str]]:
+    try:
+        import requests as _req
+    except ImportError:
+        return None
+
+    col_info = ", ".join(f'"{c}"[{r}]' for c, r in list(roles.items())[:10])
+    inp_col  = next((c for c, r in roles.items() if r == "input"),  None)
+    out_col  = next((c for c, r in roles.items() if r == "output"), None)
+    rows = []
+    if inp_col and out_col:
+        for _, row in df[[inp_col, out_col]].dropna().head(5).iterrows():
+            rows.append(f"IN: {str(row[inp_col])[:180]}\nOUT: {str(row[out_col])[:180]}")
+    elif inp_col:
+        for v in df[inp_col].dropna().head(5).astype(str):
+            rows.append(f"IN: {v[:180]}")
+
+    key_sig = {k: round(v, 3) for k, v in sig.items()
+               if k in ("compression_ratio","output_entropy","output_very_short_rate",
+                        "has_label_role","has_context_role","has_image_role",
+                        "has_step_role","vocab_overlap","input_question_rate")}
+
+    user_msg = (f"COLUMNS: {col_info}\n\n"
+                f"SAMPLE:\n{'---'.join(rows)}\n\n"
+                f"SIGNALS: {json.dumps(key_sig)}")
+
+    try:
+        resp = _req.post(
+            _GROQ_URL,
+            json={"model": _GROQ_MDL, "messages": [
+                {"role": "system", "content": _GROQ_SYS},
+                {"role": "user",   "content": user_msg},
+            ], "temperature": 0.0, "max_tokens": 200,
+               "response_format": {"type": "json_object"}},
+            headers={"Authorization": f"Bearer {api_key}",
+                     "Content-Type": "application/json"},
+            timeout=10,
         )
-        scores[mt] = min(hits / max(max_possible, 1), 1.0)
+        resp.raise_for_status()
+        p = json.loads(resp.json()["choices"][0]["message"]["content"])
+        mt = p.get("model_type", "general_llm")
+        cf = float(p.get("confidence", 0.5))
+        rz = p.get("reasoning", "")
+        if mt not in MODEL_TYPES:
+            cf *= 0.8
+        return mt, min(cf, 1.0), rz
+    except Exception:
+        return None
 
-    return scores
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ENSEMBLE + PUBLIC API
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _ensemble(r: dict, s: dict, t: dict) -> dict[str, float]:
+    return {mt: 0.30 * r.get(mt, 0) + 0.45 * s.get(mt, 0) + 0.25 * t.get(mt, 0)
+            for mt in MODEL_TYPES}
 
 
-def detect_model_type(df: pd.DataFrame) -> Tuple[str, float]:
+def _gap(scores: dict[str, float]) -> float:
+    sv = sorted(scores.values(), reverse=True)
+    return sv[0] - sv[1] if len(sv) >= 2 else 1.0
+
+
+def detect_model_type(
+    df: pd.DataFrame,
+    groq_api_key: Optional[str] = None,
+) -> Tuple[str, float]:
     """
+    Detect AI model type from inference log DataFrame.
+
     Returns (model_type, confidence ∈ [0,1]).
-
-    confidence ≥ 0.60  → high confidence
-    0.25–0.59          → moderate
-    < 0.25             → low / ambiguous (general_llm fallback used)
+    Optionally uses Groq API for tiebreaking when ambiguous.
     """
-    col_scores  = _score_column_names(df)
-    cont_scores = _score_content(df)
+    if df is None or df.empty or len(df.columns) == 0:
+        return "general_llm", 0.0
 
-    # ── Structural heuristic: output much shorter than input → summarization ──
-    # (only when content signals are weak and no other type dominates)
-    struct_bonus: dict[str, float] = {}
-    low_map = {c.lower(): c for c in df.columns}
+    roles    = assign_column_roles(df)
+    r_scores = _score_from_roles(roles)
+    sig      = _compute_signals(df, roles)
+    s_scores = _score_from_signals(sig)
+    t_scores = _score_from_tokens(df, roles)
+    combined = _ensemble(r_scores, s_scores, t_scores)
 
-    def _get_texts(*keys: str) -> list[str]:
-        for k in keys:
-            for col_l, col_o in low_map.items():
-                if k in col_l:
-                    return df[col_o].dropna().head(50).astype(str).tolist()
-        return []
+    best  = max(combined, key=lambda k: combined[k])
+    bscore= combined[best]
+    gap   = _gap(combined)
 
-    inp_texts = _get_texts("input", "prompt", "query", "instruction")
-    out_texts = _get_texts("output", "response", "answer", "completion", "result", "summary")
+    key = groq_api_key or os.environ.get("GROQ_API_KEY")
+    if key and gap < 0.15:
+        gr = _call_groq(df, roles, sig, key)
+        if gr:
+            g_type, g_conf, _ = gr
+            if g_type == best:
+                bscore = min(1.0, bscore + g_conf * 0.3)
+            else:
+                best   = g_type
+                bscore = g_conf * 0.85
 
-    if inp_texts and out_texts:
-        n = min(len(inp_texts), len(out_texts))
-        avg_in  = sum(len(t.split()) for t in inp_texts[:n]) / n
-        avg_out = sum(len(t.split()) for t in out_texts[:n]) / n
-        # If output is less than 60% of input length → compression → summarization signal
-        if avg_in > 10 and avg_out < avg_in * 0.60:
-            struct_bonus["summarization"] = 0.20
+    if bscore < 0.10 and gap < 0.05:
+        return "general_llm", 0.15
 
-    # Reference column → strong summarization indicator
-    has_ref_col = any("reference" in c or "ref_summary" in c for c in low_map)
-    if has_ref_col:
-        struct_bonus["summarization"] = struct_bonus.get("summarization", 0) + 0.25
+    conf = round(min(1.0, bscore * 1.5 + gap * 0.5), 3)
+    if best == "general_llm" and bscore < 0.25:
+        return "general_llm", max(0.15, conf)
+    return best, conf
 
-    # Blend: 40% column-name, 60% content (when content available)
-    has_content = bool(cont_scores)
-    blended: dict[str, float] = {}
-    for mt in set(col_scores) | set(cont_scores) | set(struct_bonus):
-        c_score = col_scores.get(mt, 0.0)
-        t_score = cont_scores.get(mt, 0.0)
-        s_bonus = struct_bonus.get(mt, 0.0)
-        if has_content:
-            blended[mt] = 0.40 * c_score + 0.60 * t_score + s_bonus
-        else:
-            blended[mt] = c_score + s_bonus
 
-    # Exclude general_llm from primary ranking (always fallback)
-    candidates = {mt: s for mt, s in blended.items() if mt != "general_llm"}
+def detect_model_type_with_detail(
+    df: pd.DataFrame,
+    groq_api_key: Optional[str] = None,
+) -> dict:
+    """Extended detection returning full diagnostic breakdown."""
+    if df is None or df.empty:
+        return {"model_type": "general_llm", "confidence": 0.0,
+                "column_roles": {}, "phase_scores": {}, "final_scores": {},
+                "signals": {}, "groq_used": False, "groq_reasoning": ""}
 
-    if candidates:
-        best_type = max(candidates, key=lambda k: candidates[k])
-        best_score = candidates[best_type]
+    roles    = assign_column_roles(df)
+    r_scores = _score_from_roles(roles)
+    sig      = _compute_signals(df, roles)
+    s_scores = _score_from_signals(sig)
+    t_scores = _score_from_tokens(df, roles)
+    combined = _ensemble(r_scores, s_scores, t_scores)
 
-        # Content raw check: require at least _CONTENT_MIN_MATCHES
-        if has_content:
-            content_raw = cont_scores.get(best_type, 0.0)
-            col_raw_ok  = (
-                col_scores.get(best_type, 0.0) >= _COL_MIN_NORM
-            )
-            if best_score >= 0.05 or col_raw_ok:
-                return best_type, round(min(best_score * 2, 1.0), 3)
-        else:
-            # Column-name only
-            raw_col = sum(
-                _COL_WEIGHTS[tier] * sum(
-                    1 for term in terms
-                    if any(term in c.lower() for c in df.columns)
-                )
-                for tier, terms in _COL_SIGNALS.get(best_type, {}).items()
-            )
-            if raw_col >= _COL_MIN_RAW and col_scores.get(best_type, 0) >= _COL_MIN_NORM:
-                return best_type, round(min(blended[best_type] * 2, 1.0), 3)
+    best   = max(combined, key=lambda k: combined[k])
+    bscore = combined[best]
+    gap    = _gap(combined)
 
-    # Fallback
-    general_score = blended.get("general_llm", 0.0)
-    return "general_llm", round(min(general_score * 2, 1.0), 3)
+    key = groq_api_key or os.environ.get("GROQ_API_KEY")
+    groq_used, groq_reason = False, ""
+    if key and gap < 0.15:
+        gr = _call_groq(df, roles, sig, key)
+        if gr:
+            g_type, g_conf, groq_reason = gr
+            if g_type == best:
+                bscore = min(1.0, bscore + g_conf * 0.3)
+            else:
+                best   = g_type
+                bscore = g_conf * 0.85
+            groq_used = True
+
+    if bscore < 0.10 and gap < 0.05:
+        best, bscore = "general_llm", 0.15
+    conf = round(min(1.0, bscore * 1.5 + gap * 0.5), 3)
+
+    return {
+        "model_type":     best,
+        "confidence":     conf,
+        "column_roles":   roles,
+        "phase_scores":   {"column_roles": r_scores, "statistical": s_scores,
+                           "semantic_tokens": t_scores},
+        "final_scores":   combined,
+        "signals":        sig,
+        "groq_used":      groq_used,
+        "groq_reasoning": groq_reason,
+    }

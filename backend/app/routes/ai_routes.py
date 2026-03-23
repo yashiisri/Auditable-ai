@@ -188,46 +188,55 @@ def get_sdcc_status(ai_name: str, current_user=Depends(get_current_user)):
 # ── Principle descriptions ─────────────────────────────────────────────────────
 
 _PRINCIPLE_DESCRIPTIONS: dict[str, str] = {
+    "Fairness": (
+        "AI solutions should be designed to reduce or eliminate bias against individuals, "
+        "communities, and groups. Ongoing bias monitoring and equal error rates across groups "
+        "must be maintained across the full model lifecycle."
+    ),
     "Transparency": (
-        "The AI system should be open about its capabilities, limitations, and how it makes decisions. "
-        "Users and stakeholders must be able to understand what the system does and why."
+        "AI solutions should include responsible disclosure to provide stakeholders with a "
+        "clear understanding of what is happening in each solution across the AI lifecycle, "
+        "including training data sources, model architecture, and known limitations."
     ),
     "Explainability": (
-        "Decisions and outputs produced by the AI system must be interpretable and explainable to "
-        "relevant stakeholders, including non-technical users, regulators, and affected individuals."
-    ),
-    "Fairness": (
-        "The AI system must treat all individuals and groups equitably, avoiding discriminatory outcomes "
-        "across protected characteristics such as gender, race, age, and socioeconomic status."
+        "AI solutions should be developed and delivered in a way that answers the questions "
+        "of how and why a conclusion was drawn from the solution. Outputs must be interpretable "
+        "to non-technical users, regulators, and affected individuals."
     ),
     "Accountability": (
-        "Clear lines of responsibility must exist for AI system outcomes. Governance structures, audit "
-        "trails, and human oversight mechanisms must be in place to assign and enforce accountability."
+        "Human oversight and responsibility should be embedded across the AI lifecycle to manage "
+        "risk and comply with applicable laws and regulations. Clear governance structures, audit "
+        "trails, and escalation procedures must assign and enforce accountability."
     ),
     "Data Integrity": (
-        "The data used to train and operate the AI must be accurate, complete, representative, and free "
-        "from harmful biases. Robust data governance and lineage practices must be maintained."
+        "Data used in AI solutions should be acquired in compliance with applicable laws and "
+        "regulations and assessed for accuracy, completeness, appropriateness, and quality to "
+        "drive trusted decisions. Robust data governance and lineage practices must be maintained."
     ),
     "Reliability": (
-        "The AI system must perform consistently and predictably under both normal and adversarial "
-        "conditions. Performance degradation, failures, and edge cases must be actively monitored."
+        "AI solutions should consistently operate in accordance with their intended purpose and "
+        "scope and at the desired level of precision. Performance degradation, failures, and "
+        "edge cases must be actively monitored and SLA compliance maintained."
     ),
     "Security": (
-        "The AI system must be resilient against adversarial attacks, data poisoning, model extraction, "
-        "and other cyber threats. Security must be embedded throughout the AI lifecycle."
-    ),
-    "Privacy": (
-        "Personal data used by the AI system must be collected, processed, and stored in compliance with "
-        "privacy regulations (e.g., GDPR). Data minimisation and purpose limitation must be enforced."
-    ),
-    "Sustainability": (
-        "The AI system should be designed to minimise environmental impact including compute resource "
-        "consumption, carbon footprint, and energy usage across training and inference workloads."
+        "Robust and resilient practices should be implemented to safeguard AI solutions against "
+        "bad actors, misinformation, or adverse events. A defence-in-depth approach covering "
+        "input validation, output filtering, adversarial robustness, and continuous red-teaming."
     ),
     "Safety": (
         "AI solutions should be designed and implemented to safeguard against harm to people, "
         "businesses, and property. Safety must be embedded across the full AI lifecycle through "
         "proactive risk assessment, harm prevention controls, and human override mechanisms."
+    ),
+    "Privacy": (
+        "AI solutions should be designed to comply with applicable privacy and data protection "
+        "laws and regulations. Data minimisation, purpose limitation, consent management, "
+        "anonymisation, and right-to-erasure must be embedded by design."
+    ),
+    "Sustainability": (
+        "AI solutions should be designed to be energy efficient, reduce carbon emissions, and "
+        "support a cleaner environment. Efficient model architectures, optimised training and "
+        "inference pipelines, and responsible resource allocation reduce climate impact."
     ),
 }
 
@@ -326,7 +335,7 @@ def evaluate_ai(ai_name: str, current_user=Depends(get_current_user)):
     model_metrics = evaluator.model_metrics(df, computed=computed_values)
 
     # TAF principle scores
-    principles = evaluator.taf_principles(diagnostics, logs_count, model_metrics)
+    principles = evaluator.taf_principles(diagnostics, logs_count, model_metrics, df=df)
 
     # Attach descriptions
     for name in principles:

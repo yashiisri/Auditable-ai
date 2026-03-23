@@ -28,81 +28,81 @@ KPMG_LIGHT_GREY = colors.HexColor("#F3F4F6")
 KPMG_WHITE      = colors.white
 
 PRINCIPLE_COLORS = {
-    "Transparency":     "#00C8FF",
-    "Explainability":   "#00E5A0",
-    "Fairness":         "#FF6B9D",
-    "Accountability":   "#FFB020",
-    "Data Integrity":   "#A78BFA",
-    "Reliability":      "#34D399",
-    "Security":         "#F87171",
-    "Privacy":          "#60A5FA",
-    "Sustainability":   "#4ADE80",
-    "Human-Centricity": "#FBBF24",
+    "Fairness":       "#FF6B9D",
+    "Transparency":   "#00C8FF",
+    "Explainability": "#00E5A0",
+    "Accountability": "#FFB020",
+    "Data Integrity": "#A78BFA",
+    "Reliability":    "#34D399",
+    "Security":       "#F87171",
+    "Safety":         "#FBBF24",
+    "Privacy":        "#60A5FA",
+    "Sustainability":  "#4ADE80",
 }
 
 PRINCIPLE_ICONS = {
-    "Transparency":     "T",
-    "Explainability":   "E",
-    "Fairness":         "F",
-    "Accountability":   "A",
-    "Data Integrity":   "D",
-    "Reliability":      "R",
-    "Security":         "S",
-    "Privacy":          "P",
-    "Sustainability":   "Su",
-    "Human-Centricity": "H",
+    "Fairness":       "F",
+    "Transparency":   "T",
+    "Explainability": "E",
+    "Accountability": "A",
+    "Data Integrity": "D",
+    "Reliability":    "R",
+    "Security":       "Se",
+    "Safety":         "Sa",
+    "Privacy":        "P",
+    "Sustainability":  "Su",
 }
 
 PRINCIPLE_DESCRIPTIONS = {
+    "Fairness": (
+        "AI solutions should be designed to reduce or eliminate bias against individuals, "
+        "communities, and groups. Ongoing bias monitoring and equal error rates across groups "
+        "must be maintained across the full AI model lifecycle."
+    ),
     "Transparency": (
-        "The AI system should be open about its capabilities, limitations, and how it makes decisions. "
-        "Users and stakeholders must be able to understand what the system does and why, including "
-        "training data sources, model architecture, known failure modes, and uncertainty levels."
+        "AI solutions should include responsible disclosure to provide stakeholders with a "
+        "clear understanding of what is happening in each solution across the AI lifecycle, "
+        "including training data, model architecture, known failure modes, and uncertainty levels."
     ),
     "Explainability": (
-        "Decisions and outputs produced by the AI system must be interpretable and explainable to "
-        "relevant stakeholders, including non-technical users, regulators, and affected individuals. "
-        "This includes local explanations, global model behaviour, and confidence quantification."
-    ),
-    "Fairness": (
-        "The AI system must treat all individuals and groups equitably, avoiding discriminatory outcomes "
-        "across protected characteristics such as gender, race, age, and socioeconomic status. "
-        "Ongoing bias monitoring and equal error rates across groups must be maintained."
+        "AI solutions should be developed and delivered in a way that answers the questions of how "
+        "and why a conclusion was drawn from the solution. This includes local explanations, global "
+        "model behaviour, and confidence quantification for all relevant stakeholders."
     ),
     "Accountability": (
-        "Clear lines of responsibility must exist for AI system outcomes. Governance structures, "
-        "comprehensive audit trails, human oversight mechanisms, and escalation procedures must be "
-        "in place to assign responsibility and enable corrective action when harm occurs."
+        "Human oversight and responsibility should be embedded across the AI lifecycle to manage "
+        "risk and comply with applicable laws and regulations. Clear governance structures, "
+        "comprehensive audit trails, and escalation procedures must assign and enforce accountability."
     ),
     "Data Integrity": (
-        "The data used to train and operate the AI must be accurate, complete, representative, "
-        "and free from harmful biases. Data provenance tracking, deduplication, schema enforcement, "
-        "ground-truth labelling quality, and ongoing quality monitoring must be maintained."
+        "Data used in AI solutions should be acquired in compliance with applicable laws and "
+        "assessed for accuracy, completeness, appropriateness, and quality to drive trusted "
+        "decisions. Data provenance, deduplication, and schema enforcement must be maintained."
     ),
     "Reliability": (
-        "The AI system must perform consistently and predictably under both normal and adversarial "
-        "conditions. Performance metrics, degradation detection, and SLA compliance under varying "
-        "load and data distributions must be actively monitored and maintained."
+        "AI solutions should consistently operate in accordance with their intended purpose and "
+        "scope and at the desired level of precision. Performance degradation, failures, and "
+        "edge cases must be actively monitored and SLA compliance maintained."
     ),
     "Security": (
-        "The AI system must be resilient against adversarial attacks, data poisoning, model "
-        "extraction, prompt injection, and other cyber threats. A defence-in-depth approach "
-        "covering input validation, output filtering, and continuous red-teaming must be maintained."
+        "Robust and resilient practices should be implemented to safeguard AI solutions against "
+        "bad actors, misinformation, or adverse events. A defence-in-depth approach covering "
+        "input validation, output filtering, adversarial robustness, and continuous red-teaming."
+    ),
+    "Safety": (
+        "AI solutions should be designed and implemented to safeguard against harm to people, "
+        "businesses, and property. Safety must be embedded across the full AI lifecycle through "
+        "proactive risk assessment, harm prevention controls, and human override mechanisms."
     ),
     "Privacy": (
-        "Personal data used by the AI must be collected, processed, and stored in compliance with "
-        "privacy regulations (GDPR, CCPA). Data minimisation, purpose limitation, consent management, "
-        "anonymisation techniques, and right-to-erasure capabilities must be embedded by design."
+        "AI solutions should be designed to comply with applicable privacy and data protection "
+        "laws and regulations. Data minimisation, purpose limitation, consent management, "
+        "anonymisation, and right-to-erasure must be embedded by design."
     ),
     "Sustainability": (
-        "The AI system should minimise its environmental footprint through efficient model "
-        "architectures, optimised training and inference pipelines, carbon-aware scheduling, "
-        "dataset efficiency, and responsible resource allocation to reduce climate impact."
-    ),
-    "Human-Centricity": (
-        "AI systems must augment rather than replace human judgment in high-stakes decisions. "
-        "Meaningful human oversight, contestability mechanisms, override capabilities, and clear "
-        "escalation paths must be maintained to keep humans in control of consequential outcomes."
+        "AI solutions should be designed to be energy efficient, reduce carbon emissions, and "
+        "support a cleaner environment. Efficient model architectures, optimised training and "
+        "inference pipelines, and responsible resource allocation reduce climate impact."
     ),
 }
 
@@ -976,28 +976,28 @@ def build_pdf(report: dict) -> BytesIO:
     # Principles reference table
     ref_data = [["Principle", "Core Value", "Key Focus Area"]]
     core_values = {
-        "Transparency":     "Trustworthy",
-        "Explainability":   "Trustworthy",
-        "Fairness":         "Values-led",
-        "Accountability":   "Values-led",
-        "Data Integrity":   "Trustworthy",
-        "Reliability":      "Trustworthy",
-        "Security":         "Trustworthy",
-        "Privacy":          "Values-led",
-        "Sustainability":   "Values-led",
-        "Human-Centricity": "Human-centric",
+        "Fairness":       "Values-led",
+        "Transparency":   "Trustworthy",
+        "Explainability": "Trustworthy",
+        "Accountability": "Values-led",
+        "Data Integrity": "Trustworthy",
+        "Reliability":    "Trustworthy",
+        "Security":       "Trustworthy",
+        "Safety":         "Human-centric",
+        "Privacy":        "Values-led",
+        "Sustainability":  "Values-led",
     }
     focus_areas = {
-        "Transparency":     "Openness about capabilities, data, and decision logic",
-        "Explainability":   "Interpretable outputs for all stakeholder levels",
-        "Fairness":         "Equitable treatment across demographic groups",
-        "Accountability":   "Clear governance, audit trails, and responsibility chains",
-        "Data Integrity":   "Accurate, complete, and representative data pipelines",
-        "Reliability":      "Consistent performance under normal and adverse conditions",
-        "Security":         "Resilience against adversarial and cyber threats",
-        "Privacy":          "GDPR/CCPA compliance and data minimisation",
-        "Sustainability":   "Minimised environmental and compute footprint",
-        "Human-Centricity": "Human oversight and contestability in high-stakes decisions",
+        "Fairness":       "Equitable treatment across demographic groups",
+        "Transparency":   "Openness about capabilities, data, and decision logic",
+        "Explainability": "Interpretable outputs for all stakeholder levels",
+        "Accountability": "Clear governance, audit trails, and responsibility chains",
+        "Data Integrity": "Accurate, complete, and representative data pipelines",
+        "Reliability":    "Consistent performance under normal and adverse conditions",
+        "Security":       "Resilience against adversarial and cyber threats",
+        "Safety":         "Safeguard against harm to people, businesses, and property",
+        "Privacy":        "GDPR/CCPA compliance and data minimisation",
+        "Sustainability":  "Minimised environmental and compute footprint",
     }
 
     for pname in principles.keys():

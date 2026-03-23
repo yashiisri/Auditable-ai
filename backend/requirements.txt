@@ -8,3 +8,4 @@ pydantic[email]
 pandas
 python-multipart
 httpx
+reportlab

@@ -1,8 +1,14 @@
 """
-services/sdcc/models/rag.py  (REFACTORED)
-==========================================
-Uses real computed Faithfulness / Answer Relevance / Context Recall /
-Hallucination Rate values from metrics_calculator.
+services/sdcc/models/rag.py
+============================
+RAG (Retrieval-Augmented Generation) — Enterprise-grade evaluator.
+
+Production hardening:
+- Context extraction from input prompts (e.g. "Use the following context: <doc>")
+- has_ctx flag set correctly from both column presence AND extracted context
+- context_coverage computed from actual context availability not just column presence
+- Sample-size warnings
+- All text heuristics blended with metric values when available
 """
 
 from __future__ import annotations
@@ -14,7 +20,7 @@ class RAGEvaluator(BaseEvaluator):
 
     MODEL_TYPE  = "rag"
     LABEL       = "RAG (Retrieval-Augmented Generation)"
-    DESCRIPTION = "LLMs augmented with external knowledge retrieval (vector DB, search index)"
+    DESCRIPTION = "LLMs augmented with external knowledge retrieval"
 
     THRESHOLDS = {
         "faithfulness":       {"low": 0.80, "moderate": 0.65, "unit": "score"},
@@ -22,185 +28,239 @@ class RAGEvaluator(BaseEvaluator):
         "context_recall":     {"low": 0.75, "moderate": 0.60, "unit": "score"},
         "hallucination_rate": {"low": 0.05, "moderate": 0.15, "unit": "ratio", "inverted": True},
         "context_coverage":   {"low": 0.95, "moderate": 0.80, "unit": "ratio"},
-        "avg_latency_ms":     {"low": 1500,  "moderate": 3000, "unit": "ms", "inverted": True},
+        "avg_latency_ms":     {"low": 1500, "moderate": 3000, "unit": "ms",    "inverted": True},
     }
 
     TAF_METRIC_WEIGHTS = {
-        "Reliability":    0.30,
-        "Security":       0.25,
-        "Explainability": 0.25,
+        "Reliability":    0.25,
         "Data Integrity": 0.20,
+        "Safety":         0.20,
+        "Explainability": 0.20,
+        "Security":       0.15,
     }
 
     def model_metrics(self, df: pd.DataFrame, computed: dict | None = None) -> dict:
         c = computed or {}
+        sw = self._validate_sample_size(len(df))
 
-        faith_val  = c.get("faithfulness")      or self._mean(df, "faithfulness", "groundedness")
-        rel_val    = c.get("answer_relevance")   or self._mean(df, "answer_relevance", "relevance_score")
-        recall_val = c.get("context_recall")     or self._mean(df, "context_recall", "context_precision")
-        hall_val   = c.get("hallucination_rate") or self._mean(df, "hallucination", "hallucination_rate")
-        ctx_cov    = c.get("context_coverage")   or self._coverage(
-                         df, "context", "retrieved_chunks", "chunks", "passages")
-        lat_val    = self._mean(df, "latency", "response_time", "duration_ms", "latency_ms")
+        # Compute context_coverage from actual context availability
+        ctx_col = self._col(df, "context","retrieved_chunks","chunks","passages","source_doc")
+        if ctx_col:
+            ctx_coverage_val = float(df[ctx_col].notna().mean())
+        else:
+            # Check if context can be extracted from input prompts
+            inp_col = self._col(df, "input","prompt","query","instruction")
+            if inp_col:
+                inputs = df[inp_col].dropna().astype(str).tolist()
+                extracted = [self._extract_context_from_input(t) for t in inputs]
+                ctx_coverage_val = sum(1 for e in extracted if e) / max(len(inputs), 1)
+            else:
+                ctx_coverage_val = 0.0
 
         return {
             "faithfulness": self._metric_result(
-                faith_val,
-                "Factual consistency of the generated answer with retrieved context "
-                "(computed via semantic similarity between output and context)",
-                "faithfulness",
-            ),
+                c.get("faithfulness") or self._mean(df, "faithfulness", "groundedness"),
+                "Factual consistency of answer with retrieved context (semantic similarity).",
+                "faithfulness"),
             "answer_relevance": self._metric_result(
-                rel_val,
-                "How relevant the generated answer is to the original query "
-                "(computed via query–answer semantic similarity)",
-                "answer_relevance",
-            ),
+                c.get("answer_relevance") or self._mean(df, "answer_relevance", "relevance_score"),
+                "Query-answer semantic similarity.",
+                "answer_relevance"),
             "context_recall": self._metric_result(
-                recall_val,
-                "Proportion of relevant information successfully retrieved from the knowledge base "
-                "(computed as token recall of reference content in retrieved context)",
-                "context_recall",
-            ),
+                c.get("context_recall") or self._mean(df, "context_recall", "context_precision"),
+                "Proportion of reference content found in retrieved context.",
+                "context_recall"),
             "hallucination_rate": self._metric_result(
-                hall_val,
-                "Rate of hallucinated or ungrounded claims — computed as 1 − faithfulness",
-                "hallucination_rate",
-            ),
+                c.get("hallucination_rate") or self._mean(df, "hallucination", "hallucination_rate"),
+                "Rate of ungrounded claims (1 − faithfulness).",
+                "hallucination_rate"),
             "context_coverage": self._metric_result(
-                ctx_cov,
-                "Proportion of records where retrieved context was logged (required for auditability)",
-                "context_coverage",
-            ),
+                c.get("context_coverage") if c.get("context_coverage") is not None else ctx_coverage_val,
+                "Proportion of records with available context (column or extracted from prompt). "
+                f"[{sw['level']}: {sw['message']}]",
+                "context_coverage"),
             "avg_latency_ms": self._metric_result(
-                lat_val,
-                "Mean retrieval + generation latency in milliseconds (from latency column if present)",
-                "avg_latency_ms",
-            ),
+                self._mean(df, "latency", "response_time", "duration_ms", "latency_ms"),
+                "Mean retrieval + generation latency in milliseconds (runtime metric).",
+                "avg_latency_ms"),
         }
 
-    def taf_principles(self, diagnostics: dict, logs_count: int, metrics: dict) -> dict:
-        s = self._structural(diagnostics, logs_count)
-        io = self._io_bonus(s)
-        boost = self._metric_boost(metrics)
-        c = self.clamp
-        p = self.param_score
+    def taf_principles(self, diagnostics: dict, logs_count: int, metrics: dict,
+                       df: pd.DataFrame | None = None) -> dict:
+        # Use context-aware extraction for RAG
+        sp = self._compute_sp(df, extract_context=True)
+        s   = self._structural(diagnostics, logs_count)
+        c   = self.clamp
+        G   = lambda key, fb, inv=False: self._sp(sp, key, fb, inv)
+        M   = lambda key, inverted=False: self._mv(metrics, key, inverted)
 
-        faith_val = metrics.get("faithfulness",   {}).get("value")
-        hall_val  = metrics.get("hallucination_rate", {}).get("value")
-        ctx_cov   = metrics.get("context_coverage",  {}).get("value")
-        has_faith = faith_val is not None
-        has_hall  = hall_val is not None
+        faith   = M("faithfulness")
+        hall    = M("hallucination_rate", inverted=True)
+        ans_rel = M("answer_relevance")
+        ctx_rec = M("context_recall")
+        ctx_cov = M("context_coverage")
 
-        t = {
-            "Schema Confidence":      s["schema_score"],
-            "Field Documentation":    c(io * 4 + s["schema_score"] * 0.2),
-            "Model Version Tracking": 100 if s["has_version"] else 30,
-            "Input/Output Coverage":  c(io * 4.5),
-            "Context Logging":        c((ctx_cov or 0) * 100) if ctx_cov is not None else 20,
+        vol    = s["volume_score"];  schema = s["schema_score"]
+        compl  = s["completeness"]; dup    = s["dup_penalty"]
+        B      = lambda f: 100 if f else 0
+        has_ts  = B(s["has_timestamp"]); has_uid = B(s["has_user_id"])
+        has_ver = B(s["has_version"]);   has_err = B(s["has_error"])
+        has_ovr = B(s["has_override"])
+
+        # has_ctx reflects ACTUAL context availability (column OR extracted from input)
+        ctx_col = self._col(df, "context","retrieved_chunks","chunks","passages","source_doc") if df is not None else None
+        if ctx_col:
+            has_ctx = B(True)
+        else:
+            inp_col = self._col(df, "input","prompt","query") if df is not None else None
+            if inp_col and df is not None:
+                inputs  = df[inp_col].dropna().astype(str).tolist()
+                n_extracted = sum(1 for t in inputs if self._extract_context_from_input(t))
+                has_ctx = self.clamp(int(n_extracted / max(len(inputs),1) * 100))
+            else:
+                has_ctx = 0
+
+        pp = {
+            "Fairness": {
+                "Retrieval Equity":               G("output_equity_score",         ans_rel),
+                "Query Topic Representativeness": G("data_representativeness",     compl),
+                "Answer Length Equity":           G("bias_measurement_coverage",   50),
+                "Fairness Monitoring Signals":    G("fairness_monitoring_signals", 30),
+            },
+            "Transparency": {
+                "Source Citation Rate":           G("output_traceability",         30),
+                "Context Disclosure in Answers":  c(0.5*G("io_transparency",50) + 0.5*has_ctx),
+                "Retrieval Pipeline Visibility":  c(0.5*has_ctx + 0.5*schema),
+                "Model Version Tracking":         c(0.6*has_ver + 0.4*has_ts),
+            },
+            "Explainability": {
+                "Faithfulness to Context":        faith,
+                "Grounded Reasoning Chains":      G("reasoning_transparency", faith),
+                "Answer-Query Alignment":         ans_rel,
+                "Context Recall Coverage":        ctx_rec,
+            },
+            "Accountability": {
+                "Context Logging Rate":           ctx_cov,
+                "Human Escalation Signals":       G("human_oversight_signals",     has_ovr),
+                "Error & Low-Confidence Flagging":G("error_acknowledgment_rate",   has_err),
+                "Audit Trail Coverage":           c(0.35*vol + 0.35*has_ts + 0.30*has_uid),
+            },
+            "Data Integrity": {
+                "Context Coverage Rate":          ctx_cov,
+                "Ground Truth Overlap":           G("ground_truth_accuracy",       c(0.5*faith+0.5*ctx_rec)),
+                "Retrieved Context Quality":      c(0.5*faith + 0.5*ctx_rec),
+                "Schema & Completeness":          c(0.5*compl + 0.3*dup + 0.2*schema),
+            },
+            "Reliability": {
+                "Faithfulness Score":             faith,
+                "Answer Relevance Score":         ans_rel,
+                "Context Recall Rate":            ctx_rec,
+                "Output Consistency":             G("output_consistency_score",    compl),
+            },
+            "Security": {
+                "Query Injection Resistance":     G("injection_rate",              80, inv=True),
+                "Hallucination-as-Attack Control":c(0.6*hall + 0.4*G("hallucination_indicators",hall,inv=True)),
+                "PII in Retrieved Context":       G("pii_in_outputs",              80, inv=True),
+                "Input Query Anomaly Rate":       G("input_anomaly_rate",          80, inv=True),
+            },
+            "Safety": {
+                "Hallucination Containment":      c(0.6*hall + 0.4*G("hallucination_indicators",hall,inv=True)),
+                "Ungrounded Claim Prevention":    faith,
+                "Human Override on Low Faith":    c(0.5*G("human_override_signals",has_ovr)+0.5*has_ovr),
+                "Harmful Content in Answers":     G("harmful_content_rate",        80, inv=True),
+            },
+            "Privacy": {
+                "PII Leakage in Retrieved Answers":G("pii_leakage_rate",           80, inv=True),
+                "Answer Data Minimisation":       G("data_minimisation_score",     60),
+                "Anonymisation of Retrieved Data":G("anonymisation_score",         60),
+                "Retention Signal Awareness":     G("data_retention_signals",      30),
+            },
+            "Sustainability": {
+                "Answer Token Economy":           G("token_economy",               60),
+                "Context-Answer Redundancy":      G("output_redundancy",           80, inv=True),
+                "Cross-Answer Deduplication":     G("lexical_redundancy",          80, inv=True),
+                "Retrieval Pipeline Efficiency":  c(0.5*G("token_efficiency",60)+0.5*G("output_complexity_proxy",60)),
+            },
         }
+        result = self._assemble_principles(pp, metrics)
+        sw = self._validate_sample_size(logs_count)
+        for pdata in result.values():
+            pdata["sample_size_warning"] = sw
+        return result
 
-        e = {
-            "Model Interpretability":  55,
-            "Faithfulness Score":      c((faith_val or 0) * 100) if has_faith else 30,
-            "Source Citation Logging": 100 if s["has_context"] else 20,
-            "Feedback Integration":    100 if s["has_feedback"] else 30,
-            "Output Traceability":     c(io * 4 + (20 if s["has_context"] else 0)),
-        }
-
-        f = {
-            "Data Completeness":    s["completeness"],
-            "Query Coverage":       100 if s["has_input"] else 30,
-            "Demographic Coverage": c(60 + s["text_ratio"] * 0.4),
-            "Bias Indicator Fields": 100 if s["has_feedback"] else 35,
-            "Missing Data Equity":  c((1 - s["missing"] * 2) * 100),
-        }
-
-        a = {
-            "Audit Log Volume":        s["volume_score"],
-            "Timestamp Coverage":      100 if s["has_timestamp"] else 20,
-            "User Attribution":        100 if s["has_user_id"] else 25,
-            "Model Version Control":   100 if s["has_version"] else 30,
-            "Error/Exception Logging": 100 if s["has_error"] else 35,
-        }
-
-        di = {
-            "Completeness Score":        s["completeness"],
-            "Duplicate-Free Rate":       s["dup_penalty"],
-            "Context Logged Rate":       c((ctx_cov or 0) * 100) if ctx_cov is not None else 20,
-            "Reference Answer Coverage": 100 if s["has_ref"] else 30,
-            "Schema Consistency":        s["schema_score"],
-        }
-
-        hall_score = c((1 - (hall_val or 1)) * 100) if has_hall else 30
-        r = {
-            "Faithfulness Score":  c((faith_val or 0) * 100) if has_faith else 30,
-            "Hallucination Rate":  hall_score,
-            "Latency Monitoring":  100 if s["has_latency"] else 30,
-            "Error Rate Tracking": 100 if s["has_error"] else 35,
-            "Volume Sufficiency":  s["volume_score"],
-        }
-
-        sec = {
-            "Hallucination Control": hall_score,
-            "Input Validation":      c(s["schema_score"] * 0.8 + (20 if s["has_input"] else 0)),
-            "Prompt Injection Risk": 50,
-            "Content Moderation":    100 if s["has_safety"] else 25,
-            "PII Detection":         100 if s["has_pii"] else 20,
-        }
-
-        pr = {
-            "PII Field Tracking":     100 if s["has_pii"] else 20,
-            "Data Minimisation":      c(100 - (s["total_cols"] / 20) * 40),
-            "User Anonymisation":     50 if s["has_user_id"] else 70,
-            "Consent Management":     40,
-            "Data Retention Signals": 100 if s["has_timestamp"] else 30,
-        }
-
-        su = {
-            "Dataset Efficiency":     c(100 - (logs_count / 10_000) * 30),
-            "Retrieval Efficiency":   100 if s["has_latency"] else 40,
-            "Compute Proxy Score":    50,
-            "Redundancy Elimination": s["dup_penalty"],
-            "Resource Optimisation":  c(s["schema_score"] * 0.6 + 40),
-        }
-
-        sf = {
-            "Harm Prevention Logging":   100 if s["has_safety"] else 20,
-            "Hallucination Containment": c((1 - (hall_val or 1)) * 100) if hall_val is not None else 25,
-            "Human Override Capability": 100 if s["has_override"] else (60 if s["has_feedback"] else 20),
-            "Incident Response Signals": 100 if s["has_error"] else 30,
-            "Safeguard Effectiveness":   100 if (s["has_safety"] and s["has_context"]) else 25,
-        }
-
-        raw = {
-            "Transparency":   {"score": p(t),   "parameters": t},
-            "Explainability": {"score": p(e),   "parameters": e},
-            "Fairness":       {"score": p(f),   "parameters": f},
-            "Accountability": {"score": p(a),   "parameters": a},
-            "Data Integrity": {"score": p(di),  "parameters": di},
-            "Reliability":    {"score": p(r),   "parameters": r},
-            "Security":       {"score": p(sec), "parameters": sec},
-            "Privacy":        {"score": p(pr),  "parameters": pr},
-            "Sustainability": {"score": p(su),  "parameters": su},
-            "Safety":         {"score": p(sf),  "parameters": sf},
-        }
-
-        for principle, b in boost.items():
-            if principle in raw:
-                raw[principle]["score"] = c(raw[principle]["score"] + b)
-
-        return raw
-
-    _METRIC_RECS = {
-        "faithfulness":       "Improve faithfulness by adding a post-generation verification step or self-critique loop.",
-        "answer_relevance":   "Tune retrieval to return more relevant context chunks. Consider hybrid BM25 + dense retrieval.",
-        "context_recall":     "Expand the knowledge base or improve embeddings to increase retrieval coverage.",
-        "hallucination_rate": "Add a hallucination detector as a post-processing guard before returning answers.",
-        "context_coverage":   "Ensure retrieved context is always logged — missing context makes RAG unauditable.",
-        "avg_latency_ms":     "Optimise retrieval pipeline: add caching, reduce chunk count, or use a faster encoder.",
+    _STRUCTURAL_RECS = {
+        "Fairness": {
+            "Retrieval Equity":               "Ensure retrieval quality is consistent across all query topics and user groups.",
+            "Query Topic Representativeness": "Diversify evaluation queries across topics, languages, and user personas.",
+            "Answer Length Equity":           "Ensure answers are equally detailed regardless of query demographic signals.",
+            "Fairness Monitoring Signals":    "Add query-type labels to measure retrieval equity across categories.",
+        },
+        "Transparency": {
+            "Source Citation Rate":           "Include source citations in all retrieved answers.",
+            "Context Disclosure in Answers":  "Log retrieved context alongside answers for full disclosure.",
+            "Retrieval Pipeline Visibility":  "Document retrieval pipeline; log retrieval scores per query.",
+            "Model Version Tracking":         "Version-stamp all retrieval index snapshots and generation model checkpoints.",
+        },
+        "Explainability": {
+            "Faithfulness to Context":        "Ensure answers are grounded in retrieved context; use self-consistency checks.",
+            "Grounded Reasoning Chains":      "Include reasoning connectives linking retrieved evidence to the answer.",
+            "Answer-Query Alignment":         "Improve retrieval relevance; use hybrid BM25 + dense retrieval.",
+            "Context Recall Coverage":        "Expand knowledge base; improve embedding quality for better recall.",
+        },
+        "Accountability": {
+            "Context Logging Rate":           "Always log retrieved context — missing context makes RAG unauditable.",
+            "Human Escalation Signals":       "Flag low-faithfulness answers for human review before serving.",
+            "Error & Low-Confidence Flagging":"Log and flag answers with faithfulness below threshold.",
+            "Audit Trail Coverage":           "Log query, context, answer, faithfulness, and timestamp per request.",
+        },
+        "Data Integrity": {
+            "Context Coverage Rate":          "Ensure retrieved context is logged or extractable for every record.",
+            "Ground Truth Overlap":           "Add reference answers; measure token-level overlap with context.",
+            "Retrieved Context Quality":      "Improve retrieval precision; filter low-relevance chunks.",
+            "Schema & Completeness":          "Enforce schema validation at ingestion; deduplicate knowledge base documents.",
+        },
+        "Reliability": {
+            "Faithfulness Score":             "Add post-generation faithfulness verification step.",
+            "Answer Relevance Score":         "Tune retrieval; adjust top-k and similarity threshold.",
+            "Context Recall Rate":            "Expand knowledge base; improve embedding model quality.",
+            "Output Consistency":             "Reduce answer variance for similar queries; use lower temperature.",
+        },
+        "Security": {
+            "Query Injection Resistance":     "Add injection detection to query preprocessing pipeline.",
+            "Hallucination-as-Attack Control":"Implement faithfulness guardrails; block low-grounding outputs.",
+            "PII in Retrieved Context":       "Scan knowledge base for PII; implement redaction before indexing.",
+            "Input Query Anomaly Rate":       "Validate and sanitise all queries before retrieval.",
+        },
+        "Safety": {
+            "Hallucination Containment":      "Implement faithfulness threshold; block answers below 0.6 faithfulness.",
+            "Ungrounded Claim Prevention":    "Only serve answers grounded in retrieved context.",
+            "Human Override on Low Faith":    "Route low-confidence answers to human review queue.",
+            "Harmful Content in Answers":     "Filter retrieved documents for harmful content before generation.",
+        },
+        "Privacy": {
+            "PII Leakage in Retrieved Answers":"Scan knowledge base for PII; redact before indexing and serving.",
+            "Answer Data Minimisation":       "Keep answers concise; avoid volunteering unrequested personal details.",
+            "Anonymisation of Retrieved Data":"Anonymise personal identifiers in source documents before indexing.",
+            "Retention Signal Awareness":     "Implement document expiry policies in the knowledge base.",
+        },
+        "Sustainability": {
+            "Answer Token Economy":           "Reduce mean answer length; use abstractive compression.",
+            "Context-Answer Redundancy":      "Reduce repetitive phrasing in generated answers.",
+            "Cross-Answer Deduplication":     "Cache frequent queries; return cached answers for near-duplicate queries.",
+            "Retrieval Pipeline Efficiency":  "Reduce retrieved chunk count; use approximate nearest-neighbour search.",
+        },
     }
 
-    def _rec_for_metric(self, metric_name: str) -> str:
-        return self._METRIC_RECS.get(metric_name,
-            f"Investigate elevated risk in '{metric_name}' for this RAG system.")
+    def _rec_for_metric(self, m: str) -> str:
+        return {
+            "faithfulness":       "Add post-generation verification step or self-critique loop.",
+            "answer_relevance":   "Tune retrieval; use hybrid BM25 + dense retrieval.",
+            "context_recall":     "Expand knowledge base; improve embedding quality.",
+            "hallucination_rate": "Add hallucination detector as post-processing guard.",
+            "context_coverage":   "Ensure context is logged or embeddable in input prompts.",
+            "avg_latency_ms":     "Add caching, reduce chunk count, use faster encoder.",
+        }.get(m, f"Investigate elevated risk in '{m}'.")    
+        
+        
+        
+        

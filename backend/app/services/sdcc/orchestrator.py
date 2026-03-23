@@ -27,20 +27,76 @@ from app.services.sdcc.detector import detect_model_type
 
 # ── File parser ───────────────────────────────────────────────────────────────
 
-def parse_upload(file: UploadFile) -> pd.DataFrame:
-    """Parse a CSV or JSON upload into a normalised DataFrame."""
-    filename = (file.filename or "").lower()
+# ── Supported document formats for direct document upload ────────────────────
+_DOCUMENT_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
+_LOG_EXTENSIONS      = {".csv", ".json"}
 
+
+def is_document_upload(filename: str) -> bool:
+    """Return True if this is a raw document upload (not a CSV/JSON log)."""
+    lower = (filename or "").lower()
+    return any(lower.endswith(ext) for ext in _DOCUMENT_EXTENSIONS)
+
+
+def parse_upload(file: UploadFile) -> pd.DataFrame:
+    """
+    Parse an uploaded file into a normalised DataFrame.
+
+    Supported formats:
+      CSV / JSON  → normal log format: each row = one inference record
+      TXT / MD    → treated as a source document; produces a single-row DataFrame
+                    with columns: [source, document_mode=True]
+      PDF / DOCX  → text extracted and treated as source document (single row)
+
+    For document uploads (TXT/PDF/DOCX), the DataFrame has columns:
+      source   : the full extracted document text
+    The evaluate endpoint detects document_mode and handles accordingly.
+    """
+    filename = (file.filename or "").lower()
+    content  = file.file.read()
+
+    # ── Raw document upload ───────────────────────────────────────────────────
+    if is_document_upload(filename):
+        from app.services.sdcc.models.summarization import SummarizationEvaluator
+        try:
+            text = SummarizationEvaluator.extract_text_from_document(content, filename)
+        except ValueError as e:
+            raise ValueError(str(e))
+
+        if not text or not text.strip():
+            raise ValueError(f"Could not extract any text from '{filename}'. "
+                             "Ensure the document is not empty or password-protected.")
+
+        # Split into chunks of ~500 words to simulate multi-document evaluation
+        words  = text.split()
+        chunk_size = 500
+        chunks = []
+        for i in range(0, len(words), chunk_size):
+            chunk = " ".join(words[i:i+chunk_size])
+            if chunk.strip():
+                chunks.append(chunk)
+
+        if not chunks:
+            chunks = [text]
+
+        df = pd.DataFrame({"source": chunks})
+        df["_document_mode"] = True   # flag for evaluate endpoint
+        return df
+
+    # ── CSV / JSON log upload ─────────────────────────────────────────────────
+    import io
     if filename.endswith(".json"):
-        content = json.load(file.file)
-        if isinstance(content, list):
-            df = pd.DataFrame(content)
-        elif isinstance(content, dict):
-            df = pd.json_normalize(content)
+        content_str = content.decode("utf-8", errors="replace")
+        import json as _json
+        parsed = _json.loads(content_str)
+        if isinstance(parsed, list):
+            df = pd.DataFrame(parsed)
+        elif isinstance(parsed, dict):
+            df = pd.json_normalize(parsed)
         else:
             raise ValueError("JSON must be a list of objects or a dict.")
     else:
-        df = pd.read_csv(file.file)
+        df = pd.read_csv(io.BytesIO(content))
 
     # Normalise: lowercase, strip whitespace, underscores for spaces
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
@@ -104,15 +160,28 @@ def _recommendation(dq_score: int, logs_count: int, model_type: str) -> str:
 def run_sdcc_pipeline(ai_name: str, file: UploadFile, current_user: dict) -> dict:
     df = parse_upload(file)
 
-    model_type, detection_confidence = detect_model_type(df)
-    quality = compute_data_quality(df)
+    # ── Detect document_mode ─────────────────────────────────────────────────
+    document_mode = bool(df.get("_document_mode", pd.Series([False])).any()
+                         if "_document_mode" in df.columns else False)
+    if document_mode:
+        # Document upload: force summarization model type
+        # Remove the internal flag column before analysis
+        df_clean = df.drop(columns=["_document_mode"])
+        model_type          = "summarization"
+        detection_confidence = 0.95   # we're certain — it's a document
+    else:
+        df_clean = df
+        model_type, detection_confidence = detect_model_type(df_clean)
 
-    return {
+    quality = compute_data_quality(df_clean)
+
+    result = {
         "scan_id":              str(uuid.uuid4()),
         "timestamp":            datetime.utcnow().isoformat(),
         "model_type":           model_type,
         "detection_confidence": detection_confidence,
-        "logs_ingested":        len(df),
+        "document_mode":        document_mode,
+        "logs_ingested":        len(df_clean),
         "data_quality_score":   quality["data_quality_score"],
         "structural_risk":      _structural_risk(quality["data_quality_score"]),
         "diagnostics": {
@@ -124,10 +193,22 @@ def run_sdcc_pipeline(ai_name: str, file: UploadFile, current_user: dict) -> dic
             "numeric_columns":   quality["numeric_columns"],
             "column_names":      quality["column_names"],
         },
-        "recommendation": _recommendation(
-            quality["data_quality_score"], len(df), model_type
+        "recommendation": (
+            f"Document uploaded and split into {len(df_clean)} chunk(s) for summarization evaluation. "
+            "The system will evaluate compression, faithfulness, coverage, and abstractiveness. "
+            "Add a 'summary' column or reference summaries for supervised metrics."
+            if document_mode
+            else _recommendation(quality["data_quality_score"], len(df_clean), model_type)
         ),
         # Store up to 1 000 rows so /evaluate can recompute model metrics
-        # without the file being re-uploaded.
-        "sample_records": df.head(1_000).to_dict(orient="records"),
+        "sample_records": df_clean.head(1_000).to_dict(orient="records"),
     }
+
+    if document_mode:
+        result["document_mode_note"] = (
+            "Raw document uploaded. Source text has been split into "
+            f"{len(df_clean)} chunk(s). To evaluate generated summaries, "
+            "provide them via the evaluate endpoint."
+        )
+
+    return result

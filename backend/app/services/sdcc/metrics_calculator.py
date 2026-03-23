@@ -572,15 +572,19 @@ def compute_classification_metrics(
     y_true = y_true[:n]
 
     classes = sorted(set(y_true) | set(y_pred))
-    avg = "binary" if len(classes) == 2 else "macro"
+    # Always use 'macro' for string labels.
+    # 'binary' requires numeric pos_label (defaults to 1), which crashes on
+    # string class labels like 'spam'/'ham' and silently returns 0.
+    avg = "macro"
 
     if _HAS_SKLEARN:
         try:
             result["f1_score"]  = float(f1_score(y_true, y_pred, average=avg, zero_division=0))
             result["precision"] = float(precision_score(y_true, y_pred, average=avg, zero_division=0))
             result["recall"]    = float(recall_score(y_true, y_pred, average=avg, zero_division=0))
-        except Exception:
-            pass
+        except Exception as _ske:
+            # Log the error into result so it surfaces in computation_notes
+            result["_sklearn_error"] = str(_ske)
 
         # ROC-AUC — binary only (needs probability column)
         if conf_col is not None and len(classes) == 2:
@@ -729,6 +733,168 @@ def compute_cv_metrics(df: pd.DataFrame) -> dict[str, Optional[float]]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Summarization reference-free metrics
+# ─────────────────────────────────────────────────────────────────────────────
+
+def compute_coverage_score(
+    summaries: list[str],
+    sources: list[str],
+) -> Optional[float]:
+    """
+    Coverage: what proportion of the source document's key sentences are
+    reflected in the summary (by key-word overlap).
+
+    Algorithm:
+      1. Extract "key sentences" from source = sentences above mean TF-IDF weight
+      2. For each key sentence, check if its main content words appear in the summary
+      3. Coverage = mean fraction of key sentences covered
+
+    Uses a simple TF-IDF proxy (term frequency weighted by inverse doc frequency
+    across the batch) — no external libraries needed.
+    """
+    if not summaries or not sources:
+        return None
+
+    def _tokenize(text: str) -> list[str]:
+        return re.findall(r"\b[a-z]+\b", text.lower())
+
+    def _sentences(text: str) -> list[str]:
+        return [s.strip() for s in re.split(r"[.!?]+", text) if len(s.strip()) > 20]
+
+    # Build IDF from source corpus
+    all_docs = [_tokenize(s) for s in sources]
+    doc_count = max(len(all_docs), 1)
+    df_counts: Counter = Counter()
+    for doc in all_docs:
+        for term in set(doc):
+            df_counts[term] += 1
+    idf = {t: math.log(doc_count / (1 + df_counts[t])) for t in df_counts}
+
+    scores = []
+    for summary, source in zip(summaries, sources):
+        src_tokens = _tokenize(source)
+        src_sents  = _sentences(source)
+        if not src_sents:
+            scores.append(1.0)
+            continue
+
+        # TF for this document
+        tf = Counter(src_tokens)
+        total = max(sum(tf.values()), 1)
+
+        # Score each source sentence by mean TF-IDF of its tokens
+        sent_scores = []
+        for sent in src_sents:
+            s_toks = _tokenize(sent)
+            if not s_toks:
+                continue
+            tfidf = sum((tf[t] / total) * idf.get(t, 0) for t in s_toks) / len(s_toks)
+            sent_scores.append((sent, tfidf))
+
+        if not sent_scores:
+            scores.append(0.5)
+            continue
+
+        # Key sentences = top 30% by TF-IDF score
+        sent_scores.sort(key=lambda x: x[1], reverse=True)
+        top_k = max(1, len(sent_scores) // 3)
+        key_sents = [s for s, _ in sent_scores[:top_k]]
+
+        # Check how many key sentences have their content words in the summary
+        summary_words = set(_tokenize(summary))
+        covered = 0
+        for ks in key_sents:
+            ks_words = set(_tokenize(ks)) - {"the","a","an","is","are","was","were","of","to","in","for","on","with","as","by","at","from","this","that","it","be","has","have","had","its","their","they","we","he","she","his","her"}
+            if not ks_words:
+                covered += 1
+                continue
+            overlap = len(ks_words & summary_words) / len(ks_words)
+            if overlap >= 0.40:  # 40% of key content words appear in summary
+                covered += 1
+
+        scores.append(covered / len(key_sents))
+
+    return _safe_mean(scores)
+
+
+def compute_density_score(
+    summaries: list[str],
+    sources: list[str],
+) -> Optional[float]:
+    """
+    Density: proportion of summary words that appear in verbatim spans from the source.
+    High density = extractive summary (copy-pastes source sentences)
+    Low density  = abstractive summary (paraphrases and synthesises)
+
+    For a high-quality abstractive summarizer, density should be MODERATE (0.4-0.7):
+    - Too high (>0.8): model is just copy-pasting, not summarising
+    - Too low (<0.2):  model may be hallucinating or too disconnected from source
+
+    Score returned: 1.0 = ideal abstractive range, 0.0 = extreme copy or extreme divergence.
+    """
+    if not summaries or not sources:
+        return None
+
+    scores = []
+    for summary, source in zip(summaries, sources):
+        s_words = summary.lower().split()
+        src_text = source.lower()
+
+        if not s_words:
+            scores.append(0.0)
+            continue
+
+        # Count how many summary words appear in verbatim source spans (window of 4)
+        src_words = src_text.split()
+        src_bigrams = set(" ".join(src_words[i:i+3]) for i in range(len(src_words)-2))
+        matched = 0
+        for i in range(len(s_words) - 2):
+            trigram = " ".join(s_words[i:i+3])
+            if trigram in src_bigrams:
+                matched += 3
+        density = matched / max(len(s_words), 1)
+
+        # Ideal abstractive density: 0.3 - 0.65
+        # Score: peaks at 0.5, falls off toward 0 and 1
+        if 0.30 <= density <= 0.65:
+            score = 1.0 - abs(density - 0.475) / 0.175
+        elif density < 0.30:
+            # Very abstractive — slight penalty but not severe (could be good abstraction)
+            score = 0.5 + density / 0.30 * 0.5
+        else:
+            # Very extractive — significant penalty
+            score = max(0.0, 1.0 - (density - 0.65) / 0.35)
+
+        scores.append(min(1.0, max(0.0, score)))
+
+    return _safe_mean(scores)
+
+
+def compute_summary_redundancy(summaries: list[str]) -> Optional[float]:
+    """
+    Intra-summary redundancy: proportion of repeated bigrams within each summary.
+    Lower is better (0.0 = no repetition, 1.0 = highly repetitive).
+    Score returned as 1.0 - redundancy so higher = better for scoring.
+    """
+    if not summaries:
+        return None
+
+    scores = []
+    for summary in summaries:
+        words = summary.lower().split()
+        if len(words) < 4:
+            scores.append(1.0)
+            continue
+        bigrams = [tuple(words[i:i+2]) for i in range(len(words)-1)]
+        counts = Counter(bigrams)
+        repeated = sum(v - 1 for v in counts.values() if v > 1)
+        redundancy = min(repeated / max(len(bigrams), 1), 1.0)
+        scores.append(1.0 - redundancy)  # invert: higher = better
+
+    return _safe_mean(scores)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # PUBLIC API — one dispatcher per model type
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -772,16 +938,34 @@ def calculate_metrics(model_type: str, df: pd.DataFrame) -> dict[str, Optional[f
     # ── Dispatch ───────────────────────────────────────────────────────────────
 
     if model_type == "summarization":
-        ref_list  = refs or inputs   # fall back to using input as "reference"
-        rouge     = compute_rouge(outputs, ref_list)
+        # ── Reference-supervised metrics (only when reference summaries exist) ──
+        # IMPORTANT: We do NOT fall back to inputs as references.
+        # Comparing a summary to the source document via ROUGE measures verbatim
+        # copy rate, not quality. An abstractive summary SHOULD use different words.
+        has_refs = bool(refs and len(refs) >= n)
+        ref_list = refs[:n] if has_refs else None
+
+        # ── Reference-free metrics (always computable from source + summary) ──
+        # Faithfulness: semantic similarity of summary to source document
+        # This is the right signal when references are absent.
+        source_list = inputs  # the source documents
+
+        rouge_scores = compute_rouge(outputs, ref_list) if has_refs else {"rouge_1": None, "rouge_2": None, "rouge_l": None}
+
         return {
-            "rouge_1":           rouge["rouge_1"],
-            "rouge_2":           rouge["rouge_2"],
-            "rouge_l":           rouge["rouge_l"],
-            "bleu":              compute_bleu(outputs, ref_list),
-            "bertscore":         compute_bertscore(outputs, ref_list),
-            "faithfulness":      compute_faithfulness(outputs, ref_list),
-            "reference_coverage": float(len(refs) / n) if refs else 0.0,
+            # Supervised (require reference summaries)
+            "rouge_1":            rouge_scores["rouge_1"],
+            "rouge_2":            rouge_scores["rouge_2"],
+            "rouge_l":            rouge_scores["rouge_l"],
+            "bleu":               compute_bleu(outputs, ref_list) if has_refs else None,
+            "bertscore":          compute_bertscore(outputs, ref_list) if has_refs else None,
+            # Reference-free (always computed)
+            "faithfulness":       compute_faithfulness(outputs, source_list),  # summary vs SOURCE
+            "coverage_score":     compute_coverage_score(outputs, source_list),
+            "density_score":      compute_density_score(outputs, source_list),
+            "compression_ratio":  compute_compression_ratio(source_list, outputs),
+            "summary_redundancy": compute_summary_redundancy(outputs),
+            "reference_coverage": float(len(refs) / n) if has_refs else 0.0,
         }
 
     elif model_type == "rag":

@@ -19,4 +19,8 @@ MODEL_REGISTRY: dict = {
 }
 
 def get_evaluator(model_type: str):
+    """
+    Return the evaluator class for the given model_type.
+    Falls back to GeneralLLMEvaluator for unknown types.
+    """
     return MODEL_REGISTRY.get(model_type, GeneralLLMEvaluator)
