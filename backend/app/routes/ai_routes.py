@@ -1,26 +1,3 @@
-"""
-routes/ai_routes.py  (REFACTORED)
-===================================
-Key changes from original
---------------------------
-1. /sdcc/ingest/{ai_name}
-   - Still accepts any CSV/JSON but now validates that at least an `input`
-     OR `output` column is present (warns if only one is present).
-   - Stores the sample_records as before for the /evaluate step.
-
-2. /evaluate/{ai_name}
-   - After reconstructing the DataFrame, calls
-     `metrics_calculator.calculate_metrics(model_type, df)` to compute
-     ALL model-specific metrics from the raw text.
-   - Injects the `computed` dict into `evaluator.model_metrics(df, computed)`
-     so every metric uses real NLP/ML calculations.
-   - Adds a `computation_notes` field to the report summarising which
-     libraries were used and which fell back to heuristics.
-
-Everything else (TAF scoring, risk analysis, findings, PDF generation) is
-unchanged — it receives real metric values instead of nulls.
-"""
-
 from __future__ import annotations
 import uuid
 from datetime import datetime
@@ -37,7 +14,6 @@ from app.services.sdcc.orchestrator import run_sdcc_pipeline
 from app.services.sdcc.metrics_calculator import calculate_metrics
 
 router = APIRouter()
-
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
@@ -183,7 +159,6 @@ def get_sdcc_status(ai_name: str, current_user=Depends(get_current_user)):
             detail="No ingested data found. Please upload logs first.",
         )
     return doc
-
 
 # ── Principle descriptions ─────────────────────────────────────────────────────
 
