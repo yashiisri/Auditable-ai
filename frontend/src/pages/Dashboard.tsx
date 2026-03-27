@@ -365,80 +365,90 @@ export default function Dashboard() {
         </div>
 
         {/* ── BLACK BOX RESULT SUMMARY ── */}
-        {bbResult && bbResult.status !== "manual_required" && (
-          <div className="glass-card sdcc-enterprise" style={{ marginBottom: "36px", animation: "fadeInUp 0.5s ease forwards" }}>
-            <h2>🔍 Black Box Structural Summary</h2>
-            <div className="sdcc-grid">
-              <div className="metric-card">
-                <span>Probes Run</span>
-                <strong>{bbResult.probes_run}</strong>
-              </div>
-              <div className="metric-card">
-                <span>Overall Score</span>
-                <strong style={{ color: riskColor(bbResult.risk_level) }}>
-                  {bbResult.overall_score}%
-                </strong>
-              </div>
-              <div className="metric-card">
-                <span>Findings</span>
-                <strong style={{ color: bbResult.findings.length === 0 ? "#00C896" : "#ff4d4d" }}>
-                  {bbResult.findings.length}
-                </strong>
-              </div>
-              <div className={`metric-card risk-${bbResult.risk_level.toLowerCase()}`}>
-                <span>Risk Level</span>
-                <strong>{bbResult.risk_level}</strong>
-              </div>
-            </div>
-            <div className="sdcc-recommendation">
-              💡 {bbResult.findings.length === 0
-                ? "All governance probes passed. AI system aligns with Trusted AI principles."
-                : `${bbResult.findings.length} governance violation(s) detected across ${[...new Set(bbResult.findings.map((f: BlackBoxFinding) => f.category))].join(", ")}.`
-              }
-            </div>
-          </div>
-        )}
+     {/* ── IMPROVED BLACK BOX STRUCTURAL SUMMARY ── */}
+{bbResult && bbResult.status !== "manual_required" && (
+  <div className="blackbox-summary glass-card" style={{ marginBottom: "36px" }}>
+    <h2>🔍 Black Box Audit Summary</h2>
+    
+    <div className="sdcc-grid">
+      <div className="metric-item">
+        <span>Probes Run</span>
+        <strong>{bbResult.probes_run}</strong>
+      </div>
+      <div className="metric-item">
+        <span>Overall Score</span>
+        <strong style={{ color: riskColor(bbResult.risk_level) }}>
+          {bbResult.overall_score}%
+        </strong>
+      </div>
+      <div className="metric-item">
+        <span>Findings</span>
+        <strong style={{ 
+          color: bbResult.findings.length === 0 ? "#10B981" : "#EF4444" 
+        }}>
+          {bbResult.findings.length}
+        </strong>
+      </div>
+      <div className={`metric-item risk-${bbResult.risk_level.toLowerCase()}`}>
+        <span>Risk Level</span>
+        <strong>{bbResult.risk_level}</strong>
+      </div>
+    </div>
 
-        {bbResult && bbResult.status === "manual_required" && (
-          <div className="glass-card" style={{ marginBottom: "36px", borderColor: "rgba(255,176,32,0.3)" }}>
-            <h2>🖥 UI Mode — Manual Review Required</h2>
-            <p style={{ color: "#9DBFE0", fontSize: "14px", lineHeight: "1.6" }}>{bbResult.message}</p>
-          </div>
-        )}
+    <div className="sdcc-recommendation">
+      💡 {bbResult.findings.length === 0
+        ? "All governance probes passed. AI system aligns with Trusted AI principles."
+        : `${bbResult.findings.length} governance violation(s) detected across ${[...new Set(bbResult.findings.map((f: BlackBoxFinding) => f.category))].join(", ")}.`
+      }
+    </div>
+  </div>
+)}
+
+{bbResult && bbResult.status === "manual_required" && (
+  <div className="glass-card" style={{ marginBottom: "36px", borderColor: "rgba(255,176,32,0.3)" }}>
+    <h2>🖥 UI Mode — Manual Review Required</h2>
+    <p style={{ color: "#9DBFE0", fontSize: "14px", lineHeight: "1.6" }}>{bbResult.message}</p>
+  </div>
+)}
 
         {/* ── SDCC SUMMARY ── */}
-        {sdccSummary && (
-          <div className="glass-card sdcc-enterprise">
-            <h2>📈 SDCC Structural Summary</h2>
-            <div className="sdcc-grid">
-              <div className="metric-card">
-                <span>Model Type</span>
-                <strong>{sdccSummary.model_type}</strong>
-              </div>
-              <div className="metric-card">
-                <span>Logs</span>
-                <strong>{sdccSummary.logs_ingested}</strong>
-              </div>
-              <div className="metric-card">
-                <span>Data Quality</span>
-                <strong>{sdccSummary.data_quality_score}%</strong>
-              </div>
-              <div className={`metric-card risk-${sdccSummary.structural_risk?.toLowerCase()}`}>
-                <span>Structural Risk</span>
-                <strong>{sdccSummary.structural_risk}</strong>
-              </div>
-              {sdccSummary.detection_confidence !== undefined && (
-                <div className="metric-card">
-                  <span>Detection Confidence</span>
-                  <strong>{Math.round(sdccSummary.detection_confidence * 100)}%</strong>
-                </div>
-              )}
-            </div>
-            {sdccSummary.recommendation && (
-              <div className="sdcc-recommendation">💡 {sdccSummary.recommendation}</div>
-            )}
-          </div>
-        )}
+       {/* ── IMPROVED SDCC STRUCTURAL SUMMARY ── */}
+{sdccSummary && (
+  <div className="sdcc-summary glass-card">
+    <h2>📊 SDCC Structural Summary</h2>
+    
+    <div className="sdcc-grid">
+      <div className="metric-item">
+        <span>Model Type</span>
+        <strong>{sdccSummary.model_type}</strong>
+      </div>
+      <div className="metric-item">
+        <span>Logs Ingested</span>
+        <strong>{sdccSummary.logs_ingested}</strong>
+      </div>
+      <div className="metric-item">
+        <span>Data Quality</span>
+        <strong>{sdccSummary.data_quality_score}%</strong>
+      </div>
+      <div className={`metric-item risk-${sdccSummary.structural_risk.toLowerCase()}`}>
+        <span>Structural Risk</span>
+        <strong>{sdccSummary.structural_risk}</strong>
+      </div>
+      {sdccSummary.detection_confidence !== undefined && (
+        <div className="metric-item">
+          <span>Detection Confidence</span>
+          <strong>{Math.round(sdccSummary.detection_confidence * 100)}%</strong>
+        </div>
+      )}
+    </div>
+
+    {sdccSummary.recommendation && (
+      <div className="sdcc-recommendation">
+        💡 {sdccSummary.recommendation}
+      </div>
+    )}
+  </div>
+)}
 
         {/* ── COMPUTATION NOTES (shown after evaluate returns) ── */}
         {computationNotes && noteEntries.length > 0 && (
@@ -822,6 +832,138 @@ const CSS=`
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
   gap: 28px;
   margin-bottom: 36px;
+}
+  /* ── IMPROVED BLACK BOX SUMMARY ── */
+.blackbox-summary {
+  background: white;
+  border-radius: 20px;
+  padding: 36px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+
+.blackbox-summary h2 {
+  font-size: 21px;
+  font-weight: 700;
+  color: #1E2937;
+  margin-bottom: 28px;
+}
+
+/* Reuse the same grid and metric styles from SDCC */
+.sdcc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.metric-item {
+  background: #F8FAFC;
+  padding: 20px 22px;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+  background: #F0F7FF;
+  border-color: #BFDBFE;
+}
+
+.metric-item span {
+  font-size: 12.5px;
+  color: #64748B;
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.metric-item strong {
+  font-size: 23px;
+  font-weight: 700;
+  color: #1E2937;
+}
+
+/* Risk Colors */
+.risk-low    { color: #10B981 !important; }
+.risk-moderate { color: #F59E0B !important; }
+.risk-high   { color: #EF4444 !important; }
+
+.sdcc-recommendation {
+  margin-top: 28px;
+  padding: 18px 22px;
+  background: #F0FDF4;
+  border-left: 5px solid #10B981;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #166534;
+  line-height: 1.6;
+}
+  /* ── IMPROVED SDCC SUMMARY STYLES ── */
+.sdcc-summary {
+  background: white;
+  border-radius: 20px;
+  padding: 36px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  margin-bottom: 40px;
+}
+
+.sdcc-summary h2 {
+  font-size: 21px;
+  font-weight: 700;
+  color: #1E2937;
+  margin-bottom: 28px;
+}
+
+.sdcc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.metric-item {
+  background: #F8FAFC;
+  padding: 20px 22px;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+  background: #F0F7FF;
+  border-color: #BFDBFE;
+}
+
+.metric-item span {
+  font-size: 12.5px;
+  color: #64748B;
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.metric-item strong {
+  font-size: 23px;
+  font-weight: 700;
+  color: #1E2937;
+}
+
+/* Risk Colors */
+.risk-low    { color: #10B981 !important; }
+.risk-moderate { color: #F59E0B !important; }
+.risk-high   { color: #EF4444 !important; }
+
+.sdcc-recommendation {
+  margin-top: 28px;
+  padding: 18px 22px;
+  background: #F0FDF4;
+  border-left: 5px solid #10B981;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #166534;
+  line-height: 1.6;
 }
 
 /* 🔥 FIXED CARD */

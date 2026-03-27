@@ -4,6 +4,7 @@ from app.routes.auth_routes import router as auth_router
 from app.routes.ai_routes import router as ai_router
 from app.routes.blackbox_routes import router as blackbox_router
 from app.routes.reports import router as reports_router
+from app.routes.chat_routes import router as chat_router
 
 app = FastAPI(title="Auditable AI Backend")
 
@@ -19,6 +20,7 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(reports_router, prefix="/reports", tags=["Reports"])
 app.include_router(ai_router)
 app.include_router(blackbox_router)
+app.include_router(chat_router)
 
 @app.get("/")
 def root():
