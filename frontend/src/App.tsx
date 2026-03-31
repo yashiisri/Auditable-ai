@@ -154,6 +154,7 @@ import Dashboard  from "./pages/Dashboard";
 import Report     from "./pages/Report";
 import RegisterAI from "./pages/RegisterAi";
 import Profile    from "./pages/Profile";
+import SelfReportPage from "./pages/SelfReportPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -172,6 +173,7 @@ function App() {
         <Route path="/"         element={<Home />} />
         <Route path="/login"    element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/self-report" element={<SelfReportPage />} />
 
         {/* PROTECTED */}
         <Route

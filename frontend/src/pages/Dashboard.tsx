@@ -45,6 +45,10 @@ interface SdccSummary {
   has_input_col?: boolean;
   has_output_col?: boolean;
 }
+// Read self-report result from localStorage on mount
+
+
+
 
 /* ─────────────────────────────────────────────
    Component
@@ -348,7 +352,9 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+              
             )}
+
 
             {/* Input/output column status */}
             {sdccSummary && (
@@ -449,7 +455,24 @@ export default function Dashboard() {
     )}
   </div>
 )}
-
+{/* SELF-REPORT CARD */}
+<div className="glass-card" style={{ borderColor: "rgba(0,94,184,0.25)", background: "#F8FBFF" }}>
+  <h2 style={{ color: "#00338D" }}>📋 Enterprise Self-Report</h2>
+  <p className="card-desc">
+    No API key or logs? Fill out a short report about your AI system — 
+    we score it against our governance framework for you.
+  </p>
+  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    <span className="ai-pill">No logs needed</span>
+    <span className="ai-pill">No API key</span>
+  </div>
+  <button
+    onClick={() => navigate("/self-report")}
+    style={{ background: "linear-gradient(135deg, #1D4ED8, #3B82F6)" }}
+  >
+    Create Report →
+  </button>
+</div>
         {/* ── COMPUTATION NOTES (shown after evaluate returns) ── */}
         {computationNotes && noteEntries.length > 0 && (
           <div className="glass-card sdcc-enterprise" style={{ marginBottom: 36 }}>

@@ -1974,17 +1974,7 @@ const Home = () => {
           <img src="/kpmg-logo.png" alt="KPMG Logo" />
         </div>
 
-        <div className="nav-right">
-          {isLoggedIn && (
-            <div 
-              className="profile-icon"
-              onClick={() => navigate("/profile")}
-              title="Profile"
-            >
-              👤
-            </div>
-          )}
-        </div>
+    
       </div>
 
       {/* MAIN CONTENT */}
