@@ -403,8 +403,8 @@ export default function Dashboard() {
 
     <div className="sdcc-recommendation">
       💡 {bbResult.findings.length === 0
-        ? "All governance probes passed. AI system aligns with Trusted AI principles."
-        : `${bbResult.findings.length} governance violation(s) detected across ${[...new Set(bbResult.findings.map((f: BlackBoxFinding) => f.category))].join(", ")}.`
+        ? `${bbResult.ai_name || "The AI system"} passed all ${bbResult.probes_run} governance probes. No violations detected across Safety, Fairness, Transparency, and other KPMG Trusted AI principles.`
+        : `${bbResult.findings.length} governance violation(s) detected in ${bbResult.ai_name || "the AI system"} across ${[...new Set(bbResult.findings.map((f: BlackBoxFinding) => f.category))].join(", ")}. Immediate remediation recommended before production deployment.`
       }
     </div>
   </div>
@@ -450,7 +450,14 @@ export default function Dashboard() {
 
     {sdccSummary.recommendation && (
       <div className="sdcc-recommendation">
-        💡 {sdccSummary.recommendation}
+        💡 {(() => {
+          const mt = sdccSummary.model_type || "AI system";
+          const risk = sdccSummary.structural_risk || "Unknown";
+          const dq = sdccSummary.data_quality_score || 0;
+          if (risk === "Low" && dq >= 75) return `${mt} shows strong structural integrity. Proceed to full evaluation to generate your governance audit report.`;
+          if (risk === "High" || dq < 50) return `${mt} has structural risk indicators. Ensure your log file includes input/output columns and sufficient records before running the full evaluation.`;
+          return `${mt} ingested successfully with ${risk.toLowerCase()} structural risk. Run the full evaluation below to score across all 10 KPMG Trusted AI principles.`;
+        })()}
       </div>
     )}
   </div>
@@ -908,18 +915,18 @@ const CSS=`
 }
 
 /* Risk Colors */
-.risk-low    { color: #10B981 !important; }
-.risk-moderate { color: #F59E0B !important; }
-.risk-high   { color: #EF4444 !important; }
+.risk-low    { color: #059669 !important; }
+.risk-moderate { color: #005EB8 !important; }
+.risk-high   { color: #DC2626 !important; }
 
 .sdcc-recommendation {
   margin-top: 28px;
   padding: 18px 22px;
-  background: #F0FDF4;
-  border-left: 5px solid #10B981;
+  background: #E6F2FB;
+  border-left: 5px solid #005EB8;
   border-radius: 12px;
   font-size: 15px;
-  color: #166534;
+  color: #00338D;
   line-height: 1.6;
 }
   /* ── IMPROVED SDCC SUMMARY STYLES ── */
@@ -955,8 +962,8 @@ const CSS=`
 }
 
 .metric-item:hover {
-  background: #F0F7FF;
-  border-color: #BFDBFE;
+  background: #E6F2FB;
+  border-color: rgba(0,94,184,0.3);
 }
 
 .metric-item span {
@@ -974,18 +981,18 @@ const CSS=`
 }
 
 /* Risk Colors */
-.risk-low    { color: #10B981 !important; }
-.risk-moderate { color: #F59E0B !important; }
-.risk-high   { color: #EF4444 !important; }
+.risk-low    { color: #059669 !important; }
+.risk-moderate { color: #005EB8 !important; }
+.risk-high   { color: #DC2626 !important; }
 
 .sdcc-recommendation {
   margin-top: 28px;
   padding: 18px 22px;
-  background: #F0FDF4;
-  border-left: 5px solid #10B981;
+  background: #E6F2FB;
+  border-left: 5px solid #005EB8;
   border-radius: 12px;
   font-size: 15px;
-  color: #166534;
+  color: #00338D;
   line-height: 1.6;
 }
 

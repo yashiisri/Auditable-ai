@@ -1,2053 +1,588 @@
-// // // import { useNavigate } from "react-router-dom";
-
-// // // const Home = () => {
-// // //   const navigate = useNavigate();
-
-// // //   return (
-// // //     <div className="app-layout">
-// // //       <style>{`
-// // //         /* ─────────────────────────────────────────────────────────────
-// // //            SHARED KPMG-STYLE GRADIENT & COLORS (same as dashboard)
-// // //         ────────────────────────────────────────────────────────────── */
-// // //         :root {
-// // //           --kpmg:      #00338D;
-// // //           --kpmg-mid:  #005EB8;
-// // //           --kpmg-lt:   #0091DA;
-// // //           --success:   #00C896;
-// // //           --bg:        #030C1E;
-// // //           --surface:   #071530;
-// // //           --border-lt: rgba(0,145,218,0.25);
-// // //           --text:      #D8E8F5;
-// // //           --muted:     #9DBFE0;
-// // //           --accent:    #4AACDF;
-// // //         }
-
-// // //         * {
-// // //           margin: 0;
-// // //           padding: 0;
-// // //           box-sizing: border-box;
-// // //         }
-
-// // //         body {
-// // //           background: var(--bg);
-// // //           color: var(--text);
-// // //           font-family: 'IBM Plex Sans', sans-serif;
-// // //         }
-
-// // //         .app-layout {
-// // //           min-height: 100vh;
-// // //           background: radial-gradient(circle at 20% 20%, #00338D 0%, transparent 40%),
-// // //                       radial-gradient(circle at 80% 70%, #00C896 0%, transparent 40%),
-// // //                       #030C1E;
-// // //           display: flex;
-// // //         }
-
-// // //         /* Sidebar – matching dashboard feel */
-// // //         .sidebar {
-// // //           width: 260px;
-// // //           background: linear-gradient(180deg, #00338D, #005EB8);
-// // //           color: white;
-// // //           padding: 40px 24px;
-// // //           border-right: 1px solid var(--border-lt);
-// // //           backdrop-filter: blur(10px);
-// // //           flex-shrink: 0;
-// // //         }
-
-// // //         .sidebar-header h2 {
-// // //           font-size: 28px;
-// // //           font-weight: 700;
-// // //           background: linear-gradient(90deg, #00C896, #0091DA);
-// // //           -webkit-background-clip: text;
-// // //           -webkit-text-fill-color: transparent;
-// // //           margin-bottom: 40px;
-// // //         }
-
-// // //         .sidebar-menu {
-// // //           display: flex;
-// // //           flex-direction: column;
-// // //           gap: 16px;
-// // //         }
-
-// // //         .menu-item {
-// // //           padding: 12px 16px;
-// // //           border-radius: 10px;
-// // //           cursor: pointer;
-// // //           font-weight: 500;
-// // //           transition: all 0.25s;
-// // //         }
-
-// // //         .menu-item:hover {
-// // //           background: rgba(255,255,255,0.12);
-// // //         }
-
-// // //         .menu-item.active {
-// // //           background: linear-gradient(135deg, rgba(0,200,150,0.22), rgba(0,145,218,0.18));
-// // //           font-weight: 600;
-// // //           box-shadow: 0 2px 12px rgba(0,200,150,0.15);
-// // //         }
-
-// // //         /* Main area */
-// // //         .main-area {
-// // //           flex: 1;
-// // //           display: flex;
-// // //           align-items: center;
-// // //           justify-content: center;
-// // //           padding: 40px;
-// // //         }
-
-// // //         /* Hero panel – glass + same glow as dashboard */
-// // //         .hero-panel {
-// // //           position: relative;
-// // //           width: 100%;
-// // //           max-width: 1100px;
-// // //           border-radius: 24px;
-// // //           padding: 80px 60px;
-// // //           display: flex;
-// // //           gap: 80px;
-// // //           background: linear-gradient(135deg, rgba(10,30,66,0.82), rgba(7,21,48,0.75));
-// // //           backdrop-filter: blur(20px);
-// // //           border: 1px solid rgba(0,145,218,0.28);
-// // //           box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-// // //           overflow: hidden;
-// // //         }
-
-// // //         .hero-glow {
-// // //           position: absolute;
-// // //           top: -120px;
-// // //           right: -180px;
-// // //           width: 500px;
-// // //           height: 500px;
-// // //           background: radial-gradient(circle, #00C89633, transparent 70%);
-// // //           opacity: 0.25;
-// // //           filter: blur(100px);
-// // //           pointer-events: none;
-// // //         }
-
-// // //         .hero-left h1 {
-// // //           font-size: 3.8rem;
-// // //           font-weight: 800;
-// // //           line-height: 1.1;
-// // //           margin-bottom: 24px;
-// // //         }
-
-// // //         .accent-text {
-// // //           background: linear-gradient(90deg, #00C896, #0091DA);
-// // //           -webkit-background-clip: text;
-// // //           -webkit-text-fill-color: transparent;
-// // //         }
-
-// // //         .hero-left p {
-// // //           font-size: 1.2rem;
-// // //           color: var(--muted);
-// // //           line-height: 1.6;
-// // //           margin-bottom: 40px;
-// // //         }
-
-// // //         .hero-buttons {
-// // //           display: flex;
-// // //           gap: 20px;
-// // //           flex-wrap: wrap;
-// // //         }
-
-// // //         .primary-btn,
-// // //         .outline-btn {
-// // //           padding: 14px 32px;
-// // //           border-radius: 12px;
-// // //           font-weight: 600;
-// // //           font-size: 1rem;
-// // //           cursor: pointer;
-// // //           transition: all 0.3s;
-// // //         }
-
-// // //         .primary-btn {
-// // //           background: linear-gradient(135deg, #0091DA, #00C896);
-// // //           color: white;
-// // //           border: none;
-// // //         }
-
-// // //         .primary-btn:hover {
-// // //           transform: translateY(-3px);
-// // //           box-shadow: 0 10px 30px rgba(0,200,150,0.35);
-// // //         }
-
-// // //         .outline-btn {
-// // //           background: transparent;
-// // //           border: 2px solid #0091DA;
-// // //           color: #0091DA;
-// // //         }
-
-// // //         .outline-btn:hover {
-// // //           background: rgba(0,145,218,0.12);
-// // //           transform: translateY(-3px);
-// // //         }
-
-// // //         /* Feature cards – glass style matching dashboard */
-// // //         .hero-right {
-// // //           display: flex;
-// // //           flex-direction: column;
-// // //           gap: 24px;
-// // //         }
-
-// // //         .feature-card {
-// // //           background: rgba(255,255,255,0.08);
-// // //           backdrop-filter: blur(12px);
-// // //           border: 1px solid rgba(0,145,218,0.25);
-// // //           border-radius: 16px;
-// // //           padding: 28px;
-// // //           transition: all 0.3s;
-// // //         }
-
-// // //         .feature-card:hover {
-// // //           transform: translateY(-6px);
-// // //           background: rgba(255,255,255,0.12);
-// // //           box-shadow: 0 12px 32px rgba(0,200,150,0.15);
-// // //         }
-
-// // //         .feature-card h3 {
-// // //           font-size: 1.4rem;
-// // //           font-weight: 700;
-// // //           color: #EAF2FB;
-// // //           margin-bottom: 12px;
-// // //         }
-
-// // //         .feature-card p {
-// // //           color: var(--muted);
-// // //           font-size: 1rem;
-// // //           line-height: 1.5;
-// // //         }
-
-// // //         /* Responsive adjustments */
-// // //         @media (max-width: 1024px) {
-// // //           .hero-panel {
-// // //             flex-direction: column;
-// // //             padding: 60px 40px;
-// // //             gap: 60px;
-// // //           }
-// // //           .hero-left h1 {
-// // //             font-size: 3.2rem;
-// // //           }
-// // //         }
-
-// // //         @media (max-width: 768px) {
-// // //           .hero-panel {
-// // //             padding: 50px 30px;
-// // //           }
-// // //           .hero-left h1 {
-// // //             font-size: 2.8rem;
-// // //           }
-// // //           .hero-buttons {
-// // //             flex-direction: column;
-// // //             gap: 16px;
-// // //           }
-// // //         }
-// // //       `}</style>
-
-// // //       {/* SIDEBAR */}
-// // //       <div className="sidebar">
-        
-// // //         <div className="sidebar-header">
-// // //           <h2>Auditable AI</h2>
-// // //         </div>
-
-// // //         <div className="sidebar-menu">
-// // //           <div className="menu-item active">Home</div>
-// // //           <div className="menu-item">AI Audit</div>
-// // //           <div className="menu-item">Report Generation</div>
-// // //           <div className="menu-item">Profile</div>
-// // //         </div>
-// // //       </div>
-
-// // //       {/* MAIN AREA */}
-// // //       <div className="main-area">
-// // //         <div className="hero-panel">
-
-// // //           {/* Glow Layer */}
-// // //           <div className="hero-glow"></div>
-
-// // //           <div className="hero-left">
-// // //             <h1>
-// // //               AI Assurance.
-// // //               <br />
-// // //               <span className="accent-text">Reimagined.</span>
-// // //             </h1>
-
-// // //             <p>
-// // //               Enterprise-grade AI governance, risk intelligence,
-// // //               transparency validation, and regulatory compliance
-// // //               built for high-stakes systems.
-// // //             </p>
-
-// // //             <div className="hero-buttons">
-// // //               <button
-// // //                 className="primary-btn"
-// // //                 onClick={() => navigate("/login")}
-// // //               >
-// // //                 Access Platform
-// // //               </button>
-
-// // //               <button
-// // //                 className="outline-btn"
-// // //                 onClick={() => navigate("/register")}
-// // //               >
-// // //                 Create Account
-// // //               </button>
-// // //             </div>
-// // //           </div>
-
-// // //           <div className="hero-right">
-// // //             <div className="feature-card">
-// // //               <h3>Risk Scoring Engine</h3>
-// // //               <p>
-// // //                 Dynamic evaluation across governance principles
-// // //                 with model-based scoring.
-// // //               </p>
-// // //             </div>
-
-// // //             <div className="feature-card">
-// // //               <h3>Model Transparency</h3>
-// // //               <p>
-// // //                 Explainability, bias detection, and compliance validation.
-// // //               </p>
-// // //             </div>
-
-// // //             <div className="feature-card">
-// // //               <h3>Enterprise Reports</h3>
-// // //               <p>
-// // //                 Structured PDF documentation aligned with audit standards.
-// // //               </p>
-// // //             </div>
-// // //           </div>
-// // //         </div>
-// // //       </div>
-// // //     </div>
-// // //   );
-// // // };
-
-// // // export default Home;
-
-
-// // import { useNavigate } from "react-router-dom";
-
-// // const Home = () => {
-// //   const navigate = useNavigate();
-
-// //   return (
-// //     <div className="layout">
-// //   <style>{`
-// // :root {
-// //   --primary: #2563EB;
-// //   --accent: #3B82F6;
-// //   --bg: #F6F9FF;
-// //   --surface: #FFFFFF;
-// //   --text: #0F172A;
-// //   --muted: #64748B;
-// //   --border: #E2E8F0;
-// // }
-
-// // /* LAYOUT */
-// // .layout {
-// //   display: flex;
-// //   min-height: 100vh;
-// //   background: radial-gradient(circle at 20% 20%, #EAF2FF, transparent 40%),
-// //               radial-gradient(circle at 80% 70%, #DCE9FF, transparent 40%),
-// //               var(--bg);
-// //   font-family: 'Inter', sans-serif;
-// // }
-
-// // /* SIDEBAR */
-// // .sidebar {
-// //   width: 240px;
-// //   background: white;
-// //   border-right: 1px solid var(--border);
-// //   padding: 32px 20px;
-// //   box-shadow: 4px 0 20px rgba(0,0,0,0.04);
-// // }
-
-// // .logo {
-// //   font-size: 22px;
-// //   font-weight: 800;
-// //   background: linear-gradient(90deg, #2563EB, #60A5FA);
-// //   -webkit-background-clip: text;
-// //   -webkit-text-fill-color: transparent;
-// //   margin-bottom: 50px;
-// // }
-
-// // .menu-item {
-// //   padding: 12px 16px;
-// //   border-radius: 12px;
-// //   margin-bottom: 10px;
-// //   color: var(--muted);
-// //   cursor: pointer;
-// //   transition: 0.25s;
-// // }
-
-// // .menu-item:hover {
-// //   background: #EEF4FF;
-// //   transform: translateX(6px);
-// // }
-
-// // .menu-item.active {
-// //   background: linear-gradient(90deg, #EEF4FF, #E0ECFF);
-// //   color: var(--primary);
-// //   font-weight: 600;
-// // }
-
-// // /* MAIN */
-// // .main {
-// //   flex: 1;
-// //   padding: 80px 60px;
-// // }
-
-// // /* HERO */
-// // .hero {
-// //   position: relative;
-// //   display: grid;
-// //   grid-template-columns: 1.2fr 1fr;
-// //   gap: 80px;
-// //   align-items: center;
-// // }
-
-// // /* GLOW BACKGROUND */
-// // .hero::before {
-// //   content: "";
-// //   position: absolute;
-// //   top: -80px;
-// //   left: -60px;
-// //   width: 400px;
-// //   height: 400px;
-// //   background: radial-gradient(circle, #3B82F633, transparent 70%);
-// //   filter: blur(60px);
-// //   z-index: 0;
-// // }
-
-// // /* LEFT */
-// // .hero-left {
-// //   position: relative;
-// //   z-index: 1;
-// // }
-
-// // .hero h1 {
-// //   font-size: 3.5rem;
-// //   font-weight: 900;
-// //   line-height: 1.1;
-// //   letter-spacing: -1.2px;
-// // }
-
-// // .gradient-text {
-// //   background: linear-gradient(90deg, #2563EB, #3B82F6, #60A5FA);
-// //   -webkit-background-clip: text;
-// //   -webkit-text-fill-color: transparent;
-// // }
-
-// // /* DESCRIPTION */
-// // .hero p {
-// //   color: var(--muted);
-// //   margin: 28px 0 40px;
-// //   font-size: 17px;
-// //   line-height: 1.7;
-// //   max-width: 500px;
-// // }
-
-// // /* BUTTONS */
-// // .btn-group {
-// //   display: flex;
-// //   gap: 18px;
-// // }
-
-// // .primary-btn {
-// //   background: linear-gradient(135deg, #2563EB, #3B82F6);
-// //   color: white;
-// //   border: none;
-// //   padding: 16px 28px;
-// //   border-radius: 14px;
-// //   font-weight: 600;
-// //   font-size: 15px;
-// //   cursor: pointer;
-// //   transition: 0.3s;
-// // }
-
-// // .primary-btn:hover {
-// //   transform: translateY(-4px);
-// //   box-shadow: 0 18px 40px rgba(37,99,235,0.4);
-// // }
-
-// // .secondary-btn {
-// //   border: 1px solid var(--border);
-// //   padding: 16px 28px;
-// //   border-radius: 14px;
-// //   background: white;
-// //   font-weight: 500;
-// //   cursor: pointer;
-// //   transition: 0.2s;
-// // }
-
-// // .secondary-btn:hover {
-// //   background: #F1F5F9;
-// // }
-
-// // /* RIGHT CARDS */
-// // .cards {
-// //   display: flex;
-// //   flex-direction: column;
-// //   gap: 24px;
-// //   position: relative;
-// //   z-index: 1;
-// // }
-
-// // .card {
-// //   background: var(--surface);
-// //   border-radius: 20px;
-// //   padding: 28px;
-// //   border: 1px solid var(--border);
-// //   box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-// //   transition: 0.35s;
-// //   position: relative;
-// //   overflow: hidden;
-// // }
-
-// // /* CARD HOVER MAGIC */
-// // .card::before {
-// //   content: "";
-// //   position: absolute;
-// //   inset: 0;
-// //   background: linear-gradient(120deg, transparent, #2563EB22, transparent);
-// //   opacity: 0;
-// //   transition: 0.4s;
-// // }
-
-// // .card:hover::before {
-// //   opacity: 1;
-// // }
-
-// // .card:hover {
-// //   transform: translateY(-8px) scale(1.03);
-// //   box-shadow: 0 30px 70px rgba(0,0,0,0.12);
-// // }
-
-// // .card h3 {
-// //   font-size: 17px;
-// //   font-weight: 700;
-// //   margin-bottom: 6px;
-// // }
-
-// // .card p {
-// //   color: var(--muted);
-// //   font-size: 14px;
-// // }
-
-// // /* RESPONSIVE */
-// // @media (max-width: 900px) {
-// //   .hero {
-// //     grid-template-columns: 1fr;
-// //   }
-
-// //   .main {
-// //     padding: 40px 20px;
-// //   }
-// // }
-// // `}</style>
-
-// //       {/* SIDEBAR */}
-// //       <div className="sidebar">
-// //         <div className="logo">Auditable AI</div>
-
-// //         <div className="menu-item active">Home</div>
-// //         <div className="menu-item">AI Audit</div>
-// //         <div className="menu-item">Reports</div>
-// //         <div className="menu-item">Profile</div>
-// //       </div>
-
-// //       {/* MAIN */}
-// //       <div className="main">
-// //         <div className="container">
-
-// //           <div className="hero">
-
-// //             {/* LEFT */}
-// //             <div>
-// //               <h1>
-// //                 AI Assurance <br />
-// //                 <span className="gradient-text">Reimagined</span>
-// //               </h1>
-
-// //               <p>
-// //                 Enterprise-grade AI governance, risk intelligence,
-// //                 and compliance validation built for real-world systems.
-// //               </p>
-
-// //               <div className="btn-group">
-// //                 <button
-// //                   className="primary-btn"
-// //                   onClick={() => navigate("/login")}
-// //                 >
-// //                   Access Platform
-// //                 </button>
-
-// //                 <button
-// //                   className="secondary-btn"
-// //                   onClick={() => navigate("/register")}
-// //                 >
-// //                   Create Account
-// //                 </button>
-// //               </div>
-// //             </div>
-
-// //             {/* RIGHT */}
-// //             <div className="cards">
-// //               <div className="card">
-// //                 <h3>Risk Scoring Engine</h3>
-// //                 <p>Dynamic evaluation across AI governance principles.</p>
-// //               </div>
-
-// //               <div className="card">
-// //                 <h3>Model Transparency</h3>
-// //                 <p>Explainability, bias detection, and compliance insights.</p>
-// //               </div>
-
-// //               <div className="card">
-// //                 <h3>Audit Reports</h3>
-// //                 <p>Structured, client-ready audit documentation.</p>
-// //               </div>
-// //             </div>
-
-// //           </div>
-
-// //         </div>
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // export default Home;
-
-
-
-// import { useNavigate } from "react-router-dom";
-
-// const Home = () => {
-//   const navigate = useNavigate();
-
-//   return (
-//     <div className="layout">
-//       <style>{`
-// :root {
-//   --kpmg-dark: #00338D;
-//   --kpmg-mid: #005EB8;
-//   --kpmg-light: #0091DA;
-
-//   --bg: #F4F8FC;
-//   --surface: #FFFFFF;
-
-//   --text: #0B1F33;
-//   --muted: #6B7C93;
-
-//   --border: #E3EAF3;
-// }
-
-// /* GLOBAL */
-// .layout {
-//   display: flex;
-//   min-height: 100vh;
-//   background: var(--bg);
-//   font-family: 'Inter', sans-serif;
-// }
-
-// /* SIDEBAR */
-// .sidebar {
-//   width: 240px;
-//   background: white;
-//   border-right: 1px solid var(--border);
-//   padding: 32px 20px;
-//   box-shadow: 4px 0 20px rgba(0,0,0,0.04);
-// }
-
-// .logo {
-//   font-size: 22px;
-//   font-weight: 800;
-//   background: linear-gradient(90deg, #00338D, #0091DA);
-//   -webkit-background-clip: text;
-//   -webkit-text-fill-color: transparent;
-//   margin-bottom: 50px;
-// }
-
-// .menu-item {
-//   padding: 12px 16px;
-//   border-radius: 12px;
-//   margin-bottom: 10px;
-//   color: var(--muted);
-//   cursor: pointer;
-//   transition: 0.25s;
-// }
-
-// .menu-item:hover {
-//   background: #EEF4FF;
-//   transform: translateX(6px);
-// }
-
-// .menu-item.active {
-//   background: linear-gradient(90deg, #EEF4FF, #E0ECFF);
-//   color: var(--kpmg-mid);
-//   font-weight: 600;
-// }
-
-// /* MAIN */
-// .main {
-//   flex: 1;
-//   padding: 80px 60px;
-// }
-
-// /* HERO */
-// .hero {
-//   position: relative;
-//   display: grid;
-//   grid-template-columns: 1.2fr 1fr;
-//   gap: 80px;
-//   align-items: center;
-// }
-
-// /* GRAPHICS */
-// .hero::before {
-//   content: "";
-//   position: absolute;
-//   top: -120px;
-//   right: -120px;
-//   width: 500px;
-//   height: 500px;
-//   background: radial-gradient(circle, #0091DA33, transparent 70%);
-//   filter: blur(80px);
-//   z-index: 0;
-// }
-
-// .hero::after {
-//   content: "";
-//   position: absolute;
-//   bottom: -120px;
-//   left: -100px;
-//   width: 400px;
-//   height: 400px;
-//   background: radial-gradient(circle, #005EB822, transparent 70%);
-//   filter: blur(80px);
-//   z-index: 0;
-// }
-
-// /* LEFT */
-// .hero-left {
-//   position: relative;
-//   z-index: 1;
-// }
-
-// .hero h1 {
-//   font-size: 3.5rem;
-//   font-weight: 900;
-//   line-height: 1.1;
-//   letter-spacing: -1.2px;
-// }
-
-// .gradient-text {
-//   background: linear-gradient(90deg, #00338D, #005EB8, #0091DA);
-//   -webkit-background-clip: text;
-//   -webkit-text-fill-color: transparent;
-// }
-
-// .hero p {
-//   color: var(--muted);
-//   margin: 28px 0 40px;
-//   font-size: 17px;
-//   line-height: 1.7;
-//   max-width: 500px;
-// }
-
-// /* BUTTONS */
-// .btn-group {
-//   display: flex;
-//   gap: 18px;
-// }
-
-// .primary-btn {
-//   background: linear-gradient(135deg, #00338D, #005EB8);
-//   color: white;
-//   border: none;
-//   padding: 16px 28px;
-//   border-radius: 14px;
-//   font-weight: 600;
-//   cursor: pointer;
-//   transition: 0.3s;
-// }
-
-// .primary-btn:hover {
-//   transform: translateY(-4px);
-//   box-shadow: 0 18px 40px rgba(0,51,141,0.4);
-// }
-
-// .secondary-btn {
-//   border: 1px solid var(--border);
-//   padding: 16px 28px;
-//   border-radius: 14px;
-//   background: white;
-//   font-weight: 500;
-//   cursor: pointer;
-// }
-
-// .secondary-btn:hover {
-//   background: #F1F5F9;
-// }
-
-// /* CARDS */
-// .cards {
-//   display: flex;
-//   flex-direction: column;
-//   gap: 24px;
-//   position: relative;
-//   z-index: 1;
-// }
-
-// .card {
-//   background: var(--surface);
-//   border-radius: 20px;
-//   padding: 28px;
-//   border: 1px solid var(--border);
-//   box-shadow: 0 20px 50px rgba(0,51,141,0.08);
-//   transition: 0.35s;
-// }
-
-// .card:hover {
-//   transform: translateY(-8px) scale(1.03);
-//   box-shadow: 0 30px 70px rgba(0,51,141,0.15);
-// }
-
-// .card h3 {
-//   font-size: 17px;
-//   font-weight: 700;
-//   margin-bottom: 6px;
-// }
-
-// .card p {
-//   color: var(--muted);
-//   font-size: 14px;
-// }
-
-// /* RESPONSIVE */
-// @media (max-width: 900px) {
-//   .hero {
-//     grid-template-columns: 1fr;
-//   }
-
-//   .main {
-//     padding: 40px 20px;
-//   }
-// }
-//       `}</style>
-
-//       {/* SIDEBAR */}
-//       <div className="sidebar">
-//         <div className="logo">Auditable AI</div>
-
-//         <div className="menu-item active">Home</div>
-//         <div className="menu-item">AI Audit</div>
-//         <div className="menu-item">Reports</div>
-//         <div className="menu-item">Profile</div>
-//       </div>
-
-//       {/* MAIN */}
-//       <div className="main">
-//         <div className="hero">
-
-//           {/* LEFT */}
-//           <div className="hero-left">
-//             <h1>
-//               AI Assurance <br />
-//               <span className="gradient-text">Reimagined</span>
-//             </h1>
-
-//             <p>
-//               Enterprise-grade AI governance, risk intelligence,
-//               transparency validation, and compliance systems
-//               designed for high-stakes environments.
-//             </p>
-
-//             <div className="btn-group">
-//               <button
-//                 className="primary-btn"
-//                 onClick={() => navigate("/login")}
-//               >
-//                 Access Platform →
-//               </button>
-
-//               <button
-//                 className="secondary-btn"
-//                 onClick={() => navigate("/register")}
-//               >
-//                 Create Account
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* RIGHT */}
-//           <div className="cards">
-//             <div className="card">
-//               <h3>📊 Risk Scoring Engine</h3>
-//               <p>Evaluate AI across governance principles dynamically.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>🔍 Model Transparency</h3>
-//               <p>Explainability, bias detection, and compliance insights.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📄 Audit Reports</h3>
-//               <p>Client-ready structured reports aligned with standards.</p>
-//             </div>
-//           </div>
-
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-// import { useNavigate } from "react-router-dom";
-
-// const Home = () => {
-//   const navigate = useNavigate();
-
-//   return (
-//     <div className="layout">
-//       <style>{`
-// :root {
-//   --kpmg-dark: #00338D;
-//   --kpmg-mid: #005EB8;
-//   --kpmg-light: #0091DA;
-
-//   --bg: #F4F7FB;
-//   --text: #0B1F33;
-//   --muted: #6B7C93;
-//   --border: #E3EAF3;
-// }
-
-// /* LAYOUT */
-// .layout {
-//   display: flex;
-//   min-height: 100vh;
-//   font-family: 'Inter', sans-serif;
-//   background: var(--bg);
-// }
-
-// /* SIDEBAR */
-// .sidebar {
-//   width: 220px;
-//   background: white;
-//   border-right: 1px solid var(--border);
-//   padding: 30px 18px;
-// }
-
-// .logo {
-//   font-size: 20px;
-//   font-weight: 700;
-//   color: var(--kpmg-dark);
-//   margin-bottom: 40px;
-// }
-
-// .menu-item {
-//   padding: 10px 14px;
-//   border-radius: 8px;
-//   margin-bottom: 8px;
-//   color: var(--muted);
-//   cursor: pointer;
-// }
-
-// .menu-item.active {
-//   background: #E6F2FB;
-//   color: var(--kpmg-mid);
-//   font-weight: 600;
-// }
-
-// /* MAIN */
-// .main {
-//   flex: 1;
-//   padding: 80px;
-// }
-
-// /* HERO */
-// .hero {
-//   display: flex;
-//   justify-content: space-between;
-//   align-items: center;
-// }
-
-// /* LEFT */
-// .hero-left {
-//   max-width: 520px;
-// }
-
-// .badge {
-//   background: #E6F2FB;
-//   color: var(--kpmg-mid);
-//   font-size: 12px;
-//   padding: 6px 12px;
-//   border-radius: 20px;
-//   display: inline-block;
-//   margin-bottom: 20px;
-// }
-
-// .hero h1 {
-//   font-size: 3.2rem;
-//   font-weight: 800;
-//   line-height: 1.2;
-// }
-
-// .hero h1 span {
-//   color: var(--kpmg-mid);
-// }
-
-// .hero p {
-//   margin: 20px 0 30px;
-//   color: var(--muted);
-//   line-height: 1.6;
-// }
-
-// /* BUTTONS */
-// .btn-group {
-//   display: flex;
-//   gap: 12px;
-// }
-
-// .primary-btn {
-//   background: var(--kpmg-dark);
-//   color: white;
-//   padding: 12px 22px;
-//   border-radius: 8px;
-//   border: none;
-//   cursor: pointer;
-// }
-
-// .secondary-btn {
-//   border: 1px solid var(--border);
-//   padding: 12px 22px;
-//   border-radius: 8px;
-//   background: white;
-// }
-
-// /* RIGHT GRAPHIC */
-// .hero-graphic {
-//   width: 380px;
-//   height: 380px;
-//   position: relative;
-// }
-
-// /* fake network dots */
-// .dot {
-//   width: 8px;
-//   height: 8px;
-//   background: var(--kpmg-mid);
-//   border-radius: 50%;
-//   position: absolute;
-// }
-
-// /* lines */
-// .line {
-//   position: absolute;
-//   height: 1px;
-//   background: #BFD7F2;
-//   transform-origin: left;
-// }
-
-// /* STATS */
-// .stats {
-//   margin-top: 60px;
-//   display: flex;
-//   gap: 40px;
-// }
-
-// .stat {
-//   font-size: 14px;
-// }
-
-// .stat strong {
-//   font-size: 18px;
-//   color: var(--kpmg-dark);
-// }
-
-// /* RESPONSIVE */
-// @media (max-width: 900px) {
-//   .hero {
-//     flex-direction: column;
-//     gap: 40px;
-//   }
-
-//   .hero-graphic {
-//     display: none;
-//   }
-// }
-//       `}</style>
-
-//       {/* SIDEBAR */}
-//       <div className="sidebar">
-//         <div className="logo">Auditable AI</div>
-//         <div className="menu-item active">Home</div>
-//         <div className="menu-item">AI Audit</div>
-//         <div className="menu-item">Reports</div>
-//         <div className="menu-item">Profile</div>
-//       </div>
-
-//       {/* MAIN */}
-//       <div className="main">
-
-//         <div className="hero">
-
-//           {/* LEFT */}
-//           <div className="hero-left">
-//             <div className="badge">AI-Powered Risk Intelligence</div>
-
-//             <h1>
-//               AI Risk <br />
-//               <span>Audit Platform</span>
-//             </h1>
-
-//             <p>
-//               AI-powered risk intelligence transforming enterprise systems
-//               into transparent, compliant, and trustworthy solutions.
-//             </p>
-
-//             <div className="btn-group">
-//               <button
-//                 className="primary-btn"
-//                 onClick={() => navigate("/login")}
-//               >
-//                 Explore Platform →
-//               </button>
-
-//               <button
-//                 className="secondary-btn"
-//                 onClick={() => navigate("/register")}
-//               >
-//                 Sign In
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* RIGHT GRAPHIC */}
-//           <div className="hero-graphic">
-
-//             <div className="dot" style={{ top: "40px", left: "120px" }} />
-//             <div className="dot" style={{ top: "120px", left: "200px" }} />
-//             <div className="dot" style={{ top: "200px", left: "80px" }} />
-//             <div className="dot" style={{ top: "300px", left: "160px" }} />
-
-//             <div className="line" style={{ top: "45px", left: "125px", width: "120px", transform: "rotate(30deg)" }} />
-//             <div className="line" style={{ top: "130px", left: "200px", width: "140px", transform: "rotate(120deg)" }} />
-//             <div className="line" style={{ top: "210px", left: "80px", width: "150px", transform: "rotate(40deg)" }} />
-
-//           </div>
-
-//         </div>
-
-//         {/* STATS */}
-//         <div className="stats">
-//           <div className="stat"><strong>50+</strong><br />Audits</div>
-//           <div className="stat"><strong>10+</strong><br />Domains</div>
-//           <div className="stat"><strong>Live</strong><br />Monitoring</div>
-//           <div className="stat"><strong>2</strong><br />Modes</div>
-//         </div>
-
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-// import { useNavigate } from "react-router-dom";
-
-// const Home = () => {
-//   const navigate = useNavigate();
-
-//   return (
-//     <div className="layout">
-//       <style>{`
-//         :root {
-//           --kpmg-dark: #00338D;
-//           --kpmg-mid: #005EB8;
-//           --kpmg-light: #0091DA;
-//           --accent: #00C896;
-
-//           --bg: #F4F7FB;
-//           --text: #0B1F33;
-//           --muted: #6B7C93;
-//           --border: #E3EAF3;
-//         }
-
-//         .layout {
-//           min-height: 100vh;
-//           font-family: 'Inter', system-ui, sans-serif;
-//           background: var(--bg);
-//           color: var(--text);
-//         }
-
-//         /* NAVBAR */
-//         .navbar {
-//           padding: 24px 60px;
-//           display: flex;
-//           align-items: center;
-//           justify-content: flex-end;
-//         }
-
-//         /* MAIN - Shifted upward */
-//         .main {
-//           padding: 70px 60px 80px;
-//         }
-
-//         /* HERO */
-//         .hero {
-//           display: flex;
-//           justify-content: space-between;
-//           align-items: center;
-//           gap: 80px;
-//         }
-
-//         /* LEFT SIDE */
-//         .hero-left {
-//           max-width: 540px;
-//           padding-left: 20px;
-//         }
-
-//         .badge {
-//           background: #E6F2FB;
-//           color: var(--kpmg-mid);
-//           font-size: 13px;
-//           padding: 8px 18px;
-//           border-radius: 30px;
-//           display: inline-block;
-//           margin-bottom: 24px;
-//           font-weight: 600;
-//         }
-
-//         .hero h1 {
-//           font-size: 3.8rem;
-//           font-weight: 800;
-//           line-height: 1.12;
-//           margin-bottom: 24px;
-//         }
-
-//         .hero h1 span {
-//           background: linear-gradient(135deg, #0091DA, #00C896);
-//           -webkit-background-clip: text;
-//           -webkit-text-fill-color: transparent;
-//         }
-
-//         .hero p {
-//           font-size: 1.22rem;
-//           color: var(--muted);
-//           line-height: 1.65;
-//           margin-bottom: 40px;
-//         }
-
-//         /* BUTTONS */
-//         .btn-group {
-//           display: flex;
-//           gap: 16px;
-//         }
-
-//         .primary-btn {
-//           background: linear-gradient(135deg, var(--kpmg-dark), var(--kpmg-mid));
-//           color: white;
-//           padding: 16px 34px;
-//           border-radius: 12px;
-//           border: none;
-//           cursor: pointer;
-//           font-weight: 700;
-//           font-size: 1.08rem;
-//           transition: all 0.3s ease;
-//         }
-
-//         .primary-btn:hover {
-//           transform: translateY(-4px);
-//           box-shadow: 0 15px 35px rgba(0,51,141,0.3);
-//         }
-
-//         .secondary-btn {
-//           background: white;
-//           border: 2px solid #E3EAF3;
-//           color: var(--kpmg-dark);
-//           padding: 16px 34px;
-//           border-radius: 12px;
-//           cursor: pointer;
-//           font-weight: 600;
-//           transition: all 0.3s ease;
-//         }
-
-//         .secondary-btn:hover {
-//           background: #f8fafd;
-//           border-color: var(--kpmg-light);
-//           transform: translateY(-2px);
-//         }
-
-//         /* 6 CARDS WITH NICE OUTLINE */
-//         .cards-grid {
-//           display: grid;
-//           grid-template-columns: repeat(3, 1fr);
-//           gap: 28px;
-//           width: 700px;
-//         }
-
-//         .card {
-//           background: white;
-//           border-radius: 22px;
-//           padding: 34px 28px;
-//           border: 2px solid #E3EAF3;           /* Clean outline */
-//           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-//           cursor: pointer;
-//           box-shadow: 0 8px 25px rgba(0,0,0,0.06);
-//           height: 100%;
-//         }
-
-//         .card:hover {
-//           border-color: var(--kpmg-light);     /* Highlight on hover */
-//           transform: translateY(-12px);
-//           box-shadow: 0 22px 50px rgba(0,51,141,0.18);
-//         }
-
-//         .card h3 {
-//           font-size: 18.5px;
-//           font-weight: 700;
-//           margin-bottom: 14px;
-//           color: var(--kpmg-dark);
-//         }
-
-//         .card p {
-//           font-size: 14.8px;
-//           color: var(--muted);
-//           line-height: 1.65;
-//         }
-
-//         /* RESPONSIVE */
-//         @media (max-width: 1200px) {
-//           .hero {
-//             flex-direction: column;
-//             gap: 70px;
-//             text-align: center;
-//           }
-
-//           .hero-left {
-//             padding-left: 0;
-//             max-width: 100%;
-//           }
-
-//           .cards-grid {
-//             width: 100%;
-//             max-width: 700px;
-//             margin: 0 auto;
-//             grid-template-columns: repeat(2, 1fr);
-//           }
-//         }
-
-//         @media (max-width: 640px) {
-//           .main {
-//             padding: 50px 20px;
-//           }
-//           .hero h1 {
-//             font-size: 3.1rem;
-//           }
-//           .cards-grid {
-//             grid-template-columns: 1fr;
-//           }
-//         }
-//       `}</style>
-
-//       {/* NAVBAR */}
-//       <div className="navbar">
-//         {/* Empty navbar */}
-//       </div>
-
-//       {/* MAIN CONTENT */}
-//       <div className="main">
-//         <div className="hero">
-
-//           {/* LEFT SIDE */}
-//           <div className="hero-left">
-//             <div className="badge">AI Governance Platform</div>
-
-//             <h1>
-//               AI Assurance <br />
-//               <span>Reimagined.</span>
-//             </h1>
-
-//             <p>
-//               Enterprise-grade AI governance, risk intelligence, 
-//               transparency validation, and regulatory compliance 
-//               built for high-stakes systems.
-//             </p>
-
-//             <div className="btn-group">
-//               <button
-//                 className="primary-btn"
-//                 onClick={() => navigate("/login")}
-//               >
-//                 Access Platform →
-//               </button>
-
-//               <button
-//                 className="secondary-btn"
-//                 onClick={() => navigate("/login")}
-//               >
-//                 Sign In
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* RIGHT SIDE - 6 Cards with Outline */}
-//       <div className="cards-grid">
-//             <div className="card">
-//               <h3>📋 AI Register</h3>
-//               <p>Register and manage all your AI models centrally.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📥 Smart Ingestion</h3>
-//               <p>Upload logs or use SDCC for automatic data classification.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>🔍 Blackbox Testing</h3>
-//               <p>Generate synthetic logs and run evaluations when needed.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📊 Full Audit</h3>
-//               <p>Run complete trusted AI assessment with detailed scoring.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📑 Audit Reports</h3>
-//               <p>Generate professional PDF reports with findings and evidence.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📈 Live Monitoring</h3>
-//               <p>Continuous monitoring and drift detection in production.</p>
-//             </div>
-//           </div>
-
-
-
-
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-// import { useNavigate } from "react-router-dom";
-
-// const Home = () => {
-//   const navigate = useNavigate();
-
-//   return (
-//     <div className="layout">
-//       <style>{`
-//         :root {
-//           --kpmg-dark: #00338D;
-//           --kpmg-mid: #005EB8;
-//           --kpmg-light: #0091DA;
-//           --accent: #00C896;
-
-//           --bg: #F4F7FB;
-//           --text: #0B1F33;
-//           --muted: #6B7C93;
-//           --border: #E3EAF3;
-//         }
-
-//         .layout {
-//           min-height: 100vh;
-//           font-family: 'Inter', system-ui, sans-serif;
-//           background: var(--bg);
-//           color: var(--text);
-//         }
-
-//         /* NAVBAR with KPMG Logo */
-//         .navbar {
-//           padding: 10px 80px;
-//           display: flex;
-//           align-items: center;
-//           justify-content: space-between;
-//         }
-
-//         .logo img {
-//           height: 90px;
-//         }
-
-//         /* MAIN - Controlled padding to prevent extra scroll */
-//         .main {
-//           padding: 30px 60px 100px;   /* reduced top padding */
-//         }
-
-//         /* HERO */
-//         .hero {
-//           display: flex;
-//           justify-content: space-between;
-//           align-items: center;
-//           gap: 90px;
-//         }
-
-//         /* LEFT SIDE */
-//         .hero-left {
-//           max-width: 520px;
-//         }
-
-//         .badge {
-//           background: #E6F2FB;
-//           color: var(--kpmg-mid);
-//           font-size: 13px;
-//           padding: 8px 20px;
-//           border-radius: 30px;
-//           display: inline-block;
-//           margin-bottom: 24px;
-//           font-weight: 600;
-//         }
-
-//         .hero h1 {
-//           font-size: 3.85rem;
-//           font-weight: 800;
-//           line-height: 1.1;
-//           margin-bottom: 24px;
-//         }
-
-//         .hero h1 span {
-//           background: linear-gradient(135deg, #0091DA, #00C896);
-//           -webkit-background-clip: text;
-//           -webkit-text-fill-color: transparent;
-//         }
-
-//         .hero p {
-//           font-size: 1.23rem;
-//           color: var(--muted);
-//           line-height: 1.68;
-//           margin-bottom: 42px;
-//         }
-
-//         /* BUTTONS */
-//         .btn-group {
-//           display: flex;
-//           gap: 18px;
-//         }
-
-//         .primary-btn {
-//           background: linear-gradient(135deg, var(--kpmg-dark), var(--kpmg-mid));
-//           color: white;
-//           padding: 16px 36px;
-//           border-radius: 12px;
-//           border: none;
-//           cursor: pointer;
-//           font-weight: 700;
-//           font-size: 1.1rem;
-//           transition: all 0.3s ease;
-//         }
-
-//         .primary-btn:hover {
-//           transform: translateY(-4px);
-//           box-shadow: 0 18px 40px rgba(0,51,141,0.35);
-//         }
-
-//         .secondary-btn {
-//           background: white;
-//           border: 2px solid #E3EAF3;
-//           color: var(--kpmg-dark);
-//           padding: 16px 36px;
-//           border-radius: 12px;
-//           cursor: pointer;
-//           font-weight: 600;
-//           transition: all 0.3s ease;
-//         }
-
-//         .secondary-btn:hover {
-//           background: #f8fafd;
-//           border-color: var(--kpmg-light);
-//           transform: translateY(-2px);
-//         }
-
-//         /* 6 CARDS - Improved Text Styling */
-//         .cards-grid {
-//           display: grid;
-//           grid-template-columns: repeat(3, 1fr);
-//           gap: 28px;
-//           width: 720px;
-//         }
-
-//         .card {
-//           background: white;
-//           border-radius: 22px;
-//           padding: 32px 26px;
-//           border: 2px solid #E3EAF3;
-//           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-//           cursor: pointer;
-//           box-shadow: 0 10px 30px rgba(0,0,0,0.07);
-//           height: 100%;
-//         }
-
-//         .card:hover {
-//           border-color: var(--kpmg-light);
-//           transform: translateY(-12px);
-//           box-shadow: 0 25px 60px rgba(0,51,141,0.22);
-//         }
-
-//         .card h3 {
-//           font-size: 18px;
-//           font-weight: 700;
-//           margin-bottom: 12px;
-//           color: var(--kpmg-dark);
-//           letter-spacing: -0.02em;
-//         }
-
-//         .card p {
-//           font-size: 14.2px;
-//           color: var(--muted);
-//           line-height: 1.6;
-//           font-weight: 400;
-//         }
-
-//         /* RESPONSIVE */
-//         @media (max-width: 1200px) {
-//           .hero {
-//             flex-direction: column;
-//             gap: 80px;
-//             text-align: center;
-//           }
-
-//           .hero-left {
-//             max-width: 100%;
-//           }
-
-//           .cards-grid {
-//             width: 100%;
-//             max-width: 720px;
-//             margin: 0 auto;
-//             grid-template-columns: repeat(2, 1fr);
-//           }
-//         }
-
-//         @media (max-width: 640px) {
-//           .main {
-//             padding: 50px 20px;
-//           }
-//           .hero h1 {
-//             font-size: 3.1rem;
-//           }
-//           .cards-grid {
-//             grid-template-columns: 1fr;
-//           }
-//         }
-//       `}</style>
-
-//       {/* NAVBAR with KPMG Logo at Top Left */}
-//       <div className="navbar">
-//         <div className="logo">
-//           <img src="/kpmg-logo.png" alt="KPMG Logo" />
-//         </div>
-//       </div>
-
-//       {/* MAIN CONTENT */}
-//       <div className="main">
-//         <div className="hero">
-
-//           {/* LEFT SIDE */}
-//           <div className="hero-left">
-//             <div className="badge">AI Governance Platform</div>
-
-//             <h1>
-//               AI Assurance <br />
-//               <span>Reimagined.</span>
-//             </h1>
-
-//             <p>
-//               Enterprise-grade AI governance, risk intelligence, 
-//               transparency validation, and regulatory compliance 
-//               built for high-stakes systems.
-//             </p>
-
-//             <div className="btn-group">
-//               <button
-//                 className="primary-btn"
-//                 onClick={() => navigate("/login")}
-//               >
-//                 Access Platform →
-//               </button>
-
-//               <button
-//                 className="secondary-btn"
-//                 onClick={() => navigate("/login")}
-//               >
-//                 Sign In
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* RIGHT SIDE - 6 Cards */}
-//           <div className="cards-grid">
-//             <div className="card">
-//               <h3>📋 AI Register</h3>
-//               <p>Register and manage all your AI models centrally.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📥 Smart Ingestion</h3>
-//               <p>Upload logs or use SDCC for automatic classification.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>🔍 Blackbox Testing</h3>
-//               <p>Generate synthetic logs when real data is unavailable.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📊 Full Audit</h3>
-//               <p>Run complete trusted AI assessment with detailed scoring.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📑 Audit Reports</h3>
-//               <p>Generate professional PDF reports with findings.</p>
-//             </div>
-
-//             <div className="card">
-//               <h3>📈 Live Monitoring</h3>
-//               <p>Continuous monitoring and drift detection in production.</p>
-//             </div>
-//           </div>
-
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Home;
-
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const navigate = useNavigate();
 
-  // Check if user is logged in (simple check using localStorage)
-  const isLoggedIn = !!localStorage.getItem("token");
-
   return (
-    <div className="layout">
+    <div style={{ minHeight: "100vh", fontFamily: "'Inter', system-ui, sans-serif", background: "#F4F7FB", color: "#0B1F33" }}>
       <style>{`
-        :root {
-          --kpmg-dark: #00338D;
-          --kpmg-mid: #005EB8;
-          --kpmg-light: #0091DA;
-          --accent: #00C896;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-          --bg: #F4F7FB;
-          --text: #0B1F33;
-          --muted: #6B7C93;
-          --border: #E3EAF3;
-        }
-
-        .layout {
-          min-height: 100vh;
-          font-family: 'Inter', system-ui, sans-serif;
-          background: var(--bg);
-          color: var(--text);
-        }
-
-        /* NAVBAR - Fixed compact height */
-        .navbar {
-          padding: 16px 60px;
+        .home-navbar {
+          background: white;
+          border-bottom: 1px solid #E3EAF3;
+          padding: 0 60px;
+          height: 72px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: white;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
           position: sticky;
           top: 0;
           z-index: 100;
-          height: 76px; /* Fixed height to prevent shifting */
+          box-shadow: 0 2px 12px rgba(0,51,141,0.06);
         }
 
-        .logo img {
-          height: 90px; /* Your requested logo size */
-        }
+        .home-nav-logo img { height: 80px; }
 
-        .nav-right {
+        .home-nav-links {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 8px;
         }
 
-        /* Improved Profile Icon */
-        .profile-icon {
-          width: 42px;
-          height: 42px;
-          background: linear-gradient(135deg, var(--kpmg-mid), var(--kpmg-light));
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
+        .nav-link {
+          padding: 9px 18px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #6B7C93;
           cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 4px 12px rgba(0,51,141,0.15);
-          transition: all 0.3s ease;
+          border: none;
+          background: transparent;
+          transition: all 0.2s;
+          font-family: 'Inter', sans-serif;
         }
+        .nav-link:hover { background: #F0F6FF; color: #005EB8; }
 
-        .profile-icon:hover {
-          transform: scale(1.1);
-          box-shadow: 0 6px 16px rgba(0,51,141,0.25);
+        .nav-cta {
+          padding: 10px 22px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 700;
+          color: white;
+          cursor: pointer;
+          border: none;
+          background: linear-gradient(135deg, #00338D, #005EB8);
+          transition: all 0.3s;
+          font-family: 'Inter', sans-serif;
+          box-shadow: 0 4px 14px rgba(0,51,141,0.25);
         }
-
-        /* MAIN */
-        .main {
-          padding: 80px 60px 100px;
-        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,51,141,0.3); }
 
         /* HERO */
-        .hero {
+        .home-hero {
+          padding: 80px 60px 60px;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          gap: 90px;
+          justify-content: space-between;
+          gap: 80px;
+          max-width: 1280px;
+          margin: 0 auto;
         }
 
-        .hero-left {
-          max-width: 520px;
-        }
+        .home-hero-left { max-width: 560px; }
 
-        .badge {
+        .hero-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
           background: #E6F2FB;
-          color: var(--kpmg-mid);
-          font-size: 13px;
-          padding: 8px 20px;
-          border-radius: 30px;
-          display: inline-block;
+          color: #005EB8;
+          font-size: 12px;
+          font-weight: 700;
+          padding: 6px 14px;
+          border-radius: 20px;
           margin-bottom: 24px;
-          font-weight: 600;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          border: 1px solid rgba(0,94,184,0.2);
         }
 
-        .hero h1 {
-          font-size: 3.85rem;
-          font-weight: 800;
-          line-height: 1.1;
-          margin-bottom: 24px;
+        .hero-title {
+          font-size: 3.6rem;
+          font-weight: 900;
+          line-height: 1.08;
+          letter-spacing: -1.5px;
+          color: #0B1F33;
+          margin-bottom: 22px;
         }
 
-        .hero h1 span {
-          background: linear-gradient(135deg, #0091DA, #00C896);
+        .hero-title-accent {
+          background: linear-gradient(135deg, #00338D, #0091DA);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
 
-        .hero p {
-          font-size: 1.23rem;
-          color: var(--muted);
-          line-height: 1.68;
-          margin-bottom: 42px;
-        }
-
-        /* BUTTONS */
-        .btn-group {
-          display: flex;
-          gap: 18px;
-        }
-
-        .primary-btn {
-          background: linear-gradient(135deg, var(--kpmg-dark), var(--kpmg-mid));
-          color: white;
-          padding: 16px 36px;
-          border-radius: 12px;
-          border: none;
-          cursor: pointer;
-          font-weight: 700;
+        .hero-desc {
           font-size: 1.1rem;
-          transition: all 0.3s ease;
+          color: #6B7C93;
+          line-height: 1.75;
+          margin-bottom: 40px;
+          max-width: 480px;
         }
 
-        .primary-btn:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 18px 40px rgba(0,51,141,0.35);
-        }
+        .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
 
-        .secondary-btn {
-          background: white;
-          border: 2px solid #E3EAF3;
-          color: var(--kpmg-dark);
-          padding: 16px 36px;
-          border-radius: 12px;
+        .btn-primary {
+          padding: 15px 32px;
+          border-radius: 10px;
+          border: none;
+          background: linear-gradient(135deg, #00338D, #005EB8);
+          color: white;
+          font-weight: 700;
+          font-size: 15px;
           cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s;
+          box-shadow: 0 6px 20px rgba(0,51,141,0.28);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,51,141,0.35); }
+
+        .btn-secondary {
+          padding: 15px 32px;
+          border-radius: 10px;
+          border: 2px solid #E3EAF3;
+          background: white;
+          color: #00338D;
           font-weight: 600;
-          transition: all 0.3s ease;
+          font-size: 15px;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s;
+        }
+        .btn-secondary:hover { border-color: #0091DA; background: #F0F6FF; transform: translateY(-2px); }
+
+        /* TRUST BADGES */
+        .trust-row {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          margin-top: 36px;
+          flex-wrap: wrap;
+        }
+        .trust-badge {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          color: #94A3B8;
+          font-weight: 500;
+        }
+        .trust-badge span:first-child { font-size: 14px; }
+
+        /* RIGHT SIDE — visual panel */
+        .hero-right {
+          flex-shrink: 0;
+          width: 520px;
         }
 
-        .secondary-btn:hover {
-          background: #f8fafd;
-          border-color: var(--kpmg-light);
-          transform: translateY(-2px);
+        .score-panel {
+          background: white;
+          border-radius: 24px;
+          border: 1px solid #E3EAF3;
+          box-shadow: 0 20px 60px rgba(0,51,141,0.1);
+          overflow: hidden;
         }
 
-        /* 6 CARDS */
-        .cards-grid {
+        .score-panel-header {
+          background: linear-gradient(135deg, #00338D, #005EB8);
+          padding: 24px 28px;
+          color: white;
+        }
+
+        .score-panel-header h3 {
+          font-size: 14px;
+          font-weight: 700;
+          opacity: 0.8;
+          margin-bottom: 4px;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .score-panel-header .ai-name {
+          font-size: 20px;
+          font-weight: 800;
+        }
+
+        .score-panel-body { padding: 24px 28px; }
+
+        .score-big {
+          display: flex;
+          align-items: flex-end;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .score-number {
+          font-size: 72px;
+          font-weight: 900;
+          color: #00338D;
+          line-height: 1;
+          letter-spacing: -3px;
+        }
+
+        .score-meta { padding-bottom: 8px; }
+        .score-meta .score-label { font-size: 13px; color: #94A3B8; }
+        .score-meta .score-risk {
+          display: inline-block;
+          padding: 3px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 700;
+          background: #DCFCE7;
+          color: #059669;
+          margin-top: 4px;
+        }
+
+        .principle-bars { display: flex; flex-direction: column; gap: 10px; }
+
+        .principle-bar-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .principle-bar-label {
+          font-size: 12px;
+          color: #6B7C93;
+          width: 110px;
+          flex-shrink: 0;
+          font-weight: 500;
+        }
+
+        .principle-bar-track {
+          flex: 1;
+          height: 8px;
+          background: #F1F5F9;
+          border-radius: 99px;
+          overflow: hidden;
+        }
+
+        .principle-bar-fill {
+          height: 100%;
+          border-radius: 99px;
+          background: linear-gradient(90deg, #00338D, #0091DA);
+        }
+
+        .principle-bar-val {
+          font-size: 12px;
+          font-weight: 700;
+          color: #00338D;
+          width: 28px;
+          text-align: right;
+          flex-shrink: 0;
+        }
+
+        /* FEATURES SECTION */
+        .features-section {
+          padding: 80px 60px;
+          max-width: 1280px;
+          margin: 0 auto;
+        }
+
+        .section-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #005EB8;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          margin-bottom: 12px;
+        }
+
+        .section-title {
+          font-size: 2.2rem;
+          font-weight: 800;
+          color: #0B1F33;
+          letter-spacing: -0.5px;
+          margin-bottom: 12px;
+        }
+
+        .section-desc {
+          font-size: 1rem;
+          color: #6B7C93;
+          line-height: 1.7;
+          max-width: 520px;
+          margin-bottom: 48px;
+        }
+
+        .features-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 28px;
-          width: 720px;
+          gap: 24px;
         }
 
-        .card {
+        .feature-card {
           background: white;
-          border-radius: 22px;
-          padding: 32px 26px;
-          border: 2px solid #E3EAF3;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          cursor: pointer;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.07);
-          height: 100%;
+          border-radius: 20px;
+          padding: 32px 28px;
+          border: 1.5px solid #E3EAF3;
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: default;
+          position: relative;
+          overflow: hidden;
         }
 
-        .card:hover {
-          border-color: var(--kpmg-light);
-          transform: translateY(-12px);
-          box-shadow: 0 25px 60px rgba(0,51,141,0.22);
+        .feature-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #00338D, #0091DA);
+          opacity: 0;
+          transition: opacity 0.3s;
         }
 
-        .card h3 {
-          font-size: 18px;
+        .feature-card:hover {
+          border-color: #0091DA;
+          transform: translateY(-6px);
+          box-shadow: 0 20px 50px rgba(0,51,141,0.12);
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          background: #E6F2FB;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 22px;
+          margin-bottom: 18px;
+          border: 1px solid rgba(0,94,184,0.15);
+        }
+
+        .feature-card h3 {
+          font-size: 16px;
           font-weight: 700;
-          margin-bottom: 12px;
-          color: var(--kpmg-dark);
+          color: #0B1F33;
+          margin-bottom: 10px;
           letter-spacing: -0.02em;
         }
 
-        .card p {
-          font-size: 14.2px;
-          color: var(--muted);
-          line-height: 1.6;
-          font-weight: 400;
+        .feature-card p {
+          font-size: 13.5px;
+          color: #6B7C93;
+          line-height: 1.65;
         }
 
+        /* STATS STRIP */
+        .stats-strip {
+          background: linear-gradient(135deg, #00338D, #005EB8);
+          padding: 48px 60px;
+        }
+
+        .stats-inner {
+          max-width: 1280px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 40px;
+        }
+
+        .stat-item { text-align: center; }
+
+        .stat-number {
+          font-size: 2.8rem;
+          font-weight: 900;
+          color: white;
+          letter-spacing: -1px;
+          line-height: 1;
+          margin-bottom: 8px;
+        }
+
+        .stat-label {
+          font-size: 13px;
+          color: rgba(255,255,255,0.65);
+          font-weight: 500;
+        }
+
+        /* FRAMEWORKS */
+        .frameworks-section {
+          padding: 60px 60px;
+          max-width: 1280px;
+          margin: 0 auto;
+        }
+
+        .frameworks-row {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+          margin-top: 32px;
+        }
+
+        .framework-pill {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 14px 22px;
+          background: white;
+          border: 1.5px solid #E3EAF3;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #0B1F33;
+          transition: all 0.2s;
+        }
+
+        .framework-pill:hover {
+          border-color: #0091DA;
+          background: #F0F6FF;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0,51,141,0.1);
+        }
+
+        /* FOOTER */
+        .home-footer {
+          background: #0B1F33;
+          padding: 32px 60px;
+          text-align: center;
+          color: rgba(255,255,255,0.4);
+          font-size: 13px;
+        }
+
+        .home-footer span { color: rgba(255,255,255,0.7); font-weight: 600; }
+
         /* RESPONSIVE */
-        @media (max-width: 1200px) {
-          .hero {
-            flex-direction: column;
-            gap: 80px;
-            text-align: center;
-          }
-
-          .hero-left {
-            max-width: 100%;
-          }
-
-          .cards-grid {
-            width: 100%;
-            max-width: 720px;
-            margin: 0 auto;
-            grid-template-columns: repeat(2, 1fr);
-          }
+        @media (max-width: 1100px) {
+          .home-hero { flex-direction: column; gap: 60px; padding: 60px 40px; }
+          .hero-right { width: 100%; max-width: 520px; }
+          .features-grid { grid-template-columns: repeat(2, 1fr); }
+          .stats-inner { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 640px) {
-          .main {
-            padding: 50px 20px;
-          }
-          .hero h1 {
-            font-size: 3.1rem;
-          }
-          .cards-grid {
-            grid-template-columns: 1fr;
-          }
-          .navbar {
-            padding: 16px 24px;
-          }
+          .home-navbar { padding: 0 24px; }
+          .home-hero { padding: 40px 24px; }
+          .hero-title { font-size: 2.6rem; }
+          .features-section, .frameworks-section { padding: 60px 24px; }
+          .features-grid { grid-template-columns: 1fr; }
+          .stats-strip { padding: 40px 24px; }
+          .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 24px; }
         }
       `}</style>
 
       {/* NAVBAR */}
-      <div className="navbar">
-        <div className="logo">
-          <img src="/kpmg-logo.png" alt="KPMG Logo" />
+      <nav className="home-navbar">
+        <div className="home-nav-logo">
+          <img src="/kpmg-logo.png" alt="KPMG" />
+        </div>
+        <div className="home-nav-links">
+          <button className="nav-cta" onClick={() => navigate("/login")}>Access Platform →</button>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <section className="home-hero">
+        <div className="home-hero-left">
+          <div className="hero-eyebrow">
+            <span>🔷</span> KPMG Trusted AI Framework
+          </div>
+          <h1 className="hero-title">
+            AI Governance<br />
+            <span className="hero-title-accent">Built for Enterprise.</span>
+          </h1>
+          <p className="hero-desc">
+            Audit, score, and certify your AI systems against EU AI Act, ISO 42001, and NIST AI RMF — with real-time risk intelligence and regulatory-grade reporting.
+          </p>
+          <div className="hero-btns">
+            <button className="btn-primary" onClick={() => navigate("/login")}>Start Audit →</button>
+            <button className="btn-secondary" onClick={() => navigate("/register")}>Create Account</button>
+          </div>
+          <div className="trust-row">
+            <div className="trust-badge"><span>🇪🇺</span><span>EU AI Act Ready</span></div>
+            <div className="trust-badge"><span>🏅</span><span>ISO 42001 Aligned</span></div>
+            <div className="trust-badge"><span>🏛️</span><span>NIST AI RMF</span></div>
+          </div>
         </div>
 
-    
-      </div>
-
-      {/* MAIN CONTENT */}
-      <div className="main">
-        <div className="hero">
-
-          {/* LEFT SIDE */}
-          <div className="hero-left">
-            <div className="badge">AI Governance Platform</div>
-
-            <h1>
-              AI Assurance <br />
-              <span>Reimagined.</span>
-            </h1>
-
-            <p>
-              Enterprise-grade AI governance, risk intelligence, 
-              transparency validation, and regulatory compliance 
-              built for high-stakes systems.
-            </p>
-
-            <div className="btn-group">
-              <button
-                className="primary-btn"
-                onClick={() => navigate("/login")}
-              >
-                Access Platform →
-              </button>
-
-              <button
-                className="secondary-btn"
-                onClick={() => navigate("/login")}
-              >
-                Sign In
-              </button>
+        <div className="hero-right">
+          <div className="score-panel">
+            <div className="score-panel-header">
+              <h3>Why Auditable AI?</h3>
+              <div className="ai-name">Enterprise-grade governance, built for scale.</div>
+            </div>
+            <div className="score-panel-body">
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {[
+                  { icon: "🔍", title: "Detect governance gaps before regulators do", desc: "Proactive auditing across 10 KPMG Trusted AI Principles." },
+                  { icon: "📋", title: "EU AI Act & ISO 42001 ready", desc: "Automated compliance mapping against global standards." },
+                  { icon: "🛡️", title: "Black-box ", desc: "Audit any AI — with or without access to the model." },
+                  { icon: "📄", title: "Regulatory-grade PDF reports", desc: "Client-ready documentation for auditors and boards." },
+                  { icon: "🔷", title: "Powered by KPMG Trusted AI Framework", desc: "Built on the same framework used by enterprise clients globally." },
+                ].map(item => (
+                  <div key={item.title} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, border: "1px solid rgba(0,94,184,0.15)" }}>{item.icon}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0B1F33", marginBottom: 2 }}>{item.title}</div>
+                      <div style={{ fontSize: 12, color: "#6B7C93", lineHeight: 1.5 }}>{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* RIGHT SIDE - 6 Cards */}
-          <div className="cards-grid">
-            <div className="card">
-              <h3>📋 AI Register</h3>
-              <p>Register and manage all your AI models centrally.</p>
+      {/* STATS */}
+      <div className="stats-strip">
+        <div className="stats-inner">
+          {[
+            { num: "10", label: "Governance Principles" },
+            { num: "4", label: "Regulatory Frameworks" },
+            { num: "50+", label: "Sub-parameters Scored" },
+            { num: "2", label: "Audit Modes" },
+          ].map(s => (
+            <div key={s.label} className="stat-item">
+              <div className="stat-number">{s.num}</div>
+              <div className="stat-label">{s.label}</div>
             </div>
-
-            <div className="card">
-              <h3>📥 Smart Ingestion</h3>
-              <p>Upload logs or use SDCC for automatic classification.</p>
-            </div>
-
-            <div className="card">
-              <h3>🔍 Blackbox Testing</h3>
-              <p>Generate synthetic logs when real data is unavailable.</p>
-            </div>
-
-            <div className="card">
-              <h3>📊 Full Audit</h3>
-              <p>Run complete trusted AI assessment with detailed scoring.</p>
-            </div>
-
-            <div className="card">
-              <h3>📑 Audit Reports</h3>
-              <p>Generate professional PDF reports with findings.</p>
-            </div>
-
-            <div className="card">
-              <h3>📈 Live Monitoring</h3>
-              <p>Continuous monitoring and drift detection in production.</p>
-            </div>
-          </div>
-
+          ))}
         </div>
       </div>
+
+      {/* FEATURES */}
+      <section className="features-section">
+        <div className="section-label">Platform Capabilities</div>
+        <h2 className="section-title">Everything you need to govern AI</h2>
+        <p className="section-desc">From automated log ingestion to regulatory-grade PDF reports — one platform for your entire AI governance programme.</p>
+        <div className="features-grid">
+          {[
+            { icon: "📋", title: "AI Register", desc: "Centralise all your AI models with metadata, risk classification, and ownership tracking in one place." },
+            { icon: "📥", title: "Smart Ingestion", desc: "Upload audit logs or use SDCC for automatic data classification and schema detection." },
+            { icon: "🔍", title: "Blackbox Testing", desc: "Generate synthetic probes and run adversarial evaluations when real data is unavailable." },
+            { icon: "📊", title: "Full Governance Audit", desc: "Score across 10 Trusted AI principles with 50+ sub-parameters and detailed calculation transparency." },
+            { icon: "📑", title: "Regulatory Reports", desc: "Generate professional PDF reports aligned with EU AI Act, ISO 42001, and NIST AI RMF standards." },
+            { icon: "📈", title: "Continuous Monitoring", desc: "Track governance scores over time, detect drift, and receive alerts on compliance degradation." },
+          ].map(f => (
+            <div key={f.title} className="feature-card">
+              <div className="feature-icon">{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FRAMEWORKS */}
+      <section className="frameworks-section">
+        <div className="section-label">Regulatory Coverage</div>
+        <h2 className="section-title">Aligned with global AI standards</h2>
+        <div className="frameworks-row">
+          {[
+            { icon: "🇪🇺", label: "EU AI Act", desc: "European Union AI Regulation" },
+            { icon: "🏅", label: "ISO/IEC 42001:2023", desc: "AI Management System Standard" },
+            { icon: "🏛️", label: "NIST AI RMF", desc: "AI Risk Management Framework" },
+            { icon: "🔷", label: "KPMG Trusted AI", desc: "Trusted AI Framework" },
+          ].map(f => (
+            <div key={f.label} className="framework-pill">
+              <span style={{ fontSize: 20 }}>{f.icon}</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#0B1F33" }}>{f.label}</div>
+                <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="home-footer">
+        <span>Auditable AI™</span> · Powered by KPMG Trusted AI Framework · Built for enterprise governance
+      </footer>
     </div>
   );
 };

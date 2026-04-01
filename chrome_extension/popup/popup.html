@@ -4,93 +4,130 @@
   <meta charset="UTF-8">
   <title>AI Governance Auditor</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     :root {
-      --bg:#0a0f1a; --surface:#111827; --border:#1f2937;
-      --accent:#3b82f6; --green:#10b981; --warn:#f59e0b; --red:#ef4444;
-      --text:#f9fafb; --muted:#6b7280;
-      --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+      --kpmg: #00338D; --kpmg-mid: #005EB8; --kpmg-lt: #0091DA;
+      --bg: #F4F7FB; --surface: #FFFFFF; --border: #E3EAF3;
+      --text: #0B1F33; --muted: #6B7C93;
+      --green: #059669; --red: #DC2626; --orange: #D97706;
     }
-    *{ box-sizing:border-box; margin:0; padding:0; }
-    body{ width:360px; min-height:460px; background:var(--bg); color:var(--text); font-family:var(--sans); font-size:13px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { width: 380px; min-height: 520px; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; }
 
-    .header{ padding:14px 18px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
-    .hicon{ width:28px; height:28px; background:var(--accent); border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .hicon svg{ width:15px; height:15px; }
-    .htxt h1{ font-size:13px; font-weight:600; letter-spacing:.03em; }
-    .htxt p{ font-size:11px; color:var(--muted); margin-top:1px; }
-    .hbadge{ margin-left:auto; font-family:var(--mono); font-size:10px; padding:2px 7px; border-radius:999px; background:#1f2937; color:var(--muted); border:1px solid var(--border); }
+    /* HEADER */
+    .header { padding: 14px 18px 12px; background: var(--kpmg); display: flex; align-items: center; gap: 10px; }
+    .hlogo { width: 32px; height: 32px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .hlogo svg { width: 18px; height: 18px; }
+    .htxt h1 { font-size: 13px; font-weight: 700; color: white; letter-spacing: .02em; }
+    .htxt p { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+    .hbadge { margin-left: auto; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.2); }
 
-    .tabs{ display:flex; border-bottom:1px solid var(--border); }
-    .tab{ flex:1; padding:9px 0; background:none; border:none; color:var(--muted); font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s; }
-    .tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
+    /* TABS */
+    .tabs { display: flex; background: white; border-bottom: 1px solid var(--border); }
+    .tab { flex: 1; padding: 10px 0; background: none; border: none; color: var(--muted); font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s; }
+    .tab.active { color: var(--kpmg-mid); border-bottom-color: var(--kpmg-mid); }
 
-    .panel{ display:none; padding:16px 18px; }
-    .panel.active{ display:block; }
+    /* PANELS */
+    .panel { display: none; padding: 16px 18px; }
+    .panel.active { display: block; }
 
-    .platform-badge{ display:flex; align-items:center; gap:8px; padding:9px 11px; background:var(--surface); border:1px solid var(--border); border-radius:7px; margin-bottom:14px; }
-    .pdot{ width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
-    .pdot.unknown{ background:var(--muted); }
-    .pname{ font-size:12px; font-weight:500; }
-    .purl{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:270px; }
+    /* PLATFORM BADGE */
+    .platform-badge { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .pdot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .pdot.unknown { background: var(--muted); }
+    .pname { font-size: 13px; font-weight: 600; color: var(--text); }
+    .purl { font-size: 10px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px; }
 
-    .audit-btn{ width:100%; padding:11px; background:var(--accent); border:none; border-radius:8px; color:#fff; font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:14px; transition:all .15s; }
-    .audit-btn:hover:not(:disabled){ background:#2563eb; }
-    .audit-btn:disabled{ opacity:.5; cursor:not-allowed; }
-    .audit-btn.running{ background:#92400e; }
+    /* AUDIT BUTTON */
+    .audit-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--kpmg), var(--kpmg-mid)); border: none; border-radius: 10px; color: white; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; transition: all .2s; box-shadow: 0 4px 12px rgba(0,51,141,0.25); }
+    .audit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,51,141,0.3); }
+    .audit-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .audit-btn.running { background: linear-gradient(135deg, #1e3a8a, #1d4ed8); }
 
-    .progress-wrap{ margin-bottom:14px; display:none; }
-    .prog-label{ display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:5px; }
-    .prog-bg{ height:4px; background:var(--border); border-radius:999px; overflow:hidden; }
-    .prog-fill{ height:100%; background:var(--accent); border-radius:999px; transition:width .3s ease; width:0%; }
-    .probe-status{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .history-btn { width: 100%; padding: 10px; background: white; border: 1.5px solid var(--kpmg-mid); border-radius: 10px; color: var(--kpmg-mid); font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 12px; transition: all .2s; }
+    .history-btn:hover { background: #E6F2FB; }
 
-    .results-wrap{ display:none; }
-    .score-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-    .score-big{ font-family:var(--mono); font-size:38px; font-weight:600; line-height:1; }
-    .score-big.high{ color:var(--green); }
-    .score-big.medium{ color:var(--warn); }
-    .score-big.low{ color:var(--red); }
-    .risk-badge{ font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px; }
-    .risk-badge.Low{ background:rgba(16,185,129,.15); color:var(--green); }
-    .risk-badge.Moderate{ background:rgba(245,158,11,.15); color:var(--warn); }
-    .risk-badge.High{ background:rgba(239,68,68,.15); color:var(--red); }
-    .cat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
-    .cat-cell{ background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:8px 10px; }
-    .cat-name{ font-size:10px; color:var(--muted); font-weight:500; }
-    .cat-score{ font-family:var(--mono); font-size:20px; font-weight:600; margin-top:2px; }
-    .cat-score.high{ color:var(--green); }
-    .cat-score.medium{ color:var(--warn); }
-    .cat-score.low{ color:var(--red); }
-    .view-btn{ width:100%; padding:9px; background:none; border:1px solid var(--accent); border-radius:6px; color:var(--accent); font-family:var(--sans); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
-    .view-btn:hover{ background:rgba(59,130,246,.08); }
+    /* PROGRESS */
+    .progress-wrap { margin-bottom: 12px; display: none; background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+    .prog-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .prog-bg { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .prog-fill { height: 100%; background: linear-gradient(90deg, var(--kpmg), var(--kpmg-lt)); border-radius: 99px; transition: width .3s ease; width: 0%; }
+    .probe-status { font-size: 10px; color: var(--muted); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; }
 
-    .error-box{ background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:6px; padding:9px 11px; font-size:11.5px; color:#fca5a5; display:none; margin-bottom:10px; }
+    /* RESULTS */
+    .results-wrap { display: none; }
+    .score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 14px 16px; background: white; border: 1px solid var(--border); border-radius: 12px; }
+    .score-big { font-size: 42px; font-weight: 900; line-height: 1; letter-spacing: -2px; }
+    .score-big.high { color: var(--green); }
+    .score-big.medium { color: var(--orange); }
+    .score-big.low { color: var(--red); }
+    .score-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .risk-badge { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+    .risk-badge.Low { background: #DCFCE7; color: var(--green); }
+    .risk-badge.Moderate { background: #E6F2FB; color: var(--kpmg-mid); }
+    .risk-badge.High { background: #FEE2E2; color: var(--red); }
 
-    .field{ margin-bottom:13px; }
-    .field label{ display:block; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
-    .field input{ width:100%; padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:11.5px; outline:none; transition:border-color .15s; }
-    .field input:focus{ border-color:var(--accent); }
-    .field input::placeholder{ color:var(--muted); }
-    .save-btn{ width:100%; padding:9px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
-    .save-btn:hover{ border-color:var(--accent); color:var(--accent); }
-    .save-msg{ font-size:11px; color:var(--green); margin-top:7px; text-align:center; display:none; }
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .cat-cell { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .cat-name { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .cat-score { font-size: 22px; font-weight: 800; margin-top: 3px; }
+    .cat-score.high { color: var(--green); }
+    .cat-score.medium { color: var(--kpmg-mid); }
+    .cat-score.low { color: var(--red); }
+
+    .view-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, var(--kpmg), var(--kpmg-mid)); border: none; border-radius: 8px; color: white; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s; }
+    .view-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,51,141,0.25); }
+
+    /* HISTORY RESULTS */
+    .history-result { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .history-result h3 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+    .finding-item { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 11px; line-height: 1.5; }
+    .finding-item.High { background: #FEE2E2; color: #7F1D1D; border-left: 3px solid var(--red); }
+    .finding-item.Medium { background: #E6F2FB; color: #1e3a8a; border-left: 3px solid var(--kpmg-mid); }
+    .finding-item.Low { background: #DCFCE7; color: #14532d; border-left: 3px solid var(--green); }
+    .no-findings { padding: 12px; background: #DCFCE7; border-radius: 8px; color: #166534; font-size: 12px; font-weight: 600; text-align: center; }
+
+    /* ERROR */
+    .error-box { background: #FEE2E2; border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px; font-size: 11.5px; color: #7F1D1D; display: none; margin-bottom: 10px; }
+
+    /* CONFIG */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 11px; font-weight: 700; color: var(--kpmg-mid); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+    .field input { width: 100%; padding: 9px 11px; background: white; border: 1.5px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; outline: none; transition: border-color .15s; }
+    .field input:focus { border-color: var(--kpmg-mid); box-shadow: 0 0 0 3px rgba(0,94,184,0.1); }
+    .field input::placeholder { color: var(--muted); }
+    .save-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, var(--kpmg), var(--kpmg-mid)); border: none; border-radius: 8px; color: white; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s; }
+    .save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,51,141,0.25); }
+    .save-msg { font-size: 11px; color: var(--green); margin-top: 8px; text-align: center; display: none; font-weight: 600; }
+
+    /* PLATFORMS */
+    .platforms-section { margin-top: 16px; }
+    .platforms-section h4 { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .platform-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .platform-tag { padding: 4px 10px; background: white; border: 1px solid var(--border); border-radius: 20px; font-size: 11px; color: var(--text); font-weight: 500; }
+
+    /* INFO BOX */
+    .info-box { padding: 10px 12px; background: #E6F2FB; border: 1px solid rgba(0,145,218,0.3); border-radius: 8px; font-size: 11px; color: var(--kpmg); line-height: 1.6; margin-bottom: 12px; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <div class="hicon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <div class="hlogo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00338D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
       </svg>
     </div>
-    <div class="htxt"><h1>AI Governance Auditor</h1><p>Enterprise black-box audit</p></div>
-    <span class="hbadge">v1.0</span>
+    <div class="htxt">
+      <h1>AI Governance Auditor</h1>
+      <p>KPMG Trusted AI Framework</p>
+    </div>
+    <span class="hbadge">v2.0</span>
   </div>
 
   <div class="tabs">
     <button class="tab active" data-tab="audit">Audit</button>
+    <button class="tab" data-tab="history">History</button>
     <button class="tab" data-tab="config">Config</button>
   </div>
 
@@ -99,23 +136,25 @@
 
     <div class="platform-badge">
       <div class="pdot" id="pdot"></div>
-      <div>
-        <div class="pname" id="pname">Detecting…</div>
-        <div class="purl"  id="purl"></div>
+      <div style="flex:1;min-width:0">
+        <div class="pname" id="pname">Detecting platform…</div>
+        <div class="purl" id="purl"></div>
       </div>
     </div>
 
+    <div class="info-box">
+      Audits <strong>50 probes</strong> across all 10 KPMG Trusted AI Principles: Safety, Fairness, Transparency, Explainability, Accountability, Security, Privacy, Reliability, Data Integrity, and Sustainability.
+    </div>
+
     <button class="audit-btn" id="audit-btn">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="5 3 19 12 5 21 5 3"/>
-      </svg>
-      Start Audit (14 probes)
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Start Governance Audit (50 probes)
     </button>
 
     <div class="progress-wrap" id="progress-wrap">
       <div class="prog-label">
         <span id="prog-text">Starting…</span>
-        <span id="prog-count">0 / 14</span>
+        <span id="prog-count">0 / 50</span>
       </div>
       <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
       <div class="probe-status" id="probe-status"></div>
@@ -126,10 +165,13 @@
     <div class="results-wrap" id="results-wrap">
       <div class="score-row">
         <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">Overall Score</div>
+          <div class="score-label">Overall Score</div>
           <div class="score-big" id="score-big">—</div>
         </div>
-        <span class="risk-badge" id="risk-badge">—</span>
+        <div style="text-align:right">
+          <span class="risk-badge" id="risk-badge">—</span>
+          <div style="font-size:10px;color:var(--muted);margin-top:6px" id="probes-run-label"></div>
+        </div>
       </div>
       <div class="cat-grid" id="cat-grid"></div>
       <button class="view-btn" id="view-btn">View Full Report →</button>
@@ -137,18 +179,45 @@
 
   </div>
 
+  <!-- HISTORY PANEL -->
+  <div class="panel" id="panel-history">
+    <div class="info-box">
+      Analyse the current chat conversation for governance issues — bias, harmful content, PII exposure, and more.
+    </div>
+
+    <button class="history-btn" id="history-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Audit Chat History
+    </button>
+
+    <div class="error-box" id="history-error-box"></div>
+    <div id="history-results"></div>
+  </div>
+
   <!-- CONFIG PANEL -->
   <div class="panel" id="panel-config">
     <div class="field">
       <label>Backend URL</label>
-      <input type="text" id="backend-url" placeholder="https://your-api.com"/>
+      <input type="text" id="backend-url" placeholder="http://localhost:8000"/>
     </div>
     <div class="field">
       <label>Audit Name (optional)</label>
       <input type="text" id="audit-name" placeholder="My Enterprise AI"/>
     </div>
     <button class="save-btn" id="save-btn">Save Settings</button>
-    <div class="save-msg" id="save-msg">✓ Saved</div>
+    <div class="save-msg" id="save-msg">✓ Settings saved</div>
+
+    <div class="platforms-section">
+      <h4>Supported Platforms</h4>
+      <div class="platform-list">
+        <span class="platform-tag">ChatGPT</span>
+        <span class="platform-tag">Gemini</span>
+        <span class="platform-tag">Copilot</span>
+        <span class="platform-tag">Claude</span>
+        <span class="platform-tag">Grok</span>
+        <span class="platform-tag">Custom UI</span>
+      </div>
+    </div>
   </div>
 
   <script src="popup.js"></script>

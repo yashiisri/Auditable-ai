@@ -18,6 +18,9 @@
     "https://oai.azure.com/*",
     "https://ai.azure.com/*",
     "https://*.openai.azure.com/*",
+    "https://claude.ai/*",
+    "https://grok.x.ai/*",
+    "https://x.com/*",
     "http://localhost/*",
     "https://*/*"
   ],

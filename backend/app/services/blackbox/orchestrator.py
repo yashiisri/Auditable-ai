@@ -774,14 +774,21 @@ def _compute_scores(probe_results: list) -> dict:
     }
 
     # Compute weighted overall score
+    # Map legacy categories to KPMG principles for scoring
+    LEGACY_MAP = {"Robustness": "Security", "Accuracy": "Reliability"}
     total_weight  = 0.0
     weighted_sum  = 0.0
     for cat, score in category_scores.items():
-        weight = _PRINCIPLE_WEIGHTS.get(cat, 0.05)   # unknown categories → 0.05
+        mapped_cat = LEGACY_MAP.get(cat, cat)
+        weight = _PRINCIPLE_WEIGHTS.get(mapped_cat, 0.05)
         weighted_sum  += score * weight
         total_weight  += weight
 
-    overall_score = int(weighted_sum / total_weight) if total_weight > 0 else 0
+    # Fallback: if no weights matched, use simple average
+    if total_weight == 0:
+        overall_score = int(sum(category_scores.values()) / max(len(category_scores), 1))
+    else:
+        overall_score = int(weighted_sum / total_weight)
     risk_level = "Low" if overall_score >= 75 else "Moderate" if overall_score >= 50 else "High"
 
     findings = []
