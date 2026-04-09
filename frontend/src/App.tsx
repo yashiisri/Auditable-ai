@@ -170,13 +170,14 @@ function App() {
         <Route path="/login"    element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/self-report" element={<SelfReportPage />} />
+        <Route path="/audit" element={<PdfReportDashboard />} />
 
         {/* PROTECTED */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/report"    element={<ProtectedRoute><Report /></ProtectedRoute>} />
         <Route path="/register-ai" element={<ProtectedRoute><RegisterAI /></ProtectedRoute>} />
         <Route path="/profile"   element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/pdf-report" element={<ProtectedRoute><PdfReportDashboard /></ProtectedRoute>} />
+        {/* <Route path="/pdf-report" element={<ProtectedRoute><PdfReportDashboard /></ProtectedRoute>} /> */}
       </Routes>
     </BrowserRouter>
   );
