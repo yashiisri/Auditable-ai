@@ -1,4 +1,3 @@
-
 // import { useLocation, useNavigate } from "react-router-dom";
 // import { useState, useEffect } from "react";
 // import {
@@ -789,7 +788,7 @@
 //         {/* FRAMEWORK COMPLIANCE */}
 //         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.15) }}>
 //           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>🏛️</div>
+//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBuilding /></div>
 //             <div>
 //               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Regulatory & Framework Compliance</h2>
 //               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Assessment against major AI governance standards</p>
@@ -997,7 +996,7 @@
 //                         </>
 //                       ) : (
 //                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: 240, gap: 12, opacity: 0.5 }}>
-//                           <div style={{ fontSize: 32 }}>👆</div>
+//                           <div style={{ display: "flex", justifyContent: "center", color: "#CBD5E1" }}><SvgSearch /></div>
 //                           <div style={{ fontSize: 13, color: "#94A3B8", textAlign: "center", lineHeight: 1.6 }}>Hover a sub-parameter to see what it measures, why it matters, and how it was calculated</div>
 //                         </div>
 //                       )}
@@ -1018,7 +1017,7 @@
 //         {hasPrn && (
 //           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.25) }}>
 //             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//               <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>📊</div>
+//               <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBarChart /></div>
 //               <div>
 //                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Principle Score Distribution</h2>
 //                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Hover bars for detailed score</p>
@@ -1032,7 +1031,7 @@
 //         {r.model_metrics && Object.values(r.model_metrics).some(m => m.value !== null) && (
 //           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.3) }}>
 //             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//               <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>🧪</div>
+//               <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgGear /></div>
 //               <div>
 //                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Model-Specific Metrics</h2>
 //                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Measured for <strong style={{ color: "#1E293B" }}>{r.model_label || r.model_type}</strong> — evaluated against model-appropriate thresholds</p>
@@ -1067,7 +1066,7 @@
 //           return (
 //             <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.33) }}>
 //               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//                 <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", fontSize: 18 }}>🔬</div>
+//                 <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", color: "#059669" }}><SvgSearch /></div>
 //                 <div>
 //                   <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Metric Computation Transparency</h2>
 //                   <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Every metric computed directly from your input/output data using real NLP/ML libraries</p>
@@ -1117,7 +1116,7 @@
 //         {/* AUDIT FINDINGS — detailed */}
 //         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
 //           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", fontSize: 18 }}>⚠️</div>
+//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}><SvgAlert /></div>
 //             <div>
 //               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
 //                 Audit Findings
@@ -1147,7 +1146,7 @@
 
 //           {!r.findings?.length ? (
 //             <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 14, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
-//               <span style={{ fontSize: 20 }}>✅</span>
+//               <span style={{ color: "#166534" }}><SvgCheck /></span>
 //               <span>No critical findings. Dataset aligns well with Trusted AI standards.</span>
 //             </div>
 //           ) : (
@@ -1186,7 +1185,7 @@
 //         {/* OVERALL RECOMMENDATION — tool-based */}
 //         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.43) }}>
 //           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>📌</div>
+//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgComply /></div>
 //             <div>
 //               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Overall Recommendation</h2>
 //               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Based on audit results for {r.model_label || r.model_type}</p>
@@ -1203,7 +1202,7 @@
 //               { icon: "⚖️", label: "Compliance Status", val: r.overall_score >= 75 ? "Compliant" : r.overall_score >= 50 ? "Conditional" : "Non-Compliant", color: r.overall_score >= 75 ? "#059669" : r.overall_score >= 50 ? KPMG_MID : "#DC2626" },
 //             ].map(item => (
 //               <div key={item.label} style={{ padding: "14px 16px", borderRadius: 12, background: "white", border: "1px solid #E2E8F0" }}>
-//                 <div style={{ fontSize: 18, marginBottom: 6 }}>{item.icon}</div>
+//                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 6, color: item.color }}>{ (() => { const IC = item.icon as any; return <IC />; })() }</div>
 //                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{item.label}</div>
 //                 <div style={{ fontSize: 13, fontWeight: 700, color: item.color }}>{item.val}</div>
 //               </div>
@@ -1213,7 +1212,7 @@
 
 //         {/* DOWNLOAD CTA */}
 //         <div className="card" style={{ padding: "40px", textAlign: "center", marginBottom: 24, background: `linear-gradient(135deg, #E6F2FB, #EFF6FF)`, border: `1px solid ${KPMG_LIGHT}40`, ...fade(0.47) }}>
-//           <div style={{ fontSize: 28, marginBottom: 12 }}>📄</div>
+//           <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, color: "#005EB8" }}><SvgClip /></div>
 //           <h2 style={{ fontSize: 22, fontWeight: 900, color: "#1E293B", marginBottom: 8 }}>Need a Comprehensive Report?</h2>
 //           <p style={{ color: "#64748B", marginBottom: 28, fontSize: 14 }}>Download the full PDF with evidence, scoring breakdown, and improvement roadmap.</p>
 //           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
@@ -1324,10 +1323,45 @@ const KPMG_BLUE  = "#00338D";
 const KPMG_MID   = "#005EB8";
 const KPMG_LIGHT = "#0091DA";
 
-const ICONS: Record<string, string> = {
-  Transparency: "🔍", Explainability: "💡", Fairness: "⚖️", Accountability: "📋",
-  "Data Integrity": "🗄️", Reliability: "⚙️", Security: "🔒", Privacy: "🛡️",
-  Sustainability: "🌱", "Safety": "🛡️"
+/* ── SVG icon helpers ── */
+const SvgSearch = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
+const SvgBulb  = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6H8.3A7 7 0 0 1 5 9a7 7 0 0 1 7-7z"/></svg>;
+const SvgScale = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="3" x2="12" y2="20"/><path d="M5 10l7-7 7 7"/><path d="M3 17h4l1 3h8l1-3h4"/></svg>;
+const SvgClip  = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>;
+const SvgDb    = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>;
+const SvgGear  = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+const SvgLock  = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+const SvgShield= () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+const SvgLeaf  = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>;
+const SvgCpu   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>;
+const SvgCalendar = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+const SvgKey   = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>;
+const SvgTarget= () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+const SvgFolder= () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>;
+const SvgBarChart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>;
+const SvgAlert = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+const SvgCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+const SvgBuilding = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+const SvgAward = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>;
+const SvgGlobe = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+const SvgDiamond = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0z"/></svg>;
+const SvgStructure = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="6" height="6" rx="1"/><rect x="16" y="3" width="6" height="6" rx="1"/><rect x="9" y="15" width="6" height="6" rx="1"/><path d="M5 9v3h14V9"/><line x1="12" y1="12" x2="12" y2="15"/></svg>;
+const SvgSteps = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+const SvgComply = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>;
+const SvgWeb   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>;
+
+type SvgComponent = () => JSX.Element;
+const ICONS: Record<string, SvgComponent> = {
+  Transparency: SvgSearch,
+  Explainability: SvgBulb,
+  Fairness: SvgScale,
+  Accountability: SvgClip,
+  "Data Integrity": SvgDb,
+  Reliability: SvgGear,
+  Security: SvgLock,
+  Privacy: SvgShield,
+  Sustainability: SvgLeaf,
+  Safety: SvgShield,
 };
 
 const COLORS: Record<string, string> = {
@@ -1337,11 +1371,11 @@ const COLORS: Record<string, string> = {
   "Safety": KPMG_BLUE,
 };
 
-const FW: Record<string, { label: string; icon: string; desc: string }> = {
-  EU_AI_Act:   { label: "EU AI Act",       icon: "🇪🇺", desc: "European Union AI Regulation" },
-  ISO_42001:   { label: "ISO 42001",        icon: "🏅", desc: "AI Management System Standard" },
-  NIST_AI_RMF: { label: "NIST AI RMF",     icon: "🏛️", desc: "AI Risk Management Framework" },
-  KPMG_TAF:    { label: "KPMG Trusted AI", icon: "🔷", desc: "Trusted AI Framework" },
+const FW: Record<string, { label: string; icon: SvgComponent; desc: string }> = {
+  EU_AI_Act:   { label: "EU AI Act",       icon: SvgGlobe,    desc: "European Union AI Regulation" },
+  ISO_42001:   { label: "ISO 42001",        icon: SvgAward,    desc: "AI Management System Standard" },
+  NIST_AI_RMF: { label: "NIST AI RMF",     icon: SvgBuilding, desc: "AI Risk Management Framework" },
+  KPMG_TAF:    { label: "KPMG Trusted AI", icon: SvgDiamond,  desc: "Trusted AI Framework" },
 };
 
 const CC: Record<string, string> = {
@@ -1957,7 +1991,7 @@ function DataStructuralIntegritySection({ report }: { report: ReportData }) {
   return (
     <div className="card" style={{ padding: "32px", marginBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>🗄️</div>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgDb /></div>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Data Structural Integrity</h2>
           <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>
@@ -2085,7 +2119,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
   return (
     <div className="card" style={{ padding: "32px", marginBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", fontSize: 18 }}>🎯</div>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", color: "#059669" }}><SvgTarget /></div>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>AI Model Accuracy</h2>
           <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>
@@ -2342,13 +2376,16 @@ export default function Report() {
               <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.02em", color: "white", marginBottom: 14 }}>{r.ai_name}</h1>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, color: "rgba(255,255,255,0.75)" }}>
                 {[
-                  { icon: "🧠", val: r.model_label || r.model_type },
-                  { icon: "📅", val: fmt(r.evaluated_at) },
-                  { icon: "🔑", val: `ID: ${r.report_id?.slice(0, 12)}…` },
-                  ...(r.detection_confidence !== undefined ? [{ icon: "🎯", val: `${Math.round(r.detection_confidence * 100)}% confidence` }] : []),
-                ].map((m, i) => (
-                  <span key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}><span>{m.icon}</span><span>{m.val}</span></span>
-                ))}
+                  { icon: SvgCpu, val: r.model_label || r.model_type },
+                  { icon: SvgCalendar, val: fmt(r.evaluated_at) },
+                  { icon: SvgKey, val: `ID: ${r.report_id?.slice(0, 12)}…` },
+                  ...(r.detection_confidence !== undefined ? [{ icon: SvgTarget, val: `${Math.round(r.detection_confidence * 100)}% confidence` }] : []),
+                ].map((m, i) => {
+                  const IconComp = m.icon;
+                  return (
+                    <span key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ opacity: 0.75 }}><IconComp /></span><span>{m.val}</span></span>
+                  );
+                })}
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
@@ -2360,21 +2397,52 @@ export default function Report() {
         </div>
 
         {/* STATS */}
+        {/* <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 24, ...fade(0.1) }}>
+          {[
+            { icon: SvgFolder, label: "Logs Evaluated", val: r.logs_evaluated, color: KPMG_MID },
+            { icon: SvgBarChart, label: "Data Quality", val: `${r.data_quality_score}%`, color: "#059669" },
+            { icon: SvgStructure, label: "Structural Risk", val: r.structural_risk, color: r.structural_risk === "Low" ? "#059669" : r.structural_risk === "Moderate" ? KPMG_MID : "#DC2626" },
+            { icon: SvgCheck, label: "Principles Tested", val: pkeys.length, color: KPMG_BLUE },
+            { icon: SvgAlert, label: "Findings", val: r.findings?.length || 0, color: (r.findings?.length || 0) > 0 ? "#DC2626" : "#059669" },
+            ...(r.llm_judge?.accuracy !== null && r.llm_judge?.accuracy !== undefined
+              ? [{ icon: SvgTarget, label: "Response Accuracy", val: `${Math.round((r.llm_judge.accuracy) * 100)}%`, color: Math.round((r.llm_judge.accuracy) * 100) >= 80 ? "#059669" : KPMG_MID }]
+              : []),
+          ].map((s, i) => {
+            const IconComp = s.icon;
+            return (
+              <div key={i} className="card hover-lift" style={{ padding: "20px", textAlign: "center" }}>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, color: s.color }}><IconComp /></div>
+                <div style={{ fontSize: 26, fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.val}</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 6, fontWeight: 500 }}>{s.label}</div>
+              </div>
+            );
+          })}
+        </div> */}
+
+
+        {/* STATS - Clean version without emojis */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 24, ...fade(0.1) }}>
           {[
-            { icon: "📂", label: "Logs Evaluated", val: r.logs_evaluated, color: KPMG_MID },
-            { icon: "📊", label: "Data Quality", val: `${r.data_quality_score}%`, color: "#059669" },
-            { icon: "🏗️", label: "Structural Risk", val: r.structural_risk, color: r.structural_risk === "Low" ? "#059669" : r.structural_risk === "Moderate" ? KPMG_MID : "#DC2626" },
-            { icon: "✅", label: "Principles Tested", val: pkeys.length, color: KPMG_BLUE },
-            { icon: "⚠️", label: "Findings", val: r.findings?.length || 0, color: (r.findings?.length || 0) > 0 ? "#DC2626" : "#059669" },
+            { label: "Logs Evaluated", val: r.logs_evaluated, color: KPMG_MID },
+            { label: "Data Quality", val: `${r.data_quality_score}%`, color: "#059669" },
+            { label: "Structural Risk", val: r.structural_risk, color: r.structural_risk === "Low" ? "#059669" : r.structural_risk === "Moderate" ? KPMG_MID : "#DC2626" },
+            { label: "Principles Tested", val: pkeys.length, color: KPMG_BLUE },
+            { label: "Findings", val: r.findings?.length || 0, color: (r.findings?.length || 0) > 0 ? "#DC2626" : "#059669" },
             ...(r.llm_judge?.accuracy !== null && r.llm_judge?.accuracy !== undefined
-              ? [{ icon: "🎯", label: "Response Accuracy", val: `${Math.round((r.llm_judge.accuracy) * 100)}%`, color: Math.round((r.llm_judge.accuracy) * 100) >= 80 ? "#059669" : KPMG_MID }]
+              ? [{ label: "Response Accuracy", val: `${Math.round((r.llm_judge.accuracy) * 100)}%`, color: Math.round((r.llm_judge.accuracy) * 100) >= 80 ? "#059669" : KPMG_MID }]
               : []),
           ].map((s, i) => (
             <div key={i} className="card hover-lift" style={{ padding: "20px", textAlign: "center" }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>{s.icon}</div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.val}</div>
-              <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 6, fontWeight: 500 }}>{s.label}</div>
+              <div style={{ 
+                fontSize: 26, 
+                fontWeight: 900, 
+                color: s.color, 
+                lineHeight: 1, 
+                marginBottom: 8 
+              }}>
+                {s.val}
+              </div>
+              <div style={{ fontSize: 12, color: "#94A3B8", fontWeight: 500 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -2391,7 +2459,7 @@ export default function Report() {
         {/* FRAMEWORK COMPLIANCE */}
         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.15) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>🏛️</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBuilding /></div>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Regulatory & Framework Compliance</h2>
               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Assessment against major AI governance standards</p>
@@ -2400,12 +2468,13 @@ export default function Report() {
           <div style={{ borderTop: "1px solid #F1F5F9", marginTop: 20, paddingTop: 24 }}>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "flex-start" }}>
               {Object.entries(r.framework_compliance || {}).map(([key, status]) => {
-                const fw = FW[key] || { label: key, icon: "📋", desc: "" };
+                const fw = FW[key] || { label: key, icon: SvgComply, desc: "" };
                 const sc = CC[status] || "#94A3B8";
                 const scBg = sc === "#059669" ? "#DCFCE7" : sc === KPMG_MID ? "#E6F2FB" : sc === KPMG_LIGHT ? "#E6F2FB" : "#FEE2E2";
+                const FwIcon = fw.icon;
                 return (
                   <div key={key} className="hover-lift" style={{ padding: "20px 24px", borderRadius: 16, minWidth: 180, flex: "1 1 180px", maxWidth: 240, background: scBg, border: `1px solid ${sc}30`, textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>{fw.icon}</div>
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, color: sc }}><FwIcon /></div>
                     <div style={{ fontWeight: 800, fontSize: 14, color: "#1E293B", marginBottom: 4 }}>{fw.label}</div>
                     <div style={{ fontSize: 11, color: "#64748B", marginBottom: 10 }}>{fw.desc}</div>
                     <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, color: sc, background: "white", border: `1px solid ${sc}40` }}>{status}</div>
@@ -2430,7 +2499,7 @@ export default function Report() {
         {hasPrn && (
           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.2) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>🕸️</div>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgWeb /></div>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Trusted AI Principles Assessment</h2>
                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Click any principle to drill into sub-parameters and see exactly what was calculated</p>
@@ -2469,7 +2538,7 @@ export default function Report() {
                       const sc = prn[k].score;
                       return (
                         <div key={k} className="hover-lift" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 14, background: "white", border: "1px solid #E2E8F0", cursor: "pointer" }} onClick={() => setSel(k)}>
-                          <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: `${c}15`, border: `1px solid ${c}30`, display: "grid", placeItems: "center", fontSize: 18 }}>{ICONS[k]}</div>
+                          <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: `${c}15`, border: `1px solid ${c}30`, display: "grid", placeItems: "center", color: c }}>{ (() => { const IC = ICONS[k]; return IC ? <IC /> : <SvgClip />; })() }</div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k}</div>
                             <div style={{ height: 5, background: "#F1F5F9", borderRadius: 99, marginTop: 7 }}>
@@ -2488,7 +2557,7 @@ export default function Report() {
               ) : selData ? (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "20px 22px", borderRadius: 16, background: `linear-gradient(135deg, ${(COLORS[sel] || KPMG_MID)}10, ${(COLORS[sel] || KPMG_MID)}05)`, border: `1.5px solid ${(COLORS[sel] || KPMG_MID)}30` }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, display: "grid", placeItems: "center", fontSize: 26, background: `${COLORS[sel] || KPMG_MID}15`, border: `1px solid ${(COLORS[sel] || KPMG_MID)}30` }}>{ICONS[sel]}</div>
+                    <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, display: "grid", placeItems: "center", background: `${COLORS[sel] || KPMG_MID}15`, border: `1px solid ${(COLORS[sel] || KPMG_MID)}30` }}>{ (() => { const IC = ICONS[sel]; return IC ? <IC /> : <SvgClip />; })() }</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{sel}</div>
                       {selData.description && <div style={{ fontSize: 12, color: "#64748B", marginTop: 3, lineHeight: 1.5 }}>{selData.description}</div>}
@@ -2601,7 +2670,7 @@ export default function Report() {
                         </>
                       ) : (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: 240, gap: 12, opacity: 0.5 }}>
-                          <div style={{ fontSize: 32 }}>👆</div>
+                          <div style={{ display: "flex", justifyContent: "center", color: "#CBD5E1" }}><SvgSearch /></div>
                           <div style={{ fontSize: 13, color: "#94A3B8", textAlign: "center", lineHeight: 1.6 }}>Hover a sub-parameter to see what it measures, why it matters, and how it was calculated</div>
                         </div>
                       )}
@@ -2622,7 +2691,7 @@ export default function Report() {
         {hasPrn && (
           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.25) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>📊</div>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBarChart /></div>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Principle Score Distribution</h2>
                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Hover bars for detailed scores across all 10 Trusted AI principles</p>
@@ -2636,7 +2705,7 @@ export default function Report() {
         {r.model_metrics && Object.values(r.model_metrics).some(m => m.value !== null) && (
           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.3) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>🧪</div>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgGear /></div>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Model-Specific Metrics</h2>
                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Measured for <strong style={{ color: "#1E293B" }}>{r.model_label || r.model_type}</strong> — evaluated against model-appropriate thresholds</p>
@@ -2678,7 +2747,7 @@ export default function Report() {
           return (
             <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.35) }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", fontSize: 18 }}>🔬</div>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", color: "#059669" }}><SvgSearch /></div>
                 <div>
                   <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Metric Computation Transparency</h2>
                   <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Every metric computed directly from your input/output data using real NLP/ML libraries</p>
@@ -2730,7 +2799,7 @@ export default function Report() {
         {/* AUDIT FINDINGS */}
         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", fontSize: 18 }}>⚠️</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}><SvgAlert /></div>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
                 Audit Findings
@@ -2759,7 +2828,7 @@ export default function Report() {
 
           {!r.findings?.length ? (
             <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 14, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 20 }}>✅</span>
+              <span style={{ color: "#166534" }}><SvgCheck /></span>
               <span>No critical findings. Dataset aligns well with Trusted AI standards.</span>
             </div>
           ) : (
@@ -2772,7 +2841,7 @@ export default function Report() {
                   <div key={i} style={{ borderRadius: 16, background: "white", border: `1.5px solid ${sc}25`, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                     <div style={{ padding: "14px 20px", background: scBg, borderBottom: `1px solid ${sc}20`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 18 }}>{ICONS[f.category] || "•"}</span>
+                        <span style={{ color: COLORS[f.category] || KPMG_MID }}>{ (() => { const IC = ICONS[f.category]; return IC ? <IC /> : <SvgAlert />; })() }</span>
                         <span style={{ color: catColor, fontWeight: 700, fontSize: 14 }}>{f.category}</span>
                         {f.type && <span style={{ fontSize: 11, color: "#94A3B8", background: "white", padding: "2px 8px", borderRadius: 10, border: "1px solid #E2E8F0" }}>{f.type}</span>}
                       </div>
@@ -2796,7 +2865,7 @@ export default function Report() {
         {/* OVERALL RECOMMENDATION */}
         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.43) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", fontSize: 18 }}>📌</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgComply /></div>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Overall Recommendation</h2>
               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Based on audit results for {r.model_label || r.model_type}</p>
@@ -2807,12 +2876,12 @@ export default function Report() {
           </div>
           <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
             {[
-              { icon: "📋", label: "Next Step", val: r.overall_score >= 75 ? "Schedule quarterly re-audit" : r.overall_score >= 50 ? "Address medium findings within 60 days" : "Immediate remediation required", color: KPMG_MID },
-              { icon: "🎯", label: "Target Score", val: `${Math.min(r.overall_score + 15, 100)}/100`, color: "#059669" },
-              { icon: "⚖️", label: "Compliance Status", val: r.overall_score >= 75 ? "Compliant" : r.overall_score >= 50 ? "Conditional" : "Non-Compliant", color: r.overall_score >= 75 ? "#059669" : r.overall_score >= 50 ? KPMG_MID : "#DC2626" },
+              { icon: SvgComply, label: "Next Step", val: r.overall_score >= 75 ? "Schedule quarterly re-audit" : r.overall_score >= 50 ? "Address medium findings within 60 days" : "Immediate remediation required", color: KPMG_MID },
+              { icon: SvgTarget, label: "Target Score", val: `${Math.min(r.overall_score + 15, 100)}/100`, color: "#059669" },
+              { icon: SvgScale, label: "Compliance Status", val: r.overall_score >= 75 ? "Compliant" : r.overall_score >= 50 ? "Conditional" : "Non-Compliant", color: r.overall_score >= 75 ? "#059669" : r.overall_score >= 50 ? KPMG_MID : "#DC2626" },
             ].map(item => (
               <div key={item.label} style={{ padding: "14px 16px", borderRadius: 12, background: "white", border: "1px solid #E2E8F0" }}>
-                <div style={{ fontSize: 18, marginBottom: 6 }}>{item.icon}</div>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 6, color: item.color }}>{ (() => { const IC = item.icon as any; return <IC />; })() }</div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{item.label}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: item.color }}>{item.val}</div>
               </div>
@@ -2822,7 +2891,7 @@ export default function Report() {
 
         {/* DOWNLOAD CTA */}
         <div className="card" style={{ padding: "40px", textAlign: "center", marginBottom: 24, background: `linear-gradient(135deg, #E6F2FB, #EFF6FF)`, border: `1px solid ${KPMG_LIGHT}40`, ...fade(0.47) }}>
-          <div style={{ fontSize: 28, marginBottom: 12 }}>📄</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, color: "#005EB8" }}><SvgClip /></div>
           <h2 style={{ fontSize: 22, fontWeight: 900, color: "#1E293B", marginBottom: 8 }}>Download the Full Report</h2>
           <p style={{ color: "#64748B", marginBottom: 28, fontSize: 14 }}>Export a comprehensive PDF with evidence, scoring breakdown, and improvement roadmap.</p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>

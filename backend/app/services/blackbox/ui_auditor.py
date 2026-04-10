@@ -1,3 +1,5 @@
+
+
 # import asyncio
 # import concurrent.futures
 # import json
@@ -9,9 +11,17 @@
 # from fastapi import HTTPException
 
 # from app.services.blackbox.orchestrator import (
-#     PROBE_PROMPTS,
 #     _analyse_response,
 #     _compute_scores,
+# )
+# # PROBE_PROMPTS no longer lives in orchestrator — it was removed when we
+# # introduced dynamic generation.  For UI mode we still need a synchronous
+# # list of probes (Playwright runs in a thread, not an async context), so we
+# # call the async generator from the async entry-point and pass the resolved
+# # list down into the sync pipeline via a plain argument.
+# from app.services.blackbox.probe_generator import (
+#     FALLBACK_PROBE_PROMPTS,
+#     generate_dynamic_probes,
 # )
 
 # # ── Timeouts ──────────────────────────────────────────────────────────────
@@ -165,7 +175,7 @@
 
 
 # # ═══════════════════════════════════════════════════════════════════════════
-# #  INTERNAL HELPERS
+# #  INTERNAL HELPERS  (unchanged)
 # # ═══════════════════════════════════════════════════════════════════════════
 
 # def _check_auth_wall(page) -> bool:
@@ -301,9 +311,17 @@
 
 # # ═══════════════════════════════════════════════════════════════════════════
 # #  CORE SYNC PIPELINE
+# #  — now receives probe_prompts as an argument instead of reading the
+# #    module-level PROBE_PROMPTS constant.
 # # ═══════════════════════════════════════════════════════════════════════════
 
-# def _run_sync_pipeline(ai_name: str, ui_url: str, cookies: list, stealth: bool) -> list:
+# def _run_sync_pipeline(
+#     ai_name: str,
+#     ui_url: str,
+#     cookies: list,
+#     stealth: bool,
+#     probe_prompts: list,          # ← NEW: passed in from async entry-point
+# ) -> list:
 #     from playwright.sync_api import sync_playwright
 
 #     probe_results = []
@@ -389,7 +407,10 @@
 #                     "Check that the URL points directly to the chat interface."
 #                 )
 
-#             for probe in PROBE_PROMPTS:
+#             # ── Run every probe against the UI ─────────────────────────────
+#             # probe_prompts is now the dynamically generated list, not a
+#             # hardcoded constant — zero other changes needed here.
+#             for probe in probe_prompts:
 #                 prev_text, _ = _get_last_response_text(page)
 #                 response_text = "[TIMEOUT] No response detected."
 
@@ -425,34 +446,58 @@
 
 # # ═══════════════════════════════════════════════════════════════════════════
 # #  PUBLIC ASYNC ENTRY POINT
+# #  — now accepts ai_description + ai_domain so dynamic probes are generated
+# #    before the sync Playwright thread is launched.
 # # ═══════════════════════════════════════════════════════════════════════════
 
 # async def run_ui_blackbox_pipeline(
-#     ai_name: str,
-#     ui_url: str,
+#     ai_name:        str,
+#     ui_url:         str,
 #     cookies=None,
-#     stealth: bool = False,
+#     stealth:        bool = False,
+#     ai_description: str  = "",   # ← NEW: from registered AI system
+#     ai_domain:      str  = "",   # ← NEW: from registered AI system
 # ) -> dict:
 #     try:
 #         parsed_cookies = _parse_cookies(cookies)
 #     except ValueError as e:
 #         raise HTTPException(status_code=422, detail=str(e))
 
+#     # ── Generate probes BEFORE entering the sync thread ───────────────────
+#     # generate_dynamic_probes is async (calls Groq), so it must be awaited
+#     # here in the async context — Playwright's sync thread receives a plain
+#     # list and never has to deal with async at all.
+#     probe_prompts, generation_meta = await generate_dynamic_probes(
+#         ai_description=ai_description,
+#         ai_domain=ai_domain,
+#     )
+
 #     audit_id   = str(uuid.uuid4())
 #     started_at = datetime.utcnow().isoformat()
 #     loop       = asyncio.get_event_loop()
+
+#     # Scale timeout: 10 s per probe minimum, never below 600 s
+#     ui_timeout = max(600, len(probe_prompts) * 10)
 
 #     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
 #         try:
 #             probe_results = await asyncio.wait_for(
 #                 loop.run_in_executor(
-#                     pool, _run_sync_pipeline,
-#                     ai_name, ui_url, parsed_cookies, stealth
+#                     pool,
+#                     _run_sync_pipeline,
+#                     ai_name,
+#                     ui_url,
+#                     parsed_cookies,
+#                     stealth,
+#                     probe_prompts,        # ← pass the resolved probe list
 #                 ),
-#                 timeout=600,
+#                 timeout=ui_timeout,
 #             )
 #         except asyncio.TimeoutError:
-#             raise HTTPException(status_code=504, detail="UI audit timed out after 10 minutes.")
+#             raise HTTPException(
+#                 status_code=504,
+#                 detail=f"UI audit timed out after {ui_timeout // 60} minutes."
+#             )
 #         except HTTPException:
 #             raise
 #         except Exception as e:
@@ -461,20 +506,29 @@
 #     scores = _compute_scores(probe_results)
 
 #     return {
-#         "audit_id":        audit_id,
-#         "ai_name":         ai_name,
-#         "mode":            "ui",
-#         "status":          "completed",
-#         "started_at":      started_at,
-#         "completed_at":    datetime.utcnow().isoformat(),
-#         "probes_run":      len(probe_results),
-#         "overall_score":   scores["overall_score"],
-#         "risk_level":      scores["risk_level"],
-#         "category_scores": scores["category_scores"],
-#         "findings":        scores["findings"],
-#         "probe_results":   probe_results,
-#         "ui_url_tested":   ui_url,
+#         "audit_id":              audit_id,
+#         "ai_name":               ai_name,
+#         "mode":                  "ui",
+#         "status":                "completed",
+#         "started_at":            started_at,
+#         "completed_at":          datetime.utcnow().isoformat(),
+#         "probes_run":            len(probe_results),
+#         "overall_score":         scores["overall_score"],
+#         "risk_level":            scores["risk_level"],
+#         "category_scores":       scores["category_scores"],
+#         "findings":              scores["findings"],
+#         "probe_results":         probe_results,
+#         "ui_url_tested":         ui_url,
+#         # ── NEW fields ──────────────────────────────────────────────────────
+#         "probe_generation_meta": generation_meta,
+#         "ai_description_used":   ai_description,
+#         "ai_domain_used":        ai_domain,
 #     }
+
+
+
+
+
 
 import asyncio
 import concurrent.futures
@@ -495,10 +549,12 @@ from app.services.blackbox.orchestrator import (
 # list of probes (Playwright runs in a thread, not an async context), so we
 # call the async generator from the async entry-point and pass the resolved
 # list down into the sync pipeline via a plain argument.
+from datetime import timezone
 from app.services.blackbox.probe_generator import (
     FALLBACK_PROBE_PROMPTS,
     generate_dynamic_probes,
 )
+from app.services.blackbox.probe_logger import save_probe_csv
 
 # ── Timeouts ──────────────────────────────────────────────────────────────
 PAGE_LOAD_TIMEOUT_MS   = 60_000
@@ -889,6 +945,8 @@ def _run_sync_pipeline(
             for probe in probe_prompts:
                 prev_text, _ = _get_last_response_text(page)
                 response_text = "[TIMEOUT] No response detected."
+                probe_ts = datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()
+                t0 = time.perf_counter()
 
                 try:
                     current_input, current_selector = _find_input(page)
@@ -902,14 +960,17 @@ def _run_sync_pipeline(
                 except Exception as e:
                     response_text = f"[ERROR] {str(e)[:200]}"
 
+                latency_ms = round((time.perf_counter() - t0) * 1000, 1)
                 analysis = _analyse_response(response_text, probe["category"])
                 probe_results.append({
-                    "probe_id": probe["id"],
-                    "category": probe["category"],
-                    "prompt":   probe["prompt"],
-                    "response": response_text,
-                    "passed":   analysis["passed"],
-                    "severity": analysis["severity"],
+                    "probe_id":   probe["id"],
+                    "category":   probe["category"],
+                    "prompt":     probe["prompt"],
+                    "response":   response_text,
+                    "latency_ms": latency_ms,
+                    "timestamp":  probe_ts,
+                    "passed":     analysis["passed"],
+                    "severity":   analysis["severity"],
                     "note":     analysis["note"],
                 })
                 time.sleep(INTER_PROBE_PAUSE_S)
@@ -981,6 +1042,15 @@ async def run_ui_blackbox_pipeline(
 
     scores = _compute_scores(probe_results)
 
+    # ── Save probe results + latencies to CSV ──────────────────────────────
+    csv_path = save_probe_csv(
+        audit_id=audit_id,
+        ai_name=ai_name,
+        mode="ui",
+        probe_results=probe_results,
+        started_at=started_at,
+    )
+
     return {
         "audit_id":              audit_id,
         "ai_name":               ai_name,
@@ -999,4 +1069,6 @@ async def run_ui_blackbox_pipeline(
         "probe_generation_meta": generation_meta,
         "ai_description_used":   ai_description,
         "ai_domain_used":        ai_domain,
+        # ── NEW: path to the saved CSV ─────────────────────────────────────
+        "probe_log_csv":         csv_path,
     }

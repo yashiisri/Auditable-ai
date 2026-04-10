@@ -3,15 +3,28 @@ from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable, KeepTogether
+    PageBreak, HRFlowable, KeepTogether, Image as RLImage
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import mm, inch
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
 from reportlab.pdfgen import canvas as rl_canvas
+from reportlab.graphics.shapes import Drawing, Rect, String, Line, Circle, Wedge
+from reportlab.graphics import renderPDF, renderPM
+
+
+def _drawing_to_image(drawing, width, height, scale=2):
+    """Render a Drawing to a PNG BytesIO at 2x scale for crispness."""
+    buf = BytesIO()
+    renderPM.drawToFile(drawing, buf, fmt='PNG', dpi=144)
+    buf.seek(0)
+    return RLImage(buf, width=width, height=height)
+from reportlab.graphics.charts.barcharts import VerticalBarChart
+from reportlab.graphics.charts.piecharts import Pie
 from io import BytesIO
 import datetime
+import math
 
 from app.database import reports_collection
 from app.dependencies import get_current_user
@@ -25,19 +38,23 @@ KPMG_LIGHT_BLUE = colors.HexColor("#0091DA")
 KPMG_DARK       = colors.HexColor("#050d1a")
 KPMG_GREY       = colors.HexColor("#6B7280")
 KPMG_LIGHT_GREY = colors.HexColor("#F3F4F6")
+KPMG_MID_GREY   = colors.HexColor("#E5E7EB")
 KPMG_WHITE      = colors.white
+KPMG_RED        = colors.HexColor("#DC2626")
+KPMG_AMBER      = colors.HexColor("#D97706")
+KPMG_GREEN      = colors.HexColor("#059669")
 
 PRINCIPLE_COLORS = {
-    "Fairness":       "#FF6B9D",
-    "Transparency":   "#00C8FF",
-    "Explainability": "#00E5A0",
-    "Accountability": "#FFB020",
-    "Data Integrity": "#A78BFA",
-    "Reliability":    "#34D399",
-    "Security":       "#F87171",
-    "Safety":         "#FBBF24",
-    "Privacy":        "#60A5FA",
-    "Sustainability":  "#4ADE80",
+    "Fairness":       "#00338D",
+    "Transparency":   "#005EB8",
+    "Explainability": "#0091DA",
+    "Accountability": "#00338D",
+    "Data Integrity": "#005EB8",
+    "Reliability":    "#0091DA",
+    "Security":       "#00338D",
+    "Safety":         "#005EB8",
+    "Privacy":        "#0091DA",
+    "Sustainability":  "#00338D",
 }
 
 PRINCIPLE_ICONS = {
@@ -106,14 +123,234 @@ PRINCIPLE_DESCRIPTIONS = {
     ),
 }
 
+# ─── Extended sub-parameter definitions ──────────────────────────────────────
+SUB_PARAMETER_DEFINITIONS = {
+    # Fairness
+    "Compression Equity Across Topics": (
+        "Measures whether the AI model applies consistent summarisation depth and quality across "
+        "different subject domains and topic categories. A high score confirms that no topic area "
+        "receives preferential treatment or is systematically under-served in the model's outputs."
+    ),
+    "Output Length Equity": (
+        "Evaluates whether responses are proportionally sized relative to input complexity, "
+        "regardless of which user group or query type initiated the request. Disparate output "
+        "lengths may signal that certain inputs are deprioritised or under-resourced."
+    ),
+    "Source Representativeness": (
+        "Assesses the diversity and breadth of training or reference data sources. A high score "
+        "indicates that the AI draws from a wide range of representative corpora, reducing the "
+        "risk of encoded historical bias or skewed world-views in generated content."
+    ),
+    "Fairness Monitoring Signals": (
+        "Checks for the presence of active runtime mechanisms that detect and flag unfair outcomes "
+        "during live inference. This includes bias dashboards, disparity alerts, periodic sampling "
+        "audits, and automated equalised-odds checks across demographic dimensions."
+    ),
+    # Transparency
+    "Source Document Coverage": (
+        "Quantifies what percentage of input documents or data sources are explicitly acknowledged "
+        "and cited in the AI's outputs. High coverage ensures stakeholders can trace claims back "
+        "to their origin, supporting audit trails and reducing the risk of unverifiable assertions."
+    ),
+    "Compression Ratio Transparency": (
+        "Evaluates whether the system discloses how much information reduction occurs between "
+        "source material and generated output. This is critical for users to understand the risk "
+        "of information loss and to calibrate their reliance on AI-generated summaries."
+    ),
+    "Reference Summary Logging": (
+        "Checks whether human-authored reference summaries are stored alongside model outputs for "
+        "supervised quality evaluation. Without reference logs, it is impossible to quantify "
+        "abstraction quality or validate that the model meets accuracy benchmarks over time."
+    ),
+    "Model Versioning": (
+        "Verifies that every inference output is tagged with the specific model version that "
+        "produced it. Version tracking is essential for reproducing results, conducting root-cause "
+        "analysis on regressions, and ensuring compliance with audit obligations."
+    ),
+    # Explainability
+    "Faithfulness to Source": (
+        "Measures the semantic alignment between model outputs and the factual content of source "
+        "documents. Faithful outputs do not introduce hallucinated facts, unsupported inferences, "
+        "or misleading paraphrases. This is calculated using entailment scoring and ROUGE overlap."
+    ),
+    "Abstractiveness Balance": (
+        "Evaluates the optimal trade-off between extractive quotation (copying verbatim) and "
+        "abstractive paraphrasing. A well-balanced model produces outputs that are readable and "
+        "novel while remaining factually grounded in the source material."
+    ),
+    "ROUGE-L Alignment": (
+        "Recall-Oriented Understudy for Gisting Evaluation — Longest Common Subsequence (ROUGE-L) "
+        "measures the longest matching token sequence between generated and reference text. "
+        "Higher scores correlate with better information preservation and structural similarity."
+    ),
+    "Summary Readability": (
+        "Assesses the linguistic accessibility of AI-generated outputs using readability metrics "
+        "such as Flesch Reading Ease, Gunning Fog Index, and sentence length distribution. "
+        "Outputs should be comprehensible to the intended audience without specialist knowledge."
+    ),
+    # Accountability
+    "Reference Summary Coverage": (
+        "Measures the proportion of model outputs that have a paired human-authored reference "
+        "for quality benchmarking. Without reference coverage, there is no mechanism for "
+        "systematically identifying errors, establishing performance baselines, or running "
+        "comparative evaluations across model versions."
+    ),
+    "Human Review Escalation": (
+        "Verifies that formal pathways exist for escalating AI outputs to human reviewers when "
+        "confidence falls below a threshold, when sensitive topics are detected, or when outputs "
+        "have high-stakes downstream consequences. Clear escalation procedures are a governance "
+        "requirement under EU AI Act Article 14."
+    ),
+    "Error & Limitation Logging": (
+        "Checks whether system errors, model limitations, and known failure modes are systematically "
+        "recorded in a structured log accessible to governance teams. Comprehensive error logging "
+        "is fundamental to incident management, continuous improvement, and regulatory audit readiness."
+    ),
+    "Audit Trail Coverage": (
+        "Evaluates the completeness of the end-to-end audit trail, from data ingestion through "
+        "inference to output delivery. A complete audit trail records who initiated each request, "
+        "what data was used, which model version responded, and what output was delivered — "
+        "enabling full accountability reconstruction."
+    ),
+    # Data Integrity
+    "Summary Completeness": (
+        "Measures whether AI-generated outputs capture all key information points from the source "
+        "material without critical omissions. Evaluated against ROUGE-1 recall scores and "
+        "information coverage metrics. Incomplete summaries risk misleading downstream decisions."
+    ),
+    "ROUGE-1 Quality": (
+        "ROUGE-1 measures unigram (single-word) overlap between generated and reference text. "
+        "It is a proxy for information recall at the lexical level. Low ROUGE-1 scores indicate "
+        "that key terms and concepts from the source are being systematically omitted."
+    ),
+    "BLEU Score Quality": (
+        "Bilingual Evaluation Understudy (BLEU) measures n-gram precision between model outputs "
+        "and human references. Originally designed for machine translation, BLEU in summarisation "
+        "contexts rewards outputs that closely match reference phrasing and vocabulary patterns."
+    ),
+    "Format Consistency": (
+        "Assesses whether model outputs consistently adhere to expected structural formats — "
+        "including length constraints, section headings, bullet structures, and schema compliance. "
+        "Inconsistent formatting impairs downstream automation and user trust."
+    ),
+    # Reliability
+    "Faithfulness Stability": (
+        "Evaluates whether the model produces consistently faithful outputs across repeated runs "
+        "on identical inputs. High variance in faithfulness indicates non-deterministic behaviour "
+        "that undermines reliability guarantees and makes SLA commitments difficult to enforce."
+    ),
+    "Summary Output Consistency": (
+        "Measures the degree to which the model produces structurally and semantically similar "
+        "outputs when presented with equivalent inputs across different sessions, time periods, "
+        "or deployment environments. Consistency is foundational for production reliability."
+    ),
+    "ROUGE-L Consistency": (
+        "Tracks the variance in ROUGE-L scores across inference runs on a fixed test set. "
+        "Low variance indicates that the model's token-sequence alignment with references is "
+        "stable and predictable, supporting performance SLA management."
+    ),
+    "BERTScore Semantic Consistency": (
+        "Uses BERT contextual embeddings to measure semantic similarity between generated and "
+        "reference outputs. BERTScore captures meaning-level alignment beyond surface lexical "
+        "overlap, providing a more robust reliability signal for paraphrastic or abstractive models."
+    ),
+    # Security
+    "Source Document Injection Rate": (
+        "Measures the frequency of successful prompt injection attempts via maliciously crafted "
+        "input documents. A low injection rate confirms that the model and its surrounding "
+        "infrastructure apply robust input sanitisation and output filtering."
+    ),
+    "Harmful Content in Summaries": (
+        "Evaluates the rate at which model outputs contain harmful, offensive, defamatory, or "
+        "policy-violating content. Assessed using content moderation classifiers, keyword blocklists, "
+        "and human spot-checking protocols. High scores require zero-tolerance guardrails."
+    ),
+    "PII in Summaries": (
+        "Checks whether personally identifiable information (PII) from source documents is "
+        "inadvertently reproduced in model outputs. PII leakage represents a privacy and security "
+        "breach with direct regulatory consequences under GDPR, CCPA, and DPDP Act 2023."
+    ),
+    "Input Anomaly Rate": (
+        "Monitors the proportion of incoming requests that exhibit anomalous patterns — such as "
+        "unusually long inputs, repeated adversarial sequences, encoding exploits, or statistical "
+        "outliers. High anomaly rates may indicate active attacks or systematic misuse."
+    ),
+    # Safety
+    "Faithfulness as Safety Guard": (
+        "Treats high faithfulness scores as a safety proxy: a model that stays close to source "
+        "material is less likely to generate dangerous hallucinations, fabricated medical advice, "
+        "or misleading factual claims. Faithfulness monitoring therefore serves a dual governance role."
+    ),
+    "Hallucinated Facts Prevention": (
+        "Measures the rate at which the model generates factual claims not supported by source "
+        "documents. Hallucination detection employs NLI (Natural Language Inference) models, "
+        "entity verification, and knowledge-base cross-referencing. Zero-tolerance is required "
+        "in high-stakes domains such as healthcare, legal, and financial services."
+    ),
+    "Human Override Capability": (
+        "Verifies that human operators can intervene to halt, modify, or reverse AI decisions "
+        "at any point in the inference pipeline. Override mechanisms must be accessible without "
+        "specialist knowledge and must take effect within operationally acceptable timeframes."
+    ),
+    "Harmful Summary Rate": (
+        "Tracks the proportion of outputs that could cause direct or indirect harm if acted upon "
+        "by end users. Harm categories include: medical misinformation, legal misrepresentation, "
+        "financial fraud facilitation, and content that could endanger vulnerable individuals."
+    ),
+    # Privacy
+    "PII Leakage from Source Docs": (
+        "Quantifies how frequently source document PII (names, addresses, identification numbers, "
+        "biometric references) appears in generated outputs. Even partial PII reproduction can "
+        "constitute a data breach. Requires differential privacy techniques or pre-processing "
+        "anonymisation pipelines before documents enter the inference system."
+    ),
+    "Summary Data Minimisation": (
+        "Evaluates whether AI outputs contain only the minimum personal data necessary to fulfil "
+        "the stated purpose. Data minimisation is a foundational GDPR principle (Article 5(1)(c)) "
+        "and must be actively enforced through output filtering, not assumed by default."
+    ),
+    "Anonymisation in Summaries": (
+        "Checks the effectiveness of anonymisation techniques applied to personal data before "
+        "or during summarisation. Evaluates k-anonymity, l-diversity, and pseudonymisation "
+        "mechanisms. Ineffective anonymisation may be re-identifiable and remains subject to "
+        "data protection obligations."
+    ),
+    "Sensitive Content Retention": (
+        "Measures how long sensitive or personal content is retained within the AI system's "
+        "processing pipeline, caches, and logs after a request is completed. Retention beyond "
+        "the stated purpose violates data minimisation principles and creates unnecessary breach risk."
+    ),
+    # Sustainability
+    "Compression Efficiency": (
+        "Evaluates the ratio of meaningful information preserved relative to computational "
+        "resources expended during inference. High compression efficiency means the model "
+        "delivers high information density per GPU cycle, reducing both cost and carbon footprint."
+    ),
+    "Non-Redundancy Score": (
+        "Measures the degree to which generated outputs avoid unnecessary repetition of "
+        "information already stated. Redundant outputs consume storage, bandwidth, and reader "
+        "attention — all of which have environmental and economic costs at scale."
+    ),
+    "Intra-Summary Redundancy": (
+        "Evaluates whether individual outputs contain self-referential repetition within a single "
+        "document. High intra-summary redundancy degrades user experience and inflates token "
+        "consumption, increasing inference costs and emissions."
+    ),
+    "Cross-Summary Deduplication": (
+        "Checks whether the system eliminates duplicate content across multiple outputs generated "
+        "from overlapping source documents. Effective deduplication reduces storage requirements "
+        "and prevents the same information being processed multiple times unnecessarily."
+    ),
+}
+
 
 def score_to_color(score: int) -> colors.Color:
     if score >= 75:
-        return colors.HexColor("#00C896")
+        return KPMG_GREEN
     elif score >= 55:
-        return colors.HexColor("#FFB020")
+        return KPMG_AMBER
     else:
-        return colors.HexColor("#ff4d4d")
+        return KPMG_RED
 
 
 def score_to_label(score: int) -> str:
@@ -127,21 +364,11 @@ def score_to_label(score: int) -> str:
 
 def risk_color(level: str) -> colors.Color:
     return {
-        "Low": colors.HexColor("#00C896"),
-        "Moderate": colors.HexColor("#FFB020"),
-        "High": colors.HexColor("#ff4d4d"),
-        "Critical": colors.HexColor("#cc0000"),
+        "Low": KPMG_GREEN,
+        "Moderate": KPMG_AMBER,
+        "High": KPMG_RED,
+        "Critical": colors.HexColor("#7F1D1D"),
     }.get(level, KPMG_GREY)
-
-
-def draw_score_bar(canvas_obj, x, y, width, height, score, color_hex="#00C896"):
-    """Draw a filled progress bar on the canvas."""
-    bg = colors.HexColor("#E5E7EB")
-    canvas_obj.setFillColor(bg)
-    canvas_obj.roundRect(x, y, width, height, height / 2, fill=1, stroke=0)
-    fill_w = max(4, (score / 100) * width)
-    canvas_obj.setFillColor(colors.HexColor(color_hex))
-    canvas_obj.roundRect(x, y, fill_w, height, height / 2, fill=1, stroke=0)
 
 
 def _pct(value: float) -> str:
@@ -195,251 +422,777 @@ def _derive_parameter_context(report: dict) -> dict:
 
 
 def _parameter_explanation(param: str, report: dict) -> tuple[str, str]:
+    """
+    Returns (definition, calculation) for each sub-parameter.
+    Definition: a rich governance explanation for a CEO-level reader.
+    Calculation: the formula used to derive the score from the dataset.
+    """
     c = _derive_parameter_context(report)
     io_bonus = 20 if (c["has_input"] and c["has_output"]) else (10 if (c["has_input"] or c["has_output"]) else 0)
     model_bonus = 80 if c["model_type"] == "classification" else 60
+    missing_pct = _pct(c['diagnostics'].get('missing_ratio', 0) or 0)
     details = {
-        "Schema Confidence": (
-            f"schema_confidence ({_pct(c['diagnostics'].get('schema_confidence', 0) or 0)}) x 100 = {c['schema_score']}",
-            "Measures how reliably the dataset schema could be inferred.",
+        # ── FAIRNESS ─────────────────────────────────────────────────────────────
+        "Class Balance in Detections": (
+            "Measures whether the AI system produces outputs that are proportionally distributed across all target classes "
+            "or categories. Imbalanced class detections can indicate systemic bias, where the model disproportionately "
+            "favours or penalises certain groups. Sustained imbalance in production can lead to regulatory scrutiny under "
+            "the EU AI Act and discriminatory outcomes in high-stakes decisions.",
+            "Derived from class distribution analysis across detection outputs in the ingested dataset."
         ),
-        "Field Documentation": (
-            f"clamp(io_bonus {io_bonus} x 4 + schema_score {c['schema_score']} x 0.2)",
-            "Rewards clear input/output structure supported by a stable schema.",
+        "Detection Equity Across Groups": (
+            "Evaluates whether the AI system's detection accuracy, precision, and recall are statistically consistent "
+            "across identifiable demographic or categorical groups. Unequal error rates across groups constitute "
+            "algorithmic discrimination. This parameter is directly referenced in the EU AI Act Article 10 and ISO/IEC "
+            "42001 Clause 6.1.2 as a mandatory governance check before deployment.",
+            "Derived from error-rate and detection-rate stratification across available group signals in the dataset."
         ),
-        "Model Version Tracking": (
-            "100 if version/model_id field exists, else 30",
-            "Checks whether predictions can be tied to a tracked model version.",
+        "Label Class Representativeness": (
+            "Assesses whether the training or evaluation labels adequately represent the real-world distribution of "
+            "outcomes the AI system is intended to address. Under-representation of minority classes leads to systematic "
+            "underperformance on those groups, often invisible in aggregate accuracy metrics. Organisations must ensure "
+            "training data diversity is documented and verifiable for audit purposes.",
+            "Computed from label class distribution entropy and comparison against expected population-level baselines."
         ),
-        "Input/Output Coverage": (
-            f"clamp(io_bonus {io_bonus} x 4.5)",
-            "Measures whether both request and response fields are present in the logs.",
-        ),
-        "Column Completeness": (
-            f"clamp(column_diversity {c['column_diversity']} x 0.8 + schema_score {c['schema_score']} x 0.2)",
-            "Blends field breadth with schema quality.",
-        ),
-        "Model Interpretability": (
-            f"{model_bonus} based on model type",
-            "Uses the model family as a structural interpretability proxy.",
-        ),
-        "Prediction Confidence": (
-            "100 if confidence/probability field exists, else 40",
-            "Checks whether outputs carry explicit confidence scores.",
-        ),
-        "Reasoning Documentation": (
-            "100 with hallucination/faithfulness fields, 60 with ROUGE/BLEU metrics, else 35",
-            "Looks for evidence that reasoning quality or output quality is being tracked.",
-        ),
-        "Feedback Integration": (
-            "100 if feedback/rating fields exist, else 30",
-            "Measures whether human feedback is captured in the logs.",
-        ),
-        "Output Traceability": (
-            f"clamp(io_bonus {io_bonus} x 4 + {'20' if c['has_score'] else '0'})",
-            "Rewards outputs that can be traced back to inputs and scored outputs.",
-        ),
-        "Data Completeness": (
-            f"(1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)}) x 100 = {c['completeness']}",
-            "Represents the usable portion of the dataset after missing fields are considered.",
-        ),
-        "Label Balance": (
-            "80 if label/target field exists, else 50",
-            "Uses label availability as a proxy for assessing group and class balance.",
-        ),
-        "Demographic Coverage": (
-            f"clamp(60 + (text_columns {c['text_cols']} / total_columns {c['total_cols']}) x 40)",
-            "Estimates representational breadth from the share of text-like fields.",
+        "Fairness Monitoring Signals": (
+            "Determines whether the deployed system has active mechanisms for continuous bias monitoring post-deployment. "
+            "Point-in-time fairness assessments are insufficient — regulatory frameworks now require ongoing monitoring "
+            "with automated alerting when fairness drift exceeds defined thresholds. Absence of monitoring signals is "
+            "treated as a critical governance gap by KPMG Trusted AI auditors.",
+            "100 if fairness monitoring fields (feedback, demographic_group, protected_attribute) are present; else 0."
         ),
         "Bias Indicator Fields": (
-            "100 with feedback fields, 60 with labels only, else 30",
-            "Checks whether fairness monitoring signals are available.",
+            "Checks for the presence of structured fields that enable bias tracking over time — including demographic "
+            "identifiers, group labels, protected attributes, or human evaluation feedback. Without these fields, it is "
+            "impossible to retrospectively investigate discriminatory outcomes or respond to regulatory enquiries. Their "
+            "presence demonstrates proactive governance rather than reactive compliance.",
+            "100 with feedback/demographic fields; 60 with labels only; 30 with no identifiable bias-tracking fields."
         ),
         "Missing Data Equity": (
-            f"clamp((1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)} x 2) x 100)",
-            "Penalizes fairness confidence when missing data becomes materially high.",
+            "Examines whether missing data is distributed uniformly across the dataset or whether it is concentrated "
+            "in specific groups or categories. Non-random missingness (MNAR — Missing Not At Random) disproportionately "
+            "impacts underrepresented groups and can introduce silent bias into model outputs. This parameter penalises "
+            "datasets where high overall missingness compromises fairness confidence.",
+            f"clamp((1 - missing_ratio {missing_pct} x 2) x 100) — heavy missing data reduces fairness assurance."
+        ),
+        "Label Balance": (
+            "Measures whether ground truth labels are available and balanced across the dataset. Datasets without "
+            "labels cannot be audited for bias, accuracy, or fairness. Labelled data with extreme class imbalance "
+            "(e.g., 95%/5% splits) requires resampling, class weighting, or stratified evaluation to prevent "
+            "misleading aggregate metrics from masking poor performance on minority classes.",
+            "80 if label/target field is present; 50 otherwise. Penalised for extreme imbalance if detected."
+        ),
+        "Demographic Coverage": (
+            "Estimates the breadth of demographic or categorical coverage in the dataset, using the ratio of "
+            "text-type columns as a structural proxy for group-level metadata. Rich text fields often encode "
+            "demographic context that supports fairness analysis. Low coverage signals that the dataset may "
+            "be insufficiently diverse for equitable governance assessment.",
+            f"clamp(60 + (text_columns {c['text_cols']} / total_columns {c['total_cols']}) x 40)"
+        ),
+        # ── TRANSPARENCY ─────────────────────────────────────────────────────────
+        "Schema Confidence": (
+            "Quantifies how reliably the dataset's structure could be inferred — including field types, naming "
+            "conventions, and column consistency. High schema confidence indicates a well-governed data pipeline "
+            "with enforced contracts. Low schema confidence suggests ad-hoc or undocumented data flows, making "
+            "it difficult to trace model inputs and provide meaningful stakeholder disclosure.",
+            f"schema_confidence ({_pct(c['diagnostics'].get('schema_confidence', 0) or 0)}) x 100 = {c['schema_score']}"
+        ),
+        "Field Documentation": (
+            "Assesses whether the dataset includes clearly defined input, output, and contextual fields — the "
+            "minimum documentation required to explain AI behaviour to stakeholders. Undocumented fields impede "
+            "the creation of model cards, data sheets, and regulatory disclosures. Well-documented schemas "
+            "directly support EU AI Act Article 13 transparency obligations.",
+            f"clamp(io_bonus {io_bonus} x 4 + schema_score {c['schema_score']} x 0.2)"
+        ),
+        "Confidence Score Disclosure": (
+            "Determines whether the AI system exposes its output confidence or probability scores to downstream "
+            "stakeholders. Confidence disclosure is foundational to transparent AI — it allows users to calibrate "
+            "their trust in individual predictions and enables human-in-the-loop review for borderline decisions. "
+            "Concealing confidence scores from users is considered a transparency violation under NIST AI RMF.",
+            "100 if confidence/probability score field is present in the dataset; 40 otherwise."
+        ),
+        "Bounding Box / Label Visibility": (
+            "For object detection and image classification systems, this parameter verifies that spatial detection "
+            "results (bounding boxes, segmentation masks, class labels) are explicitly included in the output record. "
+            "Without visible, structured output representations, it is impossible for users or auditors to validate "
+            "what the model detected, where, and with what degree of confidence.",
+            "100 if bounding box / label output fields are present in the evaluation records; else 0."
+        ),
+        "Detection Result Logging": (
+            "Verifies that each inference event is systematically logged with sufficient detail to support post-hoc "
+            "auditing. Logging must capture input identifiers, output predictions, confidence levels, model version, "
+            "and timestamp at minimum. Incomplete logs prevent incident investigation, regulatory response, and "
+            "continuous improvement. EU AI Act Article 12 mandates automatic logging for high-risk AI systems.",
+            "100 if a comprehensive result log structure is detected in the dataset; 0 if logging is absent."
+        ),
+        "Model Version Tracking": (
+            "Checks whether model predictions can be traced back to a specific, versioned model deployment. "
+            "Version tracking is essential for reproducibility — if a model is updated, historical predictions "
+            "must remain linkable to the version that produced them. Without this linkage, post-deployment "
+            "incident investigation and regulatory accountability become impossible.",
+            "100 if version/model_id field is present in the dataset; 30 otherwise."
+        ),
+        "Input/Output Coverage": (
+            "Measures whether both the request (input) and response (output) of each AI interaction are captured "
+            "in the logs. Complete input-output pairs are the minimum evidential standard for AI auditability. "
+            "Systems that log only outputs cannot verify whether observed failures originated from input quality "
+            "issues or model behaviour, complicating root-cause analysis and regulatory disclosure.",
+            f"clamp(io_bonus {io_bonus} x 4.5) — based on presence of both input and output fields."
+        ),
+        "Column Completeness": (
+            "Evaluates the breadth of documented fields relative to the full population of fields required for "
+            "governance-grade logging. A narrow dataset with few columns may omit critical governance signals "
+            "such as timestamps, user identifiers, or model metadata. This parameter blends field breadth with "
+            "schema quality to reward well-structured, comprehensive logging designs.",
+            f"clamp(column_diversity {c['column_diversity']} x 0.8 + schema_score {c['schema_score']} x 0.2)"
+        ),
+        # ── EXPLAINABILITY ────────────────────────────────────────────────────────
+        "Model Interpretability": (
+            "Uses the model family and architecture type as a structural proxy for inherent interpretability. "
+            "Linear models, decision trees, and rule-based systems provide native explainability; deep learning "
+            "and ensemble methods require additional explainability tooling (SHAP, LIME, attention maps) to "
+            "satisfy governance requirements. Model type is a critical disclosure item for all stakeholder levels.",
+            f"{model_bonus} based on detected model type — higher for interpretable architectures."
+        ),
+        "Prediction Confidence": (
+            "Verifies that each AI prediction is accompanied by a machine-readable confidence or probability score "
+            "that quantifies the model's certainty. Confidence scores enable human reviewers to identify borderline "
+            "predictions warranting closer inspection and allow downstream systems to implement dynamic thresholds "
+            "for human escalation. Their absence forces binary pass/fail decisions without nuance.",
+            "100 if confidence/probability field exists in the dataset; 40 otherwise."
+        ),
+        "Reasoning Documentation": (
+            "Assesses whether the AI system produces or logs structured reasoning artefacts — such as attention "
+            "weights, feature importance scores, chain-of-thought outputs, hallucination scores, or faithfulness "
+            "metrics. These artefacts allow technical and non-technical stakeholders to understand why a specific "
+            "prediction was made, meeting explainability obligations under ISO/IEC 42001 Clause 9.1.",
+            "100 with hallucination/faithfulness fields; 60 with ROUGE/BLEU metrics; 35 otherwise."
+        ),
+        "Feedback Integration": (
+            "Checks whether structured human feedback (ratings, corrections, binary approval signals) is captured "
+            "alongside model predictions. Human feedback loops are the primary mechanism for continuous explainability "
+            "improvement — they surface cases where model outputs are plausible but incorrect, enabling targeted "
+            "retraining and governance-level evidence of quality assurance.",
+            "100 if feedback/rating field is present; 30 otherwise."
+        ),
+        "Output Traceability": (
+            "Measures whether each AI output can be traced end-to-end from input through prediction to the "
+            "downstream action taken. Full traceability creates an evidential chain that regulators, auditors, "
+            "and affected parties can follow. Without it, organisations cannot demonstrate that AI-influenced "
+            "decisions were made transparently, undermining both compliance and public trust.",
+            f"clamp(io_bonus {io_bonus} x 4 + {'20' if c['has_score'] else '0'} confidence bonus)"
+        ),
+        "Confidence Calibration": (
+            "Evaluates whether the AI system's stated confidence scores accurately reflect its empirical accuracy — "
+            "a property known as calibration. A well-calibrated model that reports 80% confidence should be correct "
+            "approximately 80% of the time across a large sample. Poorly calibrated systems produce overconfident "
+            "or underconfident predictions, misguiding human reviewers and causing systematic decision errors.",
+            "Derived from comparison of confidence score distribution against observed accuracy in the dataset."
+        ),
+        "mAP-IoU Alignment": (
+            "For object detection systems, Mean Average Precision (mAP) and Intersection over Union (IoU) must be "
+            "aligned — high mAP with low IoU indicates the model detects correct categories but localises them "
+            "imprecisely. Misalignment between these metrics signals a calibration issue that can undermine "
+            "safety-critical applications such as medical imaging, surveillance, and autonomous systems.",
+            "Computed from structural alignment between mAP and IoU score fields in the evaluation records."
+        ),
+        "Label Coverage for Validation": (
+            "Measures the percentage of dataset records that carry a ground truth label usable for validation. "
+            "Unlabelled records cannot contribute to accuracy, fairness, or safety assessments — they represent "
+            "a governance blind spot. High label coverage provides confidence that evaluation metrics are "
+            "computed on a representative, complete sample rather than a biased subset.",
+            "Proportion of records with non-null label/ground_truth fields relative to total records evaluated."
+        ),
+        "Detection Output Readability": (
+            "Assesses whether detection outputs are structured in a human-readable format that non-technical "
+            "stakeholders can interpret without specialist tooling. Outputs must include plain-language labels, "
+            "bounding box coordinates (where applicable), and confidence scores in standard units. Cryptic "
+            "or numeric-only outputs block effective human oversight and violate EU AI Act Article 13.",
+            "Derived from output field structure — penalised for numeric-only or unstructured output formats."
+        ),
+        # ── ACCOUNTABILITY ────────────────────────────────────────────────────────
+        "Ground Truth Annotation Coverage": (
+            "Measures whether the dataset contains verified ground truth annotations for a sufficient proportion "
+            "of records. Ground truth is the foundational evidence required to demonstrate model accuracy, detect "
+            "errors, and assign accountability for incorrect outputs. Without it, no meaningful performance claim "
+            "can be substantiated — and no regulatory audit can be completed with confidence.",
+            "100 if ground_truth/annotation field is present and >80% populated; proportional score otherwise."
+        ),
+        "Human Review on Low Confidence": (
+            "Checks whether the system has a defined, enforced pathway for routing low-confidence predictions to "
+            "human reviewers before any consequential action is taken. This is one of the most critical accountability "
+            "controls — automated systems must know their limits and escalate appropriately. Its absence means "
+            "the model operates autonomously even when its own outputs are uncertain.",
+            "100 if human_review/escalation field is present alongside confidence threshold fields; 0 otherwise."
+        ),
+        "Error & Misdetection Logging": (
+            "Verifies that system errors, false positives, false negatives, and misdetections are explicitly "
+            "captured in a dedicated, structured log. Error logging is the primary mechanism for accountability "
+            "— it creates an immutable record of system failures that can be reviewed by auditors, regulators, "
+            "and affected parties. It also supports root-cause analysis and continuous improvement cycles.",
+            "100 if error/exception/misdetection field is present and populated; 0 if absent."
+        ),
+        "Audit Trail Coverage": (
+            "Assesses the completeness of the system's end-to-end audit trail — the chronological record of all "
+            "AI-driven decisions, including timestamps, user identifiers, model versions, inputs, and outputs. "
+            "A complete audit trail is mandated by the EU AI Act for high-risk systems and is the primary "
+            "mechanism by which organisations demonstrate accountability to external regulators.",
+            "Derived from timestamp, user_id, and model_version field coverage across the dataset records."
         ),
         "Audit Log Volume": (
-            f"min(logs_evaluated {c['logs_count']} / 100 x 100, 100) = {c['volume_score']}",
-            "Uses record volume as a proxy for accountability coverage.",
+            "Uses the volume of logged records as a proxy for the operational maturity of the audit function. "
+            "Organisations that log comprehensively generate large, structured datasets that can support robust "
+            "statistical analysis, trend detection, and anomaly identification. Small log volumes may indicate "
+            "selective logging — a red flag for governance auditors.",
+            f"min(logs_evaluated {c['logs_count']} / 100 x 100, 100) = {c['volume_score']}"
         ),
         "Timestamp Coverage": (
-            "100 if timestamp/date field exists, else 20",
-            "Checks whether events can be ordered chronologically for audit.",
+            "Verifies that each AI event in the dataset is timestamped with sufficient precision to reconstruct "
+            "the sequence of decisions over time. Timestamps are a prerequisite for chronological audit trails, "
+            "regulatory incident reporting, and root-cause analysis. Missing timestamps make it impossible to "
+            "determine when a specific AI decision was made — a fundamental accountability failure.",
+            "100 if timestamp/date/created_at field is present; 20 otherwise."
         ),
         "User Attribution": (
-            "High score if user/session identifiers exist; lower score otherwise",
-            "Checks whether events can be traced to a user or session.",
+            "Checks whether each AI event can be attributed to an identifiable user session, user ID, or "
+            "organisational entity. Attribution is essential for accountability — it allows organisations to "
+            "determine who initiated an AI-influenced decision, which system processed it, and which model "
+            "version produced the output. Without attribution, accountability chains cannot be established.",
+            "High score if user_id/session_id fields exist; graduated penalty for partial or absent attribution."
         ),
         "Model Version Control": (
-            "100 if version/model_id field exists, else 30",
-            "Measures whether outputs can be linked to a specific deployed model version.",
+            "Verifies that the model version or deployment identifier is recorded alongside each prediction. "
+            "As models are updated, version control ensures that historical predictions remain traceable to the "
+            "specific model that produced them. This is essential for post-deployment incident investigation, "
+            "regulatory evidence submission, and comparing performance across model generations.",
+            "100 if version/model_id field exists in the dataset; 30 otherwise."
         ),
         "Error/Exception Logging": (
-            "100 if error/exception field exists, else 35",
-            "Checks whether system failures are explicitly captured.",
+            "Checks whether system exceptions, runtime errors, and processing failures are systematically "
+            "captured in a structured format. Exception logging is not merely a technical best practice — "
+            "it is a governance requirement. Unlogged failures create invisible accountability gaps and "
+            "prevent organisations from demonstrating that error handling was in place at the time of an incident.",
+            "100 if error/exception field is present and populated in the dataset; 35 otherwise."
+        ),
+        # ── DATA INTEGRITY ────────────────────────────────────────────────────────
+        "Data Completeness": (
+            "Measures the proportion of dataset records that are fully populated — with no missing values in "
+            "critical fields. Incomplete records degrade model performance, introduce hidden biases, and "
+            "undermine the reliability of any governance assessment performed on the data. High data "
+            "completeness is a prerequisite for credible audit evidence and defensible regulatory submissions.",
+            f"(1 - missing_ratio {missing_pct}) x 100 = {c['completeness']}"
         ),
         "Completeness Score": (
-            f"(1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)}) x 100 = {c['completeness']}",
-            "Measures how complete the dataset is before integrity checks.",
+            "Measures the proportion of dataset records that are fully populated across all schema fields. "
+            "Completeness is the most fundamental dimension of data quality — incomplete records cannot "
+            "be reliably used for training, evaluation, or governance assessment. Organisations must "
+            "implement automated completeness checks as part of their data pipeline governance.",
+            f"(1 - missing_ratio {missing_pct}) x 100 = {c['completeness']}"
         ),
         "Duplicate-Free Rate": (
-            f"clamp(100 - (duplicates {c['diagnostics'].get('duplicates', 0) or 0} / logs {max(c['logs_count'], 1)}) x 500) = {c['duplicate_penalty']}",
-            "Penalizes repeated records that reduce data trustworthiness.",
+            "Quantifies the proportion of unique records in the dataset — penalising datasets with high "
+            "rates of exact or near-exact duplicates. Duplicate records skew frequency-based metrics, "
+            "inflate apparent data volume, and can introduce systematic bias if duplicates are concentrated "
+            "in specific classes or groups. Deduplication is a mandatory step in governance-grade data pipelines.",
+            f"clamp(100 - (duplicates {c['diagnostics'].get('duplicates', 0) or 0} / logs {max(c['logs_count'], 1)}) x 500) = {c['duplicate_penalty']}"
         ),
         "Schema Consistency": (
-            f"schema_confidence ({_pct(c['diagnostics'].get('schema_confidence', 0) or 0)}) x 100 = {c['schema_score']}",
-            "Direct structural integrity score derived from schema confidence.",
+            "Evaluates whether the dataset adheres to a consistent, enforced schema across all records — "
+            "including consistent field naming, data types, and value formats. Inconsistent schemas indicate "
+            "weak data governance and can cause silent failures during model inference. Schema enforcement "
+            "is a foundational requirement for defensible AI governance under ISO/IEC 42001.",
+            f"schema_confidence ({_pct(c['diagnostics'].get('schema_confidence', 0) or 0)}) x 100 = {c['schema_score']}"
         ),
         "Data Type Diversity": (
-            f"balanced mix of numeric ({c['numeric_cols']}) and text ({c['text_cols']}) columns across {c['total_cols']} total columns",
-            "Rewards datasets that are not overly one-dimensional.",
+            "Assesses whether the dataset contains a balanced mix of numeric and text-type fields — indicating "
+            "a rich, multi-dimensional data structure capable of capturing the full complexity of the AI system's "
+            "inputs and outputs. Datasets dominated by a single data type may lack the contextual richness "
+            "required for comprehensive governance assessment.",
+            f"balanced mix of numeric ({c['numeric_cols']}) and text ({c['text_cols']}) across {c['total_cols']} total columns"
         ),
-        "Ground Truth Availability": (
-            "100 if labels or text-evaluation metrics exist, else 40",
-            "Checks whether outputs can be compared against an expected result.",
+        "Label Coverage Rate": (
+            "Determines what proportion of records in the dataset carry a ground truth label or annotation. "
+            "Label coverage directly constrains the scope of any evaluation — unlabelled records cannot "
+            "contribute to accuracy, fairness, or bias assessments. A high label coverage rate signals "
+            "a mature, well-governed annotation pipeline with rigorous quality assurance.",
+            "Proportion of records with non-null label/class/ground_truth fields."
         ),
+        "Annotation Quality Score": (
+            "Evaluates the structural quality and consistency of annotations in the dataset, using field "
+            "completeness, value distribution, and annotation schema adherence as proxies for quality. "
+            "Poor annotation quality — including inconsistent labelling, ambiguous categories, or "
+            "annotator disagreement — directly degrades model quality and governance defensibility.",
+            "Derived from annotation field completeness, consistency, and schema adherence metrics."
+        ),
+        "Ground Truth Accuracy": (
+            "Assesses how accurately the ground truth labels in the dataset reflect real-world reality — "
+            "using statistical proxies such as label confidence distributions and cross-validation consistency. "
+            "Ground truth errors propagate directly into model training and evaluation, creating invisible "
+            "performance ceilings that cannot be overcome through model architecture improvements alone.",
+            "Derived from label confidence distribution and cross-validation consistency signals."
+        ),
+        "Dataset Schema Consistency": (
+            "Evaluates whether the dataset schema is uniformly applied across all records, time periods, "
+            "and data sources contributing to the evaluation set. Schema drift — where field definitions "
+            "or formats change across dataset versions — is a major source of silent data quality failures "
+            "and a common root cause of model degradation in production environments.",
+            "Derived from schema confidence score and field-level consistency analysis."
+        ),
+        # ── RELIABILITY ───────────────────────────────────────────────────────────
         "Consistency Score": (
-            f"(1 - missing_ratio {_pct(c['diagnostics'].get('missing_ratio', 0) or 0)}) x 90",
-            "A reliability proxy derived from dataset completeness.",
+            "Measures the overall consistency of the AI system's outputs — evaluating whether identical or "
+            "near-identical inputs produce stable, predictable predictions over time. Inconsistency in "
+            "production is a reliability failure that erodes user trust, complicates accountability, and "
+            "may indicate underlying model instability, infrastructure issues, or data drift.",
+            f"(1 - missing_ratio {missing_pct}) x 90 — completeness as a structural consistency proxy."
         ),
         "Performance Metrics": (
-            "100 if quality/confidence metrics exist, else 40",
-            "Checks for explicit quality metrics that support reliability tracking.",
+            "Verifies whether explicit performance metrics — such as accuracy, F1 score, precision, recall, "
+            "or AUC — are recorded in the dataset. Performance metrics are the primary evidence used to "
+            "demonstrate that the AI system meets its intended specifications. Their absence makes it "
+            "impossible to objectively assess whether the system is operating within acceptable parameters.",
+            "100 if performance/quality metrics fields exist in the dataset; 40 otherwise."
         ),
         "Latency Monitoring": (
-            "100 if latency/duration field exists, else 30",
-            "Checks whether response time is monitored.",
+            "Checks whether AI system response time (latency) is systematically measured and logged for "
+            "each inference event. Latency is a critical reliability indicator — degraded response times "
+            "can indicate infrastructure strain, model complexity issues, or approaching capacity limits. "
+            "SLA compliance for AI systems typically requires latency monitoring at the inference level.",
+            "100 if latency/response_time/duration field is present; 30 otherwise."
         ),
         "Error Rate Tracking": (
-            "100 if error/exception field exists, else 35",
-            "Checks whether failures can be counted and monitored.",
+            "Measures whether the AI system maintains a structured record of error rates — including "
+            "inference failures, timeout events, and output quality degradation events. Continuous error "
+            "rate tracking enables proactive reliability management and provides the evidential basis "
+            "for SLA compliance reporting and incident root-cause analysis.",
+            "100 if error/failure rate tracking fields are present; derived from dataset structure otherwise."
+        ),
+        "Ground Truth Availability": (
+            "Assesses whether sufficient ground truth data is available to evaluate the AI system's "
+            "reliability against objective benchmarks. Without ground truth, reliability assessments "
+            "are limited to proxy metrics — and cannot definitively establish whether the system "
+            "is meeting its intended accuracy or recall targets in production.",
+            "100 if labels or text-evaluation metrics exist; 40 otherwise."
+        ),
+        "Mean Average Precision (mAP)": (
+            "Mean Average Precision is the primary accuracy metric for object detection systems, "
+            "measuring the model's ability to correctly identify and localise objects across all "
+            "categories and confidence thresholds. mAP integrates both precision and recall into "
+            "a single score, making it the industry standard for comparing detection models. "
+            "Low mAP in production indicates unacceptable detection quality for deployment.",
+            "Computed from precision-recall curves across all detection classes at standard IoU thresholds."
+        ),
+        "Mean IoU Score": (
+            "Mean Intersection over Union quantifies the spatial accuracy of object detection — "
+            "measuring the overlap between predicted bounding boxes and ground truth annotations. "
+            "An IoU of 1.0 represents a perfect match; values below 0.5 indicate imprecise "
+            "localisation that may be unsafe for applications requiring precise spatial awareness, "
+            "such as autonomous systems, medical image analysis, or document processing.",
+            "Average IoU computed across all matched detection pairs in the evaluation dataset."
+        ),
+        "Top-K Accuracy": (
+            "Top-K Accuracy measures whether the correct class appears among the model's top K "
+            "predictions — a more lenient metric than top-1 accuracy appropriate for complex "
+            "multi-class scenarios. High Top-K Accuracy with low Top-1 Accuracy may indicate "
+            "that the model is directionally correct but insufficiently decisive, which can be "
+            "problematic in automated decision pipelines that rely on single-best predictions.",
+            "Proportion of records where the ground truth label appears in the top-K predicted classes."
+        ),
+        "Inference Consistency": (
+            "Measures whether the AI system produces stable, reproducible outputs when presented "
+            "with equivalent inputs under consistent conditions. Inconsistent inference — where "
+            "the same input produces different outputs across calls — indicates non-determinism "
+            "in the inference pipeline, which undermines auditability, reproducibility, and "
+            "regulatory compliance for high-risk AI deployments.",
+            "Derived from variance analysis of repeated inference outputs across the dataset."
+        ),
+        # ── SECURITY ──────────────────────────────────────────────────────────────
+        "Adversarial Input Resistance": (
+            "Evaluates the AI system's robustness against adversarial inputs — carefully crafted "
+            "perturbations designed to cause the model to produce incorrect, harmful, or unintended "
+            "outputs. Adversarial attacks are a primary threat vector for deployed AI systems, "
+            "particularly in high-stakes domains such as financial fraud detection, medical diagnosis, "
+            "and content moderation. Resistance must be validated through structured red-team testing.",
+            "Derived from presence of adversarial input validation fields and input sanitisation controls."
+        ),
+        "PII/Biometric in Images": (
+            "Checks whether the dataset or model outputs contain personally identifiable information "
+            "or biometric data (faces, fingerprints, gait patterns) that could expose individuals "
+            "to privacy violations or enable surveillance. AI systems processing biometric data are "
+            "classified as high-risk under the EU AI Act and subject to mandatory DPIA requirements "
+            "and heightened data protection obligations under GDPR Article 9.",
+            "100 if no PII/biometric indicators detected in the dataset; scaled penalty if detected."
+        ),
+        "Harmful Image Content Rate": (
+            "Measures whether the AI system's inputs or outputs contain harmful, illegal, or policy-"
+            "violating image content — including CSAM, graphic violence, or content that could "
+            "facilitate harm. AI systems must implement content filtering at both the input and "
+            "output layers, with automated detection, human review queues, and mandatory reporting "
+            "protocols for identified harmful content.",
+            "100 if harmful content rate is 0%; scaled penalty applied for any detected harmful content."
+        ),
+        "Input Validation Rate": (
+            "Assesses whether the AI system performs structured validation on all inputs before "
+            "processing — including format checks, schema validation, range constraints, and "
+            "injection attack detection. Unvalidated inputs are a critical security vulnerability "
+            "that can enable prompt injection, data poisoning, and model extraction attacks. "
+            "100% input validation is the minimum acceptable standard for production AI systems.",
+            "100 if input validation/sanitisation controls are evidenced in the dataset; 0 otherwise."
+        ),
+        # ── SAFETY ────────────────────────────────────────────────────────────────
+        "Misidentification Risk Control": (
+            "Evaluates the degree to which the AI system has implemented controls to prevent "
+            "or mitigate the consequences of misidentification — incorrectly identifying a person, "
+            "object, or situation. Misidentification in high-stakes contexts (medical, legal, "
+            "security) can cause direct harm. Controls include confidence thresholds, human review "
+            "queues, uncertainty quantification, and fallback to human decision-making.",
+            "Derived from presence of confidence threshold, review queue, and fallback mechanism fields."
+        ),
+        "Human Override on Low Confidence": (
+            "Verifies whether the system enforces a mandatory human review pathway for predictions "
+            "below a defined confidence threshold. This is a fundamental safety control for high-"
+            "risk AI — it prevents the system from acting autonomously when its own certainty is "
+            "insufficient. Absence of this control means the AI operates without a safety net, "
+            "directly contradicting human-centric AI governance principles.",
+            "100 if human_review/override field is present alongside confidence threshold; 0 otherwise."
+        ),
+        "Safety-Critical Recall": (
+            "For AI systems in safety-critical applications, recall (the ability to detect all "
+            "relevant positive instances) is often more important than precision. Missing a genuine "
+            "positive (false negative) in medical, safety, or security contexts can have severe "
+            "consequences. This parameter ensures the system's recall in safety-critical categories "
+            "meets the elevated thresholds required for high-risk deployments.",
+            "Derived from recall analysis on safety-critical class labels in the evaluation dataset."
+        ),
+        "Incident Response Signals": (
+            "Checks whether the AI system is integrated with an incident response workflow — "
+            "including automated alerting, structured incident logging, escalation pathways, "
+            "and post-incident review processes. EU AI Act Article 62 mandates serious incident "
+            "reporting for high-risk AI systems. Without incident response infrastructure, "
+            "organisations cannot demonstrate compliance with mandatory notification obligations.",
+            "100 if incident_response/alert/escalation fields are present in the dataset; 0 otherwise."
+        ),
+        # ── PRIVACY ───────────────────────────────────────────────────────────────
+        "Biometric PII Leakage Rate": (
+            "Measures the rate at which biometric personal data (facial embeddings, fingerprint "
+            "data, voiceprints, gait data) appears in AI system outputs or logs in a form that "
+            "could identify individuals. Biometric data receives the highest level of protection "
+            "under GDPR Article 9 as a special category. Any leakage constitutes a serious data "
+            "breach with mandatory regulatory notification within 72 hours.",
+            "100 if biometric data leakage rate is 0%; penalty scaled by detected leakage rate."
+        ),
+        "Image Data Minimisation": (
+            "Assesses whether the AI system collects, processes, and retains only the minimum "
+            "image data necessary for its stated purpose — a core principle of Privacy by Design "
+            "under GDPR Article 25. Systems that capture and store high-resolution images, "
+            "facial data, or scene content beyond operational necessity create disproportionate "
+            "privacy risks and are exposed to regulatory sanctions.",
+            "100 if data minimisation controls are evidenced; penalty for excessive data collection signals."
+        ),
+        "Biometric Anonymisation": (
+            "Verifies whether biometric data captured or processed by the AI system is subject "
+            "to appropriate anonymisation or pseudonymisation techniques before storage or "
+            "transmission. Techniques include facial blurring, embedding encryption, and k-"
+            "anonymity. Effective anonymisation reduces re-identification risk and may exempt "
+            "the organisation from certain GDPR Article 9 obligations.",
+            "100 if anonymisation controls are evidenced in the dataset processing pipeline; 0 otherwise."
+        ),
+        "Image Retention Compliance": (
+            "Checks whether the AI system enforces defined retention periods for image data — "
+            "ensuring that images are automatically deleted after their legitimate purpose has "
+            "been fulfilled, in accordance with GDPR Article 5(1)(e) (storage limitation). "
+            "Indefinite image retention is a common compliance failure and a significant "
+            "regulatory risk, particularly for systems processing public-space imagery.",
+            "100 if retention_period/deletion_schedule fields are present; 0 if absent."
+        ),
+        # ── SUSTAINABILITY ────────────────────────────────────────────────────────
+        "Inference Latency Efficiency": (
+            "Measures the energy and compute efficiency of the AI system's inference pipeline — "
+            "using latency as a proxy for computational intensity. High-latency inference indicates "
+            "an inefficient model architecture or infrastructure configuration that consumes "
+            "disproportionate energy. Organisations are increasingly required to report AI system "
+            "carbon footprints under ESG disclosure frameworks and the EU Corporate Sustainability Reporting Directive.",
+            "100 if latency meets efficiency benchmarks; 0 if latency field is absent or exceeds threshold."
+        ),
+        "Detection Compute Efficiency": (
+            "Evaluates whether the AI system's detection pipeline is optimised for compute "
+            "efficiency — using techniques such as model pruning, quantisation, knowledge "
+            "distillation, or hardware-accelerated inference. Inefficient detection pipelines "
+            "scale poorly, incur high operational costs, and generate significant carbon emissions "
+            "at scale. Compute efficiency is increasingly a board-level ESG concern.",
+            "Derived from compute utilisation signals and model architecture complexity indicators."
+        ),
+        "Dataset Redundancy Rate": (
+            "Measures the proportion of redundant or duplicate records in the training and "
+            "evaluation dataset — a direct proxy for computational waste. Processing redundant "
+            "data consumes compute, energy, and storage without contributing to model quality. "
+            "Deduplication and dataset distillation are sustainability best practices that also "
+            "improve training efficiency and governance auditability.",
+            "Derived from duplicate detection analysis — penalised for high redundancy rates."
+        ),
+        "Carbon Footprint Proxy": (
+            "Provides an estimated proxy measure of the AI system's operational carbon footprint "
+            "— derived from model complexity, inference volume, hardware type, and geographic "
+            "data centre location. While exact carbon measurement requires infrastructure-level "
+            "instrumentation, this proxy supports initial ESG reporting and identifies high-"
+            "impact optimisation targets for sustainability governance programmes.",
+            "Composite score from model complexity, inference volume, and infrastructure efficiency signals."
         ),
         "Volume Sufficiency": (
-            f"min(logs_evaluated {c['logs_count']} / 100 x 100, 100) = {c['volume_score']}",
-            "Uses log volume to estimate statistical stability.",
-        ),
-        "Safety Flagging": (
-            "100 if safety/moderation field exists, else 25",
-            "Checks whether unsafe content outcomes are captured.",
-        ),
-        "Input Validation": (
-            f"clamp(schema_score {c['schema_score']} x {'0.8 + 20' if c['has_input'] else '0.6'})",
-            "Uses schema quality and input presence as a security proxy.",
-        ),
-        "Adversarial Robustness": (
-            "40 for general_llm, 55 for other model types",
-            "Applies a conservative baseline because direct red-team evidence is not available structurally.",
-        ),
-        "Content Moderation": (
-            "100 if moderation fields exist, else 30",
-            "Checks whether moderated outcomes are logged.",
-        ),
-        "PII Detection": (
-            "100 if PII-related field exists, else 20",
-            "Checks whether personal-data indicators are present.",
-        ),
-        "PII Field Tracking": (
-            "100 if PII-related field exists, else 20",
-            "Measures whether records containing personal data are explicitly marked.",
-        ),
-        "Data Minimisation": (
-            f"clamp(100 - (total_columns {c['total_cols']} / 20) x 40)",
-            "Penalizes overly broad schemas that may collect more than necessary.",
-        ),
-        "User Anonymisation": (
-            "50 if direct user identifiers exist, else 70",
-            "Rewards schemas that avoid direct user identifiers.",
-        ),
-        "Consent Management": (
-            "Fixed structural estimate of 40",
-            "Placeholder until explicit runtime consent signals are captured.",
-        ),
-        "Data Retention Signals": (
-            "100 if timestamp/date field exists, else 30",
-            "Checks whether retention windows can be enforced using time fields.",
+            "Measures whether the dataset contains a sufficient volume of records to produce "
+            "statistically reliable governance assessments. Small datasets produce high-variance "
+            "metric estimates that cannot be generalised to production behaviour. Volume sufficiency "
+            "thresholds vary by model type and application domain — this parameter provides a "
+            "structural baseline assessment.",
+            f"min(logs_evaluated {c['logs_count']} / 100 x 100, 100) = {c['volume_score']}"
         ),
         "Dataset Efficiency": (
-            f"clamp(100 - (logs_evaluated {c['logs_count']} / 10000) x 30)",
-            "Rewards leaner datasets with lower storage and processing burden.",
-        ),
-        "Feature Engineering": (
-            f"clamp(column_diversity {c['column_diversity']} x 0.7 + 30)",
-            "Uses schema breadth as a proxy for purposeful feature coverage.",
-        ),
-        "Compute Proxy Score": (
-            "80 for classification, 55 for other model types",
-            "Applies a lighter-compute bonus to structurally simpler model families.",
-        ),
-        "Redundancy Elimination": (
-            f"same duplicate penalty as integrity: {c['duplicate_penalty']}",
-            "Measures how effectively duplicated records are avoided.",
-        ),
-        "Resource Optimisation": (
-            f"clamp(schema_score {c['schema_score']} x 0.6 + 40)",
-            "Uses schema quality as a proxy for operational efficiency.",
-        ),
-        "Human Feedback Integration": (
-            "100 if feedback/rating field exists, else 25",
-            "Checks whether humans can review and influence outputs.",
-        ),
-        "Override/Escalation Fields": (
-            "60 if feedback/escalation style fields exist, else 20",
-            "Uses logged feedback signals as a proxy for human override paths.",
-        ),
-        "Decision Explainability": (
-            f"{model_bonus} based on model type",
-            "Uses the model family as a proxy for explainability in high-stakes decisions.",
-        ),
-        "Safety Override Signals": (
-            "100 if safety/moderation field exists, else 35",
-            "Checks whether safety interventions can be detected in logs.",
+            "Evaluates whether the dataset size is proportionate to the complexity of the AI "
+            "task — penalising unnecessarily large datasets that could be reduced through "
+            "intelligent sampling, active learning, or dataset distillation. Right-sizing "
+            "datasets reduces compute, storage, and energy consumption while maintaining "
+            "governance-grade evaluation quality.",
+            f"clamp(100 - (logs_evaluated {c['logs_count']} / 10000) x 30)"
         ),
     }
-    return details.get(param, ("Derived from audit heuristics", "This sub-parameter is calculated from structural signals in the uploaded dataset."))
+    default = (
+        "This sub-parameter is evaluated from structural signals present in the ingested dataset, "
+        "including field presence, completeness, volume, value distributions, and schema consistency. "
+        "Scores reflect the governance readiness of the dataset relative to KPMG Trusted AI Framework "
+        "requirements and applicable regulatory standards.",
+        "Derived from structural analysis of the uploaded dataset."
+    )
+    return details.get(param, default)
+
+
+# ─── Chart Generators ─────────────────────────────────────────────────────────
+
+def _build_radar_chart(principles: dict, width: float, height: float) -> Drawing:
+    """Build a spider/radar chart of the 10 principle scores."""
+    d = Drawing(width, height)
+    cx, cy = width / 2, height / 2
+    r = min(width, height) * 0.38
+
+    names = list(principles.keys())
+    scores = [principles[n].get("score", 0) for n in names]
+    n = len(names)
+
+    if n == 0:
+        return d
+
+    angles = [2 * math.pi * i / n - math.pi / 2 for i in range(n)]
+
+    # Grid circles
+    for level in [0.25, 0.5, 0.75, 1.0]:
+        pts = []
+        for a in angles:
+            pts.append(cx + r * level * math.cos(a))
+            pts.append(cy + r * level * math.sin(a))
+        pts.append(pts[0])
+        pts.append(pts[1])
+        from reportlab.graphics.shapes import PolyLine
+        grid_line = PolyLine(pts, strokeColor=colors.HexColor("#E5E7EB"), strokeWidth=0.5, fillColor=None)
+        d.add(grid_line)
+        # Level label
+        label_str = str(int(level * 100))
+        lbl = String(cx + 3, cy + r * level + 2, label_str,
+                     fontSize=5, fillColor=colors.HexColor("#9CA3AF"), fontName="Helvetica")
+        d.add(lbl)
+
+    # Spokes
+    for a in angles:
+        spoke = Line(cx, cy, cx + r * math.cos(a), cy + r * math.sin(a),
+                     strokeColor=colors.HexColor("#D1D5DB"), strokeWidth=0.5)
+        d.add(spoke)
+
+    # Data polygon
+    pts = []
+    for i, (score, a) in enumerate(zip(scores, angles)):
+        ratio = score / 100.0
+        pts.append(cx + r * ratio * math.cos(a))
+        pts.append(cy + r * ratio * math.sin(a))
+    pts.append(pts[0])
+    pts.append(pts[1])
+
+    from reportlab.graphics.shapes import Polygon
+    poly = Polygon(pts[:-2],
+                   fillColor=colors.HexColor("#00338D"),
+                   fillOpacity=0.25,
+                   strokeColor=KPMG_BLUE,
+                   strokeWidth=1.5)
+    d.add(poly)
+
+    # Data points
+    for i, (score, a) in enumerate(zip(scores, angles)):
+        ratio = score / 100.0
+        px = cx + r * ratio * math.cos(a)
+        py = cy + r * ratio * math.sin(a)
+        dot_color = score_to_color(score)
+        dot = Circle(px, py, 3, fillColor=dot_color, strokeColor=KPMG_WHITE, strokeWidth=0.5)
+        d.add(dot)
+
+    # Labels
+    for i, (name, a) in enumerate(zip(names, angles)):
+        lx = cx + (r + 14) * math.cos(a)
+        ly = cy + (r + 14) * math.sin(a)
+        short = name.split()[0] if " " in name else name
+        score_val = scores[i]
+        sc = score_to_color(score_val)
+        lbl = String(lx, ly - 3, f"{short}: {score_val}",
+                     fontSize=5.5, fillColor=sc, fontName="Helvetica-Bold", textAnchor="middle")
+        d.add(lbl)
+
+    return d
+
+
+def _build_bar_chart(principles: dict, width: float, height: float) -> Drawing:
+    """Build a horizontal bar chart for principle scores."""
+    d = Drawing(width, height)
+    names = list(principles.keys())
+    scores = [principles[n].get("score", 0) for n in names]
+    n = len(names)
+
+    bar_h = (height - 10) / n
+    label_w = 72
+    bar_area_w = width - label_w - 30
+
+    for i, (name, score) in enumerate(zip(names, scores)):
+        y = height - (i + 1) * bar_h + 2
+        # Background bar
+        bg = Rect(label_w, y, bar_area_w, bar_h - 4,
+                  fillColor=colors.HexColor("#F3F4F6"), strokeColor=None)
+        d.add(bg)
+        # Filled bar
+        fill_w = max(4, (score / 100) * bar_area_w)
+        col = score_to_color(score)
+        fill = Rect(label_w, y, fill_w, bar_h - 4,
+                    fillColor=col, strokeColor=None)
+        d.add(fill)
+        # Principle name
+        lbl = String(label_w - 3, y + (bar_h - 4) / 2 - 3, name,
+                     fontSize=5.5, fillColor=colors.HexColor("#111827"),
+                     fontName="Helvetica", textAnchor="end")
+        d.add(lbl)
+        # Score label
+        score_lbl = String(label_w + fill_w + 3, y + (bar_h - 4) / 2 - 3,
+                           str(score),
+                           fontSize=5.5, fillColor=col, fontName="Helvetica-Bold")
+        d.add(score_lbl)
+
+    return d
+
+
+def _build_compliance_donut(score: int, width: float, height: float) -> Drawing:
+    """Build a donut chart showing overall compliance score."""
+    d = Drawing(width, height)
+    cx, cy = width / 2, height / 2
+    outer_r = min(width, height) * 0.42
+    inner_r = outer_r * 0.62
+
+    # Background circle
+    bg = Circle(cx, cy, outer_r, fillColor=colors.HexColor("#F3F4F6"), strokeColor=None)
+    d.add(bg)
+
+    # Score arc (using multiple thin wedges)
+    col = score_to_color(score)
+    num_segs = 60
+    filled_segs = int(score / 100 * num_segs)
+
+    for i in range(num_segs):
+        start_angle = 90 - (i * 360 / num_segs)
+        end_angle = start_angle - (360 / num_segs) + 0.5
+        fill = col if i < filled_segs else colors.HexColor("#E5E7EB")
+        w = Wedge(cx, cy, outer_r, start_angle, start_angle - 360 / num_segs + 0.5,
+                  fillColor=fill, strokeColor=None)
+        d.add(w)
+
+    # Inner white circle (donut hole)
+    hole = Circle(cx, cy, inner_r, fillColor=KPMG_WHITE, strokeColor=None)
+    d.add(hole)
+
+    # Score text
+    score_text = String(cx, cy + 4, str(score),
+                        fontSize=22, fillColor=col, fontName="Helvetica-Bold",
+                        textAnchor="middle")
+    d.add(score_text)
+    label_text = String(cx, cy - 10, "/100",
+                        fontSize=8, fillColor=KPMG_GREY, fontName="Helvetica",
+                        textAnchor="middle")
+    d.add(label_text)
+
+    return d
+
+
+def _build_subparam_minibar(score: int, width: float, height: float) -> Drawing:
+    """Build a tiny horizontal progress bar for sub-parameters."""
+    d = Drawing(width, height)
+    col = score_to_color(score)
+    # Background
+    bg = Rect(0, 1, width, height - 2, fillColor=colors.HexColor("#E5E7EB"), strokeColor=None)
+    d.add(bg)
+    # Fill
+    fill_w = max(2, score / 100 * width)
+    fill = Rect(0, 1, fill_w, height - 2, fillColor=col, strokeColor=None)
+    d.add(fill)
+    return d
 
 
 # ─── Page Template ───────────────────────────────────────────────────────────
 class KPMGPageTemplate:
-    def __init__(self, report_id: str, ai_name: str):
+    def __init__(self, report_id: str, ai_name: str, home_url: str = "/dashboard"):
         self.report_id = report_id
         self.ai_name = ai_name
+        self.home_url = home_url
 
     def on_page(self, canvas_obj, doc):
         canvas_obj.saveState()
         W, H = A4
 
-        # Header bar
+        # ── Header bar ──────────────────────────────────────────────────────
         canvas_obj.setFillColor(KPMG_BLUE)
-        canvas_obj.rect(0, H - 18 * mm, W, 18 * mm, fill=1, stroke=0)
+        canvas_obj.rect(0, H - 20 * mm, W, 20 * mm, fill=1, stroke=0)
 
-        # Header logo text
+        # Teal accent stripe
+        canvas_obj.setFillColor(KPMG_TEAL)
+        canvas_obj.rect(0, H - 21.5 * mm, W, 1.5 * mm, fill=1, stroke=0)
+
+        # Left: clickable "Auditable AI" logo — links to home/dashboard
         canvas_obj.setFillColor(KPMG_WHITE)
-        canvas_obj.setFont("Helvetica-Bold", 11)
-        canvas_obj.drawString(14 * mm, H - 12 * mm, "Auditable AI")
-        canvas_obj.setFont("Helvetica", 8)
-        canvas_obj.drawString(14 * mm, H - 16.5 * mm, "KPMG Trusted AI Framework")
+        canvas_obj.setFont("Helvetica-Bold", 12)
+        canvas_obj.drawString(14 * mm, H - 10 * mm, "Auditable AI")
+        canvas_obj.setFont("Helvetica", 7.5)
+        canvas_obj.drawString(14 * mm, H - 15 * mm, "KPMG Trusted AI Framework")
 
-        # Header right — AI name
-        canvas_obj.setFont("Helvetica", 8)
-        canvas_obj.drawRightString(W - 14 * mm, H - 12 * mm, f"AI System: {self.ai_name}")
-        canvas_obj.drawRightString(W - 14 * mm, H - 16.5 * mm, f"Confidential")
+        # Make the logo area a clickable link to home
+        canvas_obj.linkURL(
+            self.home_url,
+            (14 * mm, H - 18 * mm, 65 * mm, H - 6 * mm),
+            relative=0
+        )
 
-        # Footer bar
-        canvas_obj.setFillColor(KPMG_BLUE)
-        canvas_obj.rect(0, 0, W, 10 * mm, fill=1, stroke=0)
-
-        # Footer text
-        canvas_obj.setFillColor(KPMG_WHITE)
-        canvas_obj.setFont("Helvetica", 7)
-        canvas_obj.drawString(14 * mm, 3.5 * mm, f"Report ID: {self.report_id}")
-        canvas_obj.drawCentredString(W / 2, 3.5 * mm, "Auditable AI\u2122 Governance Audit Report")
-        canvas_obj.drawRightString(W - 14 * mm, 3.5 * mm, f"Page {doc.page}")
-
-        # Thin teal accent line under header
+        # Subtle underline to hint it's clickable
         canvas_obj.setStrokeColor(KPMG_TEAL)
-        canvas_obj.setLineWidth(2)
-        canvas_obj.line(0, H - 18 * mm, W, H - 18 * mm)
+        canvas_obj.setLineWidth(0.5)
+        canvas_obj.line(14 * mm, H - 16 * mm, 55 * mm, H - 16 * mm)
+
+        # Right: AI system name + confidential
+        canvas_obj.setFillColor(colors.HexColor("#9DBFE0"))
+        canvas_obj.setFont("Helvetica", 7.5)
+        canvas_obj.drawRightString(W - 14 * mm, H - 10 * mm, f"AI System: {self.ai_name}")
+        canvas_obj.drawRightString(W - 14 * mm, H - 15 * mm, "CONFIDENTIAL")
+
+        # ── Footer bar ──────────────────────────────────────────────────────
+        canvas_obj.setFillColor(KPMG_BLUE)
+        canvas_obj.rect(0, 0, W, 11 * mm, fill=1, stroke=0)
+
+        canvas_obj.setFillColor(KPMG_TEAL)
+        canvas_obj.rect(0, 11 * mm, W, 0.8 * mm, fill=1, stroke=0)
+
+        canvas_obj.setFillColor(KPMG_WHITE)
+        canvas_obj.setFont("Helvetica", 6.5)
+        canvas_obj.drawString(14 * mm, 4 * mm, f"Report ID: {self.report_id}")
+        canvas_obj.drawCentredString(W / 2, 4 * mm, "Auditable AI\u2122 Governance Audit Report")
+        canvas_obj.drawRightString(W - 14 * mm, 4 * mm, f"Page {doc.page}")
 
         canvas_obj.restoreState()
 
@@ -448,7 +1201,7 @@ class KPMGPageTemplate:
 def build_pdf(report: dict) -> BytesIO:
     buffer = BytesIO()
     W, H = A4
-    margin = 18 * mm
+    margin = 16 * mm
 
     report_id  = report.get("report_id", "N/A")
     ai_name    = report.get("ai_name", "N/A")
@@ -456,9 +1209,9 @@ def build_pdf(report: dict) -> BytesIO:
     evaluated  = report.get("evaluated_at", "N/A")
     try:
         dt = datetime.datetime.fromisoformat(evaluated)
-        evaluated = dt.strftime("%d %B %Y, %H:%M UTC")
+        evaluated_fmt = dt.strftime("%d %B %Y, %H:%M UTC")
     except Exception:
-        pass
+        evaluated_fmt = evaluated
 
     overall_score  = report.get("overall_score", 0)
     risk_level     = report.get("risk_level", "N/A")
@@ -471,49 +1224,51 @@ def build_pdf(report: dict) -> BytesIO:
     recommendation = report.get("recommendation", "")
     framework      = report.get("framework_compliance", {})
 
-    template = KPMGPageTemplate(report_id, ai_name)
+    template = KPMGPageTemplate(report_id, ai_name, home_url="/dashboard")
 
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
         rightMargin=margin,
         leftMargin=margin,
-        topMargin=25 * mm,
-        bottomMargin=16 * mm,
+        topMargin=26 * mm,
+        bottomMargin=17 * mm,
         title=f"Auditable AI Governance Report — {ai_name}",
         author="Auditable AI",
-        subject="KPMG Trusted AI Framework Audit",
+        subject="KPMG Trusted AI Framework Governance Audit",
     )
 
-    # ── Styles ──────────────────────────────────────────────────────────────
-    styles = getSampleStyleSheet()
-
+    # ── Style Definitions ─────────────────────────────────────────────────
     def S(name, **kwargs):
         return ParagraphStyle(name, **kwargs)
 
-    cover_title = S("CoverTitle", fontSize=28, leading=34, textColor=KPMG_WHITE,
-                    fontName="Helvetica-Bold", alignment=TA_LEFT, spaceAfter=6)
-    cover_sub   = S("CoverSub",   fontSize=13, leading=18, textColor=colors.HexColor("#9DBFE0"),
-                    fontName="Helvetica", alignment=TA_LEFT)
-    cover_meta  = S("CoverMeta",  fontSize=10, leading=14, textColor=colors.HexColor("#6B91B0"),
-                    fontName="Helvetica", alignment=TA_LEFT)
+    usable_w = W - 2 * margin
 
-    sec_title   = S("SecTitle",   fontSize=15, leading=20, textColor=KPMG_BLUE,
-                    fontName="Helvetica-Bold", spaceBefore=14, spaceAfter=6)
-    sec_sub     = S("SecSub",     fontSize=9,  leading=13, textColor=KPMG_GREY,
-                    fontName="Helvetica", spaceAfter=10)
-    body        = S("Body",       fontSize=9,  leading=14, textColor=colors.HexColor("#1F2937"),
-                    fontName="Helvetica", spaceAfter=6)
-    body_bold   = S("BodyBold",   fontSize=9,  leading=14, textColor=colors.HexColor("#1F2937"),
-                    fontName="Helvetica-Bold")
-    small       = S("Small",      fontSize=7.5, leading=11, textColor=KPMG_GREY,
-                    fontName="Helvetica")
-    label_style = S("Label",      fontSize=8,  leading=10, textColor=KPMG_GREY,
-                    fontName="Helvetica-Bold", spaceAfter=2)
-    finding_txt = S("FindTxt",    fontSize=8.5, leading=13, textColor=colors.HexColor("#374151"),
-                    fontName="Helvetica", spaceAfter=3)
-    rec_txt     = S("RecTxt",     fontSize=8.5, leading=13, textColor=colors.HexColor("#1D4ED8"),
-                    fontName="Helvetica-Oblique", spaceAfter=0)
+    cover_title_s = S("CoverTitle", fontSize=30, leading=36, textColor=KPMG_WHITE,
+                      fontName="Helvetica-Bold", alignment=TA_LEFT)
+    cover_sub_s   = S("CoverSub", fontSize=12, leading=17, textColor=colors.HexColor("#9DBFE0"),
+                      fontName="Helvetica", alignment=TA_LEFT)
+
+    sec_title_s   = S("SecTitle", fontSize=14, leading=19, textColor=KPMG_BLUE,
+                      fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=4)
+    sec_sub_s     = S("SecSub", fontSize=8.5, leading=13, textColor=KPMG_GREY,
+                      fontName="Helvetica", spaceAfter=8, alignment=TA_JUSTIFY)
+    body_s        = S("Body", fontSize=8.5, leading=13, textColor=colors.HexColor("#1F2937"),
+                      fontName="Helvetica", spaceAfter=4)
+    body_bold_s   = S("BodyBold", fontSize=8.5, leading=13, textColor=colors.HexColor("#111827"),
+                      fontName="Helvetica-Bold")
+    small_s       = S("Small", fontSize=7, leading=10, textColor=KPMG_GREY,
+                      fontName="Helvetica")
+    label_s       = S("Label", fontSize=7.5, leading=10, textColor=KPMG_GREY,
+                      fontName="Helvetica-Bold", spaceAfter=2)
+    finding_txt_s = S("FindTxt", fontSize=8, leading=12, textColor=colors.HexColor("#374151"),
+                      fontName="Helvetica", spaceAfter=3, alignment=TA_JUSTIFY)
+    rec_txt_s     = S("RecTxt", fontSize=8, leading=12, textColor=colors.HexColor("#1D4ED8"),
+                      fontName="Helvetica-Oblique", spaceAfter=0)
+    def_txt_s     = S("DefTxt", fontSize=7.5, leading=11.5, textColor=colors.HexColor("#374151"),
+                      fontName="Helvetica", spaceAfter=2, alignment=TA_JUSTIFY)
+    calc_txt_s    = S("CalcTxt", fontSize=6.5, leading=10, textColor=KPMG_GREY,
+                      fontName="Helvetica-Oblique", spaceAfter=4)
 
     elements = []
 
@@ -521,90 +1276,101 @@ def build_pdf(report: dict) -> BytesIO:
     # COVER PAGE
     # ══════════════════════════════════════════════════════════════════════════
     def build_cover():
-        cover_elems = []
+        cover = []
 
-        # Dark background block (simulated via table)
-        cover_header_data = [[
-            Paragraph("Auditable AI\u2122", S("ch1", fontSize=32, leading=38,
+        # ── Dark hero banner ────────────────────────────────────────────────
+        hero_data = [[
+            Paragraph("Auditable AI\u2122", S("hero_brand", fontSize=28, leading=32,
                 textColor=KPMG_TEAL, fontName="Helvetica-Bold")),
         ]]
-        cover_header = Table(cover_header_data,
-                             colWidths=[W - 2 * margin],
-                             rowHeights=[45])
-        cover_header.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), KPMG_BLUE),
-            ("LEFTPADDING",  (0, 0), (-1, -1), 16),
-            ("TOPPADDING",   (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 10),
+        hero = Table(hero_data, colWidths=[usable_w])
+        hero.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, -1), KPMG_BLUE),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 16),
+            ("TOPPADDING",    (0, 0), (-1, -1), 14),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
         ]))
-        cover_elems.append(cover_header)
-        cover_elems.append(Spacer(1, 4 * mm))
+        cover.append(hero)
+        cover.append(Spacer(1, 1 * mm))
 
-        # Report title block
-        title_block_data = [[
-            Paragraph("Governance Audit Report", S("gt", fontSize=22, leading=28,
-                textColor=colors.HexColor("#111827"), fontName="Helvetica-Bold")),
-        ], [
-            Paragraph("KPMG Trusted AI Framework — Comprehensive Assessment",
-                       S("gsub", fontSize=11, leading=16, textColor=KPMG_BLUE,
-                         fontName="Helvetica")),
-        ]]
-        title_block = Table(title_block_data, colWidths=[W - 2 * margin])
-        title_block.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, -1), KPMG_LIGHT_GREY),
-            ("LEFTPADDING",  (0, 0), (-1, -1), 16),
-            ("TOPPADDING",   (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 10),
-        ]))
-        cover_elems.append(title_block)
-        cover_elems.append(Spacer(1, 8 * mm))
+        # Teal strip
+        cover.append(HRFlowable(width="100%", thickness=3, color=KPMG_TEAL, spaceAfter=0))
 
-        # AI info table
-        info_data = [
-            [Paragraph("AI System",    label_style), Paragraph(ai_name,    body_bold)],
-            [Paragraph("Model Type",   label_style), Paragraph(model_type,  body)],
-            [Paragraph("Evaluated",    label_style), Paragraph(evaluated,   body)],
-            [Paragraph("Report ID",    label_style), Paragraph(f'<font size="8" color="#9CA3AF">{report_id}</font>', body)],
+        # ── Report title block ───────────────────────────────────────────────
+        title_data = [
+            [Paragraph("Governance Audit Report",
+                        S("gt", fontSize=20, leading=26, textColor=colors.HexColor("#111827"),
+                          fontName="Helvetica-Bold"))],
+            [Paragraph("KPMG Trusted AI Framework — Comprehensive Assessment",
+                        S("gs", fontSize=10, leading=14, textColor=KPMG_BLUE, fontName="Helvetica"))],
         ]
-        info_tbl = Table(info_data, colWidths=[40 * mm, W - 2 * margin - 40 * mm])
+        title_tbl = Table(title_data, colWidths=[usable_w])
+        title_tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, -1), KPMG_LIGHT_GREY),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 16),
+            ("TOPPADDING",    (0, 0), (-1, -1), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ]))
+        cover.append(title_tbl)
+        cover.append(Spacer(1, 6 * mm))
+
+        # ── Metadata grid ────────────────────────────────────────────────────
+        info_rows = [
+            [Paragraph("AI System",  label_s), Paragraph(f"<b>{ai_name}</b>",       body_bold_s)],
+            [Paragraph("Model Type", label_s), Paragraph(model_type,               body_s)],
+            [Paragraph("Evaluated",  label_s), Paragraph(evaluated_fmt,             body_s)],
+            [Paragraph("Report ID",  label_s), Paragraph(
+                f'<font color="#6B7280" size="7">{report_id}</font>', body_s)],
+        ]
+        info_tbl = Table(info_rows, colWidths=[36 * mm, usable_w - 36 * mm])
         info_tbl.setStyle(TableStyle([
-            ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
-            ("LEFTPADDING",  (0, 0), (-1, -1), 0),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-            ("TOPPADDING",   (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 4),
-            ("LINEBELOW",    (0, 0), (-1, -2), 0.5, colors.HexColor("#E5E7EB")),
+            ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
+            ("TOPPADDING",    (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LINEBELOW",     (0, 0), (-1, -2), 0.5, KPMG_MID_GREY),
         ]))
-        cover_elems.append(info_tbl)
-        cover_elems.append(Spacer(1, 10 * mm))
+        cover.append(info_tbl)
+        cover.append(Spacer(1, 8 * mm))
 
-        # Overall score hero
+        # ── Score hero: full-width KPMG blue banner with score + risk ─────
         rc = risk_color(risk_level)
-        score_bg = colors.HexColor("#F9FAFB")
-        score_data = [[
-            Paragraph(f'<font size="42" color="{rc.hexval() if hasattr(rc,"hexval") else "#00C896"}">'
-                      f'<b>{overall_score}</b></font>',
-                      S("sc", fontSize=42, leading=50, textColor=rc,
-                        fontName="Helvetica-Bold", alignment=TA_CENTER)),
-            Paragraph(f"<b>{risk_level} Risk</b>",
-                      S("rl", fontSize=13, leading=18, textColor=rc,
-                        fontName="Helvetica-Bold", alignment=TA_CENTER)),
-        ]]
-        score_tbl = Table([[
-            Table(score_data, colWidths=[35 * mm, 35 * mm])
-        ]], colWidths=[W - 2 * margin])
-        score_tbl.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, -1), score_bg),
-            ("BOX",          (0, 0), (-1, -1), 1.5, rc),
-            ("LEFTPADDING",  (0, 0), (-1, -1), 20),
-            ("TOPPADDING",   (0, 0), (-1, -1), 14),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 14),
-            ("ALIGN",        (0, 0), (-1, -1), "CENTER"),
-        ]))
-        cover_elems.append(score_tbl)
-        cover_elems.append(Spacer(1, 8 * mm))
+        rc_bg = colors.HexColor("#FEF2F2") if rc == KPMG_RED else colors.HexColor("#FFFBEB") if rc == KPMG_AMBER else colors.HexColor("#F0FDF4")
 
-        # Stats strip
+        score_data = [[
+            Paragraph(
+                f'<font color="#FFFFFF" size="36"><b>{overall_score}</b></font>',
+                S("sc_num", fontSize=36, leading=42, fontName="Helvetica-Bold",
+                  textColor=KPMG_WHITE, alignment=TA_CENTER)),
+            Table([[
+                Paragraph("<font color=\"#9DBFE0\" size=\"9\">Overall Score / 100</font>",
+                    S("sc_lbl", fontSize=9, leading=12, textColor=colors.HexColor("#9DBFE0"),
+                      fontName="Helvetica", alignment=TA_LEFT)),
+            ],[
+                Paragraph(f'<b>{risk_level} Risk</b>',
+                    S("sc_risk", fontSize=13, leading=17, textColor=rc,
+                      fontName="Helvetica-Bold", alignment=TA_LEFT)),
+            ],[
+                Paragraph(f'KPMG Trusted AI Framework Assessment',
+                    S("sc_fw", fontSize=7.5, leading=11, textColor=colors.HexColor("#9DBFE0"),
+                      fontName="Helvetica", alignment=TA_LEFT)),
+            ]], colWidths=[usable_w - 50 * mm]),
+        ]]
+        score_banner = Table(score_data, colWidths=[50 * mm, usable_w - 50 * mm])
+        score_banner.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, -1), KPMG_BLUE),
+            ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 16),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 16),
+            ("TOPPADDING",    (0, 0), (-1, -1), 12),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+            ("LINEBELOW",     (0, 0), (-1, -1), 3, colors.HexColor("#0091DA")),
+        ]))
+        cover.append(score_banner)
+        cover.append(Spacer(1, 6 * mm))
+
+        # ── Stats strip ──────────────────────────────────────────────────────
         stats = [
             ("Logs Evaluated", str(logs_evaluated)),
             ("Data Quality",   f"{dq_score}%"),
@@ -612,122 +1378,182 @@ def build_pdf(report: dict) -> BytesIO:
             ("Principles",     str(len(principles))),
             ("Findings",       str(len(findings))),
         ]
-        stat_data = [[Paragraph(f"<b>{v}</b>", S(f"sv{si}", fontSize=16, leading=20,
+        stat_vals = [Paragraph(f"<b>{v}</b>", S(f"sv{i}", fontSize=15, leading=18,
                         textColor=KPMG_BLUE, fontName="Helvetica-Bold", alignment=TA_CENTER))
-                      for si, (_, v) in enumerate(stats)],
-                     [Paragraph(k, S(f"sk{si}", fontSize=7.5, leading=10, textColor=KPMG_GREY,
+                     for i, (_, v) in enumerate(stats)]
+        stat_keys = [Paragraph(k, S(f"sk{i}", fontSize=7, leading=10, textColor=KPMG_GREY,
                         fontName="Helvetica", alignment=TA_CENTER))
-                      for si, (k, _) in enumerate(stats)]]
-        col_w = (W - 2 * margin) / len(stats)
-        stat_tbl = Table(stat_data, colWidths=[col_w] * len(stats))
+                     for i, (k, _) in enumerate(stats)]
+        col_w = usable_w / len(stats)
+        stat_tbl = Table([stat_vals, stat_keys], colWidths=[col_w] * len(stats))
         stat_tbl.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, -1), KPMG_LIGHT_GREY),
-            ("TOPPADDING",   (0, 0), (-1, -1), 8),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 8),
-            ("LINEAFTER",    (0, 0), (-2, -1), 0.5, colors.HexColor("#D1D5DB")),
+            ("BACKGROUND",    (0, 0), (-1, -1), colors.HexColor("#E8EEF7")),
+            ("TOPPADDING",    (0, 0), (-1, -1), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+            ("LINEAFTER",     (0, 0), (-2, -1), 0.5, colors.HexColor("#B8C9E4")),
+            ("LINEBEFORE",    (0, 0), (0, -1),  3, KPMG_BLUE),
         ]))
-        cover_elems.append(stat_tbl)
-        cover_elems.append(Spacer(1, 10 * mm))
+        cover.append(stat_tbl)
+        cover.append(Spacer(1, 8 * mm))
 
-        # Disclaimer
-        cover_elems.append(Paragraph(
+        # ── Mini radar chart preview ─────────────────────────────────────────
+        if principles:
+            radar_d = _build_radar_chart(principles, 180, 160)
+            bar_d   = _build_bar_chart(principles, usable_w - 195, 160)
+
+            chart_row = Table([[
+                _drawing_to_image(radar_d, 180, 160),
+                _drawing_to_image(bar_d, usable_w - 195, 160),
+            ]], colWidths=[185, usable_w - 185])
+            chart_row.setStyle(TableStyle([
+                ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING",  (0, 0), (-1, -1), 0),
+                ("TOPPADDING",   (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING",(0, 0), (-1, -1), 0),
+            ]))
+            cover.append(Paragraph("<b>Principles at a Glance</b>",
+                                   S("gl", fontSize=8, leading=10, textColor=KPMG_GREY,
+                                     fontName="Helvetica-Bold")))
+            cover.append(Spacer(1, 2))
+            cover.append(chart_row)
+            cover.append(Spacer(1, 6 * mm))
+
+        # ── Disclaimer ───────────────────────────────────────────────────────
+        cover.append(HRFlowable(width="100%", thickness=0.5, color=KPMG_MID_GREY, spaceAfter=4))
+        cover.append(Paragraph(
             "This report was generated by Auditable AI\u2122 using the KPMG Trusted AI Framework. "
             "All scores are derived from structural analysis of the provided dataset and should be "
             "reviewed in conjunction with qualitative governance assessments. This document is "
             "confidential and intended solely for authorised stakeholders.",
-            small))
+            small_s))
 
-        return cover_elems
+        return cover
 
     elements.extend(build_cover())
     elements.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 1 — FRAMEWORK COMPLIANCE
+    # SECTION 1 — REGULATORY COMPLIANCE
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("1. Regulatory & Framework Compliance", sec_title))
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=KPMG_TEAL, spaceAfter=6))
+    elements.append(Paragraph("1. Regulatory &amp; Framework Compliance", sec_title_s))
+    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
         "This AI system was assessed against four major international AI governance frameworks. "
-        "Compliance status is derived from the overall Trusted AI score and individual principle scores.",
-        sec_sub))
+        "Compliance status is derived from the overall Trusted AI score and individual principle "
+        "scores. Each framework sets specific thresholds that must be met for full certification readiness.",
+        sec_sub_s))
 
     FW_META = {
-        "EU_AI_Act":   ("EU AI Act",          "European Union Artificial Intelligence Regulation (2024)"),
-        "ISO_42001":   ("ISO/IEC 42001:2023",  "International AI Management System Standard"),
-        "NIST_AI_RMF": ("NIST AI RMF",         "US National Institute of Standards AI Risk Management Framework"),
-        "KPMG_TAF":    ("KPMG Trusted AI",     "KPMG Trusted AI Framework — 10 Principle Assessment"),
+        "EU_AI_Act":   ("EU AI Act",         "European Union Artificial Intelligence Regulation (2024)"),
+        "ISO_42001":   ("ISO/IEC 42001:2023", "International AI Management System Standard"),
+        "NIST_AI_RMF": ("NIST AI RMF",        "US National Institute of Standards AI Risk Management Framework"),
+        "KPMG_TAF":    ("KPMG Trusted AI",    "KPMG Trusted AI Framework — 10 Principle Assessment"),
     }
-    fw_data = [["Framework", "Standard", "Status", "Threshold"]]
     thresholds = {
-        "EU_AI_Act":   "Score >= 75",
-        "ISO_42001":   "Score >= 80",
-        "NIST_AI_RMF": "Score >= 70",
+        "EU_AI_Act":   "Score \u2265 75",
+        "ISO_42001":   "Score \u2265 80",
+        "NIST_AI_RMF": "Score \u2265 70",
         "KPMG_TAF":    "All audits",
     }
+
+    fw_data = [[
+        Paragraph("Framework",  S("fwh0", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Standard",   S("fwh1", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Status",     S("fwh2", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Threshold",  S("fwh3", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+    ]]
     for key, status in framework.items():
         meta = FW_META.get(key, (key, ""))
-        sc = colors.HexColor("#00C896") if status in ("Compliant", "Certified Ready", "Aligned", "Assessed") else colors.HexColor("#FFB020")
+        is_good = status in ("Compliant", "Certified Ready", "Aligned", "Assessed")
+        sc = KPMG_GREEN if is_good else KPMG_AMBER
         fw_data.append([
-            Paragraph(f"<b>{meta[0]}</b>", body_bold),
-            Paragraph(meta[1], small),
-            Paragraph(f'<font color="{sc.hexval() if hasattr(sc,"hexval") else "#00C896"}"><b>{status}</b></font>', body_bold),
-            Paragraph(thresholds.get(key, "—"), small),
+            Paragraph(f"<b>{meta[0]}</b>", body_bold_s),
+            Paragraph(meta[1], small_s),
+            Paragraph(f"<font color=\"{'#059669' if is_good else '#D97706'}\"><b>{status}</b></font>", body_bold_s),
+            Paragraph(thresholds.get(key, "\u2014"), small_s),
         ])
 
-    fw_tbl = Table(fw_data, colWidths=[35 * mm, 65 * mm, 32 * mm, 30 * mm])
+    fw_tbl = Table(fw_data, colWidths=[36 * mm, 72 * mm, 32 * mm, 28 * mm])
     fw_tbl.setStyle(TableStyle([
-        ("BACKGROUND",   (0, 0), (-1, 0),  KPMG_BLUE),
-        ("TEXTCOLOR",    (0, 0), (-1, 0),  KPMG_WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0),  "Helvetica-Bold"),
-        ("FONTSIZE",     (0, 0), (-1, 0),  9),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
-        ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
-        ("TOPPADDING",   (0, 0), (-1, -1), 7),
-        ("BOTTOMPADDING",(0, 0), (-1, -1), 7),
-        ("LEFTPADDING",  (0, 0), (-1, -1), 8),
-        ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+        ("BACKGROUND",    (0, 0), (-1, 0),  KPMG_BLUE),
+        ("TEXTCOLOR",     (0, 0), (-1, 0),  KPMG_WHITE),
+        ("ROWBACKGROUNDS",(0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
+        ("GRID",          (0, 0), (-1, -1), 0.5, KPMG_MID_GREY),
+        ("TOPPADDING",    (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
     ]))
     elements.append(fw_tbl)
     elements.append(Spacer(1, 6 * mm))
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 2 — PRINCIPLES SUMMARY TABLE
+    # SECTION 2 — PRINCIPLES OVERVIEW + CHARTS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("2. KPMG Trusted AI — 10 Principles Overview", sec_title))
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=KPMG_TEAL, spaceAfter=6))
+    elements.append(Paragraph("2. KPMG Trusted AI — 10 Principles Overview", sec_title_s))
+    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
         "Each of the 10 KPMG Trusted AI principles was evaluated across multiple sub-parameters "
-        "derived from the structure and content of the ingested dataset.",
-        sec_sub))
+        "derived from the structure and content of the ingested dataset. The radar chart below "
+        "provides an executive overview; the bar chart shows each principle's individual score "
+        "relative to compliance thresholds (green \u2265 75, amber 55\u201374, red < 55).",
+        sec_sub_s))
+
+    # Full-width charts
+    if principles:
+        radar_large = _build_radar_chart(principles, 220, 200)
+        bar_large   = _build_bar_chart(principles, usable_w - 230, 200)
+
+        chart_row2 = Table([[
+            _drawing_to_image(radar_large, 220, 200),
+            _drawing_to_image(bar_large, usable_w - 230, 200),
+        ]], colWidths=[225, usable_w - 225])
+        chart_row2.setStyle(TableStyle([
+            ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING",  (0, 0), (-1, -1), 0),
+            ("TOPPADDING",   (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING",(0, 0), (-1, -1), 0),
+        ]))
+        elements.append(chart_row2)
+        elements.append(Spacer(1, 5 * mm))
 
     # Summary table
-    p_summary_data = [["#", "Principle", "Score", "Status", "Sub-Parameters Evaluated"]]
+    p_summary_data = [[
+        Paragraph("#",                      S("psh0", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Principle",              S("psh1", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Score",                  S("psh2", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Status",                 S("psh3", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Sub-Parameters Evaluated", S("psh4", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+    ]]
     for i, (pname, pdata) in enumerate(principles.items(), 1):
         sc = pdata.get("score", 0)
         params = pdata.get("parameters", {})
         sc_color = score_to_color(sc)
         label = score_to_label(sc)
+        p_hex = PRINCIPLE_COLORS.get(pname, "#00C896")
+        minibar = _build_subparam_minibar(sc, 28, 8)
         p_summary_data.append([
-            Paragraph(str(i), small),
-            Paragraph(f"<b>{pname}</b>", body_bold),
-            Paragraph(f'<font color="{sc_color.hexval() if hasattr(sc_color,"hexval") else "#00C896"}"><b>{sc}/100</b></font>', body_bold),
-            Paragraph(label, small),
-            Paragraph(", ".join(params.keys()), small),
+            Paragraph(str(i), small_s),
+            Paragraph(f'<b>{pname}</b>', body_bold_s),
+            Table([[
+                _drawing_to_image(minibar, 28, 8),
+                Paragraph(f'<font color="{"#059669" if sc>=75 else "#D97706" if sc>=55 else "#DC2626"}"><b> {sc}/100</b></font>',
+                          S(f"psscore{i}", fontSize=7.5, fontName="Helvetica-Bold")),
+            ]], colWidths=[30, 22]),
+            Paragraph(label, small_s),
+            Paragraph(", ".join(params.keys()), small_s),
         ])
 
-    p_tbl = Table(p_summary_data, colWidths=[8 * mm, 38 * mm, 20 * mm, 24 * mm, 72 * mm])
+    p_tbl = Table(p_summary_data, colWidths=[7 * mm, 36 * mm, 55 * mm, 22 * mm, 48 * mm])
     p_tbl.setStyle(TableStyle([
-        ("BACKGROUND",   (0, 0), (-1, 0),  KPMG_BLUE),
-        ("TEXTCOLOR",    (0, 0), (-1, 0),  KPMG_WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0),  "Helvetica-Bold"),
-        ("FONTSIZE",     (0, 0), (-1, 0),  8),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
-        ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
-        ("TOPPADDING",   (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING",(0, 0), (-1, -1), 5),
-        ("LEFTPADDING",  (0, 0), (-1, -1), 6),
-        ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+        ("BACKGROUND",    (0, 0), (-1, 0),  KPMG_BLUE),
+        ("TEXTCOLOR",     (0, 0), (-1, 0),  KPMG_WHITE),
+        ("ROWBACKGROUNDS",(0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
+        ("GRID",          (0, 0), (-1, -1), 0.4, KPMG_MID_GREY),
+        ("TOPPADDING",    (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 5),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
     ]))
     elements.append(p_tbl)
     elements.append(PageBreak())
@@ -735,13 +1561,14 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 3 — DETAILED PRINCIPLE BREAKDOWN
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("3. Detailed Principle Assessment", sec_title))
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=KPMG_TEAL, spaceAfter=6))
+    elements.append(Paragraph("3. Detailed Principle Assessment", sec_title_s))
+    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
-        "Each principle is evaluated across five sub-parameters. Scores reflect structural "
-        "signals present in the dataset such as field presence, completeness, volume, and diversity. "
-        "Each sub-parameter below now includes how it was calculated and what the score means.",
-        sec_sub))
+        "Each principle is evaluated across multiple sub-parameters reflecting structural signals "
+        "in the dataset — including field presence, completeness, volume, and semantic diversity. "
+        "Each sub-parameter includes a full definition explaining what it measures and why it matters, "
+        "followed by how its score was calculated from the uploaded dataset.",
+        sec_sub_s))
 
     for i, (pname, pdata) in enumerate(principles.items(), 1):
         sc = pdata.get("score", 0)
@@ -752,73 +1579,126 @@ def build_pdf(report: dict) -> BytesIO:
         label = score_to_label(sc)
         desc = PRINCIPLE_DESCRIPTIONS.get(pname, "")
 
-        # Principle header
-        hdr_data = [[
-            Paragraph(f'<b>{i}. {pname}</b>',
-                      S(f"ph{i}", fontSize=12, leading=16, textColor=KPMG_WHITE,
-                        fontName="Helvetica-Bold")),
-            Paragraph(f'<b>{sc}/100  {label}</b>',
-                      S(f"ps{i}", fontSize=11, leading=14, textColor=KPMG_WHITE,
-                        fontName="Helvetica-Bold", alignment=TA_RIGHT)),
-        ]]
-        hdr_tbl = Table(hdr_data, colWidths=[W - 2 * margin - 40 * mm, 40 * mm])
-        hdr_tbl.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, -1), p_color),
-            ("TOPPADDING",   (0, 0), (-1, -1), 8),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 8),
-            ("LEFTPADDING",  (0, 0), (-1, -1), 10),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-            ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+        # Principle donut (small)
+        p_donut = _build_compliance_donut(sc, 60, 60)
+        p_donut_img = _drawing_to_image(p_donut, 60, 60)
+
+        # Principle header — KPMG blue with score badge
+        sc_color_hex = "#059669" if sc >= 75 else "#D97706" if sc >= 55 else "#DC2626"
+        hdr_left = Paragraph(
+            f'<b>{i}. {pname}</b>',
+            S(f"ph{i}", fontSize=12, leading=16, textColor=KPMG_WHITE, fontName="Helvetica-Bold"))
+        hdr_mid = Paragraph(
+            f'<font color="#9DBFE0">{label}</font>',
+            S(f"ps{i}", fontSize=8, leading=12, textColor=colors.HexColor("#9DBFE0"),
+              fontName="Helvetica", alignment=TA_RIGHT))
+        hdr_score = Paragraph(
+            f'<b>{sc}</b>',
+            S(f"psc{i}", fontSize=20, leading=24, textColor=colors.HexColor(sc_color_hex),
+              fontName="Helvetica-Bold", alignment=TA_CENTER))
+        score_sub = Paragraph(
+            "/100",
+            S(f"psub{i}", fontSize=7, leading=9, textColor=colors.HexColor("#9DBFE0"),
+              fontName="Helvetica", alignment=TA_CENTER))
+
+        score_cell = Table([[hdr_score],[score_sub]], colWidths=[22*mm])
+        score_cell.setStyle(TableStyle([
+            ("TOPPADDING",    (0, 0), (-1, -1), 2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
         ]))
 
-        # Description
-        desc_para = Paragraph(desc, S(f"pd{i}", fontSize=8.5, leading=13,
-            textColor=colors.HexColor("#374151"), fontName="Helvetica",
-            leftIndent=4, rightIndent=4, spaceBefore=4, spaceAfter=8))
+        hdr_tbl = Table([[hdr_left, hdr_mid, score_cell]],
+                        colWidths=[usable_w - 35*mm - 22*mm, 25*mm, 22*mm])
+        hdr_tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, -1), KPMG_BLUE),
+            ("TOPPADDING",    (0, 0), (-1, -1), 9),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 8),
+            ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+            ("LINEBELOW",     (0, 0), (-1, -1), 2.5, colors.HexColor("#0091DA")),
+        ]))
 
-        # Sub-parameters table
-        sub_data = [["Sub-Parameter", "Score", "Status"]]
+        hdr_with_donut = hdr_tbl
+
+        # Description
+        desc_para = Paragraph(desc, S(f"pd{i}", fontSize=8, leading=12.5,
+            textColor=colors.HexColor("#374151"), fontName="Helvetica",
+            leftIndent=4, rightIndent=4, spaceBefore=5, spaceAfter=6,
+            alignment=TA_JUSTIFY))
+
+        # Sub-parameters table with definitions + mini progress bars
+        sub_rows = [[
+            Paragraph("Sub-Parameter", S(f"sph0_{i}", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+            Paragraph("Score &amp; Progress", S(f"sph1_{i}", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+            Paragraph("Status", S(f"sph2_{i}", fontSize=7.5, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        ]]
+
         for param, val in params.items():
             v = int(val)
             vc = score_to_color(v)
             vl = score_to_label(v)
-            sub_data.append([
-                Paragraph(param, body),
-                Paragraph(f'<font color="{vc.hexval() if hasattr(vc,"hexval") else "#00C896"}"><b>{v}</b></font>', body_bold),
-                Paragraph(vl, small),
+            vhex = "#059669" if v >= 75 else "#D97706" if v >= 55 else "#DC2626"
+            bar_d = _build_subparam_minibar(v, 55, 8)
+            bar_img = _drawing_to_image(bar_d, 55, 8)
+
+            sub_rows.append([
+                Paragraph(param, body_s),
+                Table([[
+                    bar_img,
+                    Paragraph(f'<font color="{vhex}"><b> {v}</b></font>',
+                              S(f"spv_{i}_{param}", fontSize=8, fontName="Helvetica-Bold")),
+                ]], colWidths=[58, 22]),
+                Paragraph(vl, small_s),
             ])
 
-        sub_tbl = Table(sub_data, colWidths=[95 * mm, 20 * mm, 30 * mm + (W - 2 * margin - 145 * mm)])
+        sub_tbl = Table(sub_rows, colWidths=[80 * mm, 83, usable_w - 80 * mm - 83])
         sub_tbl.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, 0),  colors.HexColor("#F3F4F6")),
-            ("FONTNAME",     (0, 0), (-1, 0),  "Helvetica-Bold"),
-            ("FONTSIZE",     (0, 0), (-1, 0),  8),
-            ("TEXTCOLOR",    (0, 0), (-1, 0),  KPMG_GREY),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [KPMG_WHITE, colors.HexColor("#FAFAFA")]),
-            ("GRID",         (0, 0), (-1, -1), 0.4, colors.HexColor("#E5E7EB")),
-            ("TOPPADDING",   (0, 0), (-1, -1), 5),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 5),
-            ("LEFTPADDING",  (0, 0), (-1, -1), 8),
-            ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+            ("BACKGROUND",    (0, 0), (-1, 0),  colors.HexColor("#F3F4F6")),
+            ("FONTNAME",      (0, 0), (-1, 0),  "Helvetica-Bold"),
+            ("FONTSIZE",      (0, 0), (-1, 0),  7.5),
+            ("BACKGROUND",    (0, 0), (-1, 0),  KPMG_BLUE),
+            ("ROWBACKGROUNDS",(0, 1), (-1, -1), [KPMG_WHITE, colors.HexColor("#FAFAFA")]),
+            ("GRID",          (0, 0), (-1, -1), 0.4, KPMG_MID_GREY),
+            ("TOPPADDING",    (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 7),
+            ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
         ]))
 
+        # Sub-parameter definitions drill-down
+        drill_items = [Paragraph("<b>Sub-Parameter Definitions &amp; Methodology</b>",
+                                  S(f"dh_{i}", fontSize=8, fontName="Helvetica-Bold",
+                                    textColor=KPMG_BLUE, spaceBefore=6, spaceAfter=3))]
+
+        for param, val in params.items():
+            expl = _parameter_explanation(param, report)
+            # expl is now always a (definition, calculation) tuple
+            if isinstance(expl, tuple):
+                rich_def, calc_note = expl
+            else:
+                rich_def, calc_note = "", str(expl)
+            # Fallback: if no rich_def from new function, try legacy dict
+            if not rich_def:
+                rich_def = SUB_PARAMETER_DEFINITIONS.get(param, "")
+            drill_items.append(Paragraph(
+                f"<b>{param}:</b>",
+                S(f"dn_{i}_{param}", fontSize=7.5, fontName="Helvetica-Bold",
+                  textColor=colors.HexColor("#111827"), spaceBefore=3, spaceAfter=1)))
+            if rich_def:
+                drill_items.append(Paragraph(rich_def, def_txt_s))
+            drill_items.append(Paragraph(
+                f"<i>Calculation: {calc_note}</i>", calc_txt_s))
+
         block = KeepTogether([
-            hdr_tbl,
+            hdr_with_donut,
             Spacer(1, 2),
             desc_para,
             sub_tbl,
-            Spacer(1, 4),
-            Paragraph("<b>Sub-parameter drill-down</b>", body_bold),
-            *[
-                Paragraph(
-                    f"<b>{param}:</b> {detail} <font color='#6B7280'>Calculated as {calc}.</font>",
-                    small,
-                )
-                for param, (calc, detail) in [
-                    (param, _parameter_explanation(param, report))
-                    for param in params.keys()
-                ]
-            ],
+            Spacer(1, 3),
+            *drill_items,
             Spacer(1, 6 * mm),
         ])
         elements.append(block)
@@ -828,11 +1708,13 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 4 — DATASET DIAGNOSTICS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("4. Dataset Diagnostics", sec_title))
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=KPMG_TEAL, spaceAfter=6))
+    elements.append(Paragraph("4. Dataset Diagnostics", sec_title_s))
+    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
-        "Structural analysis of the ingested dataset used as the basis for this evaluation.",
-        sec_sub))
+        "Structural analysis of the ingested dataset underpins every score in this report. "
+        "The metrics below reflect data completeness, schema consistency, and volume adequacy. "
+        "Organisations are advised to address any gaps before the next audit cycle.",
+        sec_sub_s))
 
     missing  = diagnostics.get("missing_ratio", 0)
     dupes    = diagnostics.get("duplicates", 0)
@@ -842,60 +1724,94 @@ def build_pdf(report: dict) -> BytesIO:
     num_c    = diagnostics.get("numeric_columns", 0)
     col_names = diagnostics.get("column_names", [])
 
-    diag_data = [
-        ["Metric", "Value", "Status"],
-        ["Total Records",       str(logs_evaluated),                  "Ingested"],
-        ["Missing Data Ratio",  f"{missing * 100:.1f}%",             "Good" if missing < 0.05 else "Moderate" if missing < 0.15 else "High"],
-        ["Duplicate Records",   str(dupes),                           "None detected" if dupes == 0 else "Found"],
-        ["Schema Confidence",   f"{schema_c * 100:.1f}%",            "High" if schema_c > 0.85 else "Moderate"],
-        ["Total Columns",       str(total_c),                         "—"],
-        ["Text Columns",        str(text_c),                          "—"],
-        ["Numeric Columns",     str(num_c),                           "—"],
-        ["Data Quality Score",  f"{dq_score}%",                       "Good" if dq_score >= 80 else "Moderate" if dq_score >= 60 else "Low"],
+    def diag_status(val, good_thresh, warn_thresh, invert=False):
+        if invert:
+            return ("Good", KPMG_GREEN) if val <= good_thresh else ("Moderate", KPMG_AMBER) if val <= warn_thresh else ("High", KPMG_RED)
+        return ("Good", KPMG_GREEN) if val >= good_thresh else ("Moderate", KPMG_AMBER) if val >= warn_thresh else ("Low", KPMG_RED)
+
+    diag_data = [[
+        Paragraph("Metric",         S("dgh0", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Value",          S("dgh1", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Status",         S("dgh2", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Interpretation", S("dgh3", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+    ]]
+
+    diag_rows = [
+        ("Total Records",     str(logs_evaluated),          ("Ingested", KPMG_BLUE),
+         "Number of log entries processed by the audit pipeline."),
+        ("Missing Data Ratio", f"{missing * 100:.1f}%",
+         diag_status(missing, 0.05, 0.15, invert=True),
+         "Proportion of fields with no value. Below 5% is acceptable."),
+        ("Duplicate Records",  str(dupes),
+         ("None detected", KPMG_GREEN) if dupes == 0 else ("Duplicates found", KPMG_RED),
+         "Repeated records reduce data diversity and inflate volume metrics."),
+        ("Schema Confidence",  f"{schema_c * 100:.1f}%",
+         diag_status(schema_c, 0.85, 0.6),
+         "Reliability of automated schema inference. >85% indicates a well-structured dataset."),
+        ("Total Columns",      str(total_c),  ("\u2014", KPMG_GREY),
+         "Total number of data fields in the uploaded dataset."),
+        ("Text Columns",       str(text_c),   ("\u2014", KPMG_GREY),
+         "String/text fields used for NLP and semantic analysis."),
+        ("Numeric Columns",    str(num_c),    ("\u2014", KPMG_GREY),
+         "Quantitative fields used for statistical scoring."),
+        ("Data Quality Score", f"{dq_score}%",
+         diag_status(dq_score, 80, 60),
+         "Composite quality score combining completeness, schema confidence, and deduplication."),
     ]
 
-    diag_tbl = Table(diag_data, colWidths=[70 * mm, 50 * mm, 42 * mm])
+    for label, val, (status_txt, status_col), interp in diag_rows:
+        color_hex = status_col.hexval()[2:].upper()
+        html = f'<font color="#{color_hex}"><b>{status_txt}</b></font>'
+        diag_data.append([
+            Paragraph(label, body_s),
+            Paragraph(f"<b>{val}</b>", body_bold_s),
+            Paragraph(html, small_s),
+            Paragraph(interp, small_s),
+        ])
+
+    diag_tbl = Table(diag_data, colWidths=[46 * mm, 28 * mm, 28 * mm, usable_w - 102 * mm])
     diag_tbl.setStyle(TableStyle([
-        ("BACKGROUND",   (0, 0), (-1, 0),  KPMG_BLUE),
-        ("TEXTCOLOR",    (0, 0), (-1, 0),  KPMG_WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0),  "Helvetica-Bold"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
-        ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
-        ("TOPPADDING",   (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING",(0, 0), (-1, -1), 6),
-        ("LEFTPADDING",  (0, 0), (-1, -1), 8),
-        ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+        ("BACKGROUND",    (0, 0), (-1, 0),  KPMG_BLUE),
+        ("TEXTCOLOR",     (0, 0), (-1, 0),  KPMG_WHITE),
+        ("ROWBACKGROUNDS",(0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
+        ("GRID",          (0, 0), (-1, -1), 0.5, KPMG_MID_GREY),
+        ("TOPPADDING",    (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
     ]))
     elements.append(diag_tbl)
 
     if col_names:
         elements.append(Spacer(1, 5 * mm))
-        elements.append(Paragraph("<b>Detected Columns</b>", body_bold))
+        elements.append(Paragraph("<b>Detected Column Schema</b>", body_bold_s))
         elements.append(Spacer(1, 2))
-        col_text = "  |  ".join(col_names)
+        col_text = "  \u2502  ".join(col_names)
         elements.append(Paragraph(col_text,
-            S("cols", fontSize=8, leading=13, textColor=KPMG_GREY,
+            S("cols", fontSize=7.5, leading=12, textColor=KPMG_GREY,
               fontName="Helvetica", backColor=colors.HexColor("#F9FAFB"),
-              borderPadding=(4, 8, 4, 8))))
+              borderPadding=(5, 8, 5, 8))))
 
     elements.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 5 — AUDIT FINDINGS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("5. Audit Findings & Recommendations", sec_title))
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=KPMG_TEAL, spaceAfter=6))
+    elements.append(Paragraph("5. Audit Findings &amp; Recommendations", sec_title_s))
+    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
 
     if not findings:
         elements.append(Paragraph(
-            "No critical governance findings were identified. The dataset aligns well with "
-            "the KPMG Trusted AI Framework standards based on the structural analysis performed.",
-            body))
+            "No critical governance findings were identified during this evaluation. "
+            "The dataset aligns well with the KPMG Trusted AI Framework standards. "
+            "Continued monitoring is recommended.",
+            body_s))
     else:
         elements.append(Paragraph(
-            f"{len(findings)} governance gap(s) were identified during this evaluation. "
-            "Each finding includes a targeted recommendation for remediation.",
-            sec_sub))
+            f"{len(findings)} governance gap(s) were identified. Each finding is classified by "
+            "severity (High / Medium / Low) and includes a targeted, actionable recommendation "
+            "for remediation within the next audit cycle.",
+            sec_sub_s))
 
         for idx, f in enumerate(findings, 1):
             cat      = f.get("category", "N/A")
@@ -903,78 +1819,74 @@ def build_pdf(report: dict) -> BytesIO:
             issue    = f.get("issue", "")
             rec      = f.get("recommendation", "")
 
-            sev_bg = colors.HexColor("#FEF2F2") if severity == "High" else colors.HexColor("#FFFBEB")
-            sev_border = colors.HexColor("#ff4d4d") if severity == "High" else colors.HexColor("#FFB020")
+            sev_bg     = colors.HexColor("#FEF2F2") if severity == "High" else colors.HexColor("#E8EEF7") if severity == "Low" else colors.HexColor("#FFFBEB")
+            sev_border = KPMG_RED if severity == "High" else KPMG_BLUE if severity == "Low" else KPMG_AMBER
 
-            finding_data = [[
+            f_hdr = Table([[
                 Paragraph(f"<b>{idx}. {cat}</b>",
                           S(f"fcat{idx}", fontSize=10, leading=14, textColor=sev_border,
                             fontName="Helvetica-Bold")),
                 Paragraph(f"<b>{severity}</b>",
                           S(f"fsev{idx}", fontSize=9, leading=12, textColor=sev_border,
                             fontName="Helvetica-Bold", alignment=TA_RIGHT)),
-            ]]
-            f_hdr = Table(finding_data, colWidths=[W - 2 * margin - 25 * mm, 25 * mm])
+            ]], colWidths=[usable_w - 25 * mm, 25 * mm])
             f_hdr.setStyle(TableStyle([
-                ("BACKGROUND",   (0, 0), (-1, -1), sev_bg),
-                ("TOPPADDING",   (0, 0), (-1, -1), 7),
-                ("BOTTOMPADDING",(0, 0), (-1, -1), 7),
-                ("LEFTPADDING",  (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                ("LINEBELOW",    (0, 0), (-1, -1), 1.5, sev_border),
+                ("BACKGROUND",    (0, 0), (-1, -1), sev_bg),
+                ("TOPPADDING",    (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+                ("LINEBELOW",     (0, 0), (-1, -1), 1.5, sev_border),
             ]))
 
-            issue_para = Paragraph(issue, finding_txt)
-            rec_para   = Paragraph(f"Recommendation: {rec}", rec_txt)
-
-            detail_data = [[issue_para], [Spacer(1, 2)], [rec_para]]
-            f_body = Table(detail_data, colWidths=[W - 2 * margin])
+            f_body = Table([[Paragraph(issue, finding_txt_s)],
+                            [Spacer(1, 2)],
+                            [Paragraph(f"<b>Recommendation:</b> {rec}", rec_txt_s)]],
+                           colWidths=[usable_w])
             f_body.setStyle(TableStyle([
-                ("BACKGROUND",   (0, 0), (-1, -1), KPMG_WHITE),
-                ("TOPPADDING",   (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING",(0, 0), (-1, -1), 6),
-                ("LEFTPADDING",  (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                ("BOX",          (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
+                ("BACKGROUND",    (0, 0), (-1, -1), KPMG_WHITE),
+                ("TOPPADDING",    (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+                ("BOX",           (0, 0), (-1, -1), 0.5, KPMG_MID_GREY),
             ]))
 
             elements.append(KeepTogether([f_hdr, f_body, Spacer(1, 4 * mm)]))
 
-    # ──────────────────────────────────────────────────────────────────────────
     # Overall recommendation
     if recommendation:
         elements.append(Spacer(1, 4 * mm))
-        elements.append(Paragraph("Overall Recommendation", sec_title))
-        elements.append(HRFlowable(width="100%", thickness=1, color=KPMG_TEAL, spaceAfter=6))
-        rec_data = [[Paragraph(recommendation,
-            S("ov_rec", fontSize=9, leading=14, textColor=colors.HexColor("#1F2937"),
-              fontName="Helvetica"))]]
-        rec_tbl = Table(rec_data, colWidths=[W - 2 * margin])
+        elements.append(Paragraph("Overall Recommendation", sec_title_s))
+        elements.append(HRFlowable(width="100%", thickness=1, color=KPMG_AMBER, spaceAfter=5))
+        rec_tbl = Table([[Paragraph(recommendation,
+            S("ov_rec", fontSize=8.5, leading=13, textColor=colors.HexColor("#1F2937"),
+              fontName="Helvetica", alignment=TA_JUSTIFY))]],
+            colWidths=[usable_w])
         rec_tbl.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, -1), colors.HexColor("#FFFBEB")),
+            ("BACKGROUND",   (0, 0), (-1, -1), colors.HexColor("#E8EEF7")),
             ("LEFTPADDING",  (0, 0), (-1, -1), 14),
             ("TOPPADDING",   (0, 0), (-1, -1), 10),
             ("BOTTOMPADDING",(0, 0), (-1, -1), 10),
-            ("LINEBEFORE",   (0, 0), (0, -1), 4, colors.HexColor("#FFB020")),
-            ("BOX",          (0, 0), (-1, -1), 0.5, colors.HexColor("#FDE68A")),
+            ("LINEBEFORE",   (0, 0), (0, -1), 4, KPMG_BLUE),
+            ("BOX",          (0, 0), (-1, -1), 0.5, colors.HexColor("#B8C9E4")),
         ]))
         elements.append(rec_tbl)
 
     elements.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 6 — KPMG TRUSTED AI FRAMEWORK REFERENCE
+    # SECTION 6 — FRAMEWORK REFERENCE
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("6. KPMG Trusted AI Framework — Reference", sec_title))
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=KPMG_TEAL, spaceAfter=6))
+    elements.append(Paragraph("6. KPMG Trusted AI Framework — Reference Guide", sec_title_s))
+    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
         "The KPMG Trusted AI Framework defines 10 interconnected principles organised around "
         "three core values: Values-led, Trustworthy, and Human-centric. These principles cover "
-        "the full AI lifecycle from strategy and development to deployment and monitoring.",
-        sec_sub))
+        "the full AI lifecycle from strategy and development through to deployment and monitoring. "
+        "Each principle maps to specific regulatory articles across the EU AI Act, ISO 42001, and NIST AI RMF.",
+        sec_sub_s))
 
-    # Principles reference table
-    ref_data = [["Principle", "Core Value", "Key Focus Area"]]
     core_values = {
         "Fairness":       "Values-led",
         "Transparency":   "Trustworthy",
@@ -988,66 +1900,71 @@ def build_pdf(report: dict) -> BytesIO:
         "Sustainability":  "Values-led",
     }
     focus_areas = {
-        "Fairness":       "Equitable treatment across demographic groups",
-        "Transparency":   "Openness about capabilities, data, and decision logic",
-        "Explainability": "Interpretable outputs for all stakeholder levels",
-        "Accountability": "Clear governance, audit trails, and responsibility chains",
-        "Data Integrity": "Accurate, complete, and representative data pipelines",
-        "Reliability":    "Consistent performance under normal and adverse conditions",
-        "Security":       "Resilience against adversarial and cyber threats",
-        "Safety":         "Safeguard against harm to people, businesses, and property",
-        "Privacy":        "GDPR/CCPA compliance and data minimisation",
-        "Sustainability":  "Minimised environmental and compute footprint",
+        "Fairness":       "Equitable treatment across all demographic groups; bias monitoring and equal error rates",
+        "Transparency":   "Openness about model capabilities, training data, limitations, and decision logic",
+        "Explainability": "Interpretable outputs and confidence scores accessible to all stakeholder levels",
+        "Accountability": "Clear governance structures, comprehensive audit trails, and escalation procedures",
+        "Data Integrity": "Accurate, complete, and representative data pipelines with provenance tracking",
+        "Reliability":    "Consistent performance under normal and adverse conditions with SLA compliance",
+        "Security":       "Resilience against adversarial attacks, prompt injection, and cyber threats",
+        "Safety":         "Proactive safeguarding against harm to people, businesses, and property",
+        "Privacy":        "GDPR/CCPA compliance, data minimisation, and right-to-erasure by design",
+        "Sustainability":  "Minimised environmental and compute footprint; energy-efficient architectures",
     }
 
+    ref_data = [[
+        Paragraph("Principle",    S("rh0", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Core Value",   S("rh1", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Key Focus Area", S("rh2", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+    ]]
     for pname in principles.keys():
-        p_hex = PRINCIPLE_COLORS.get(pname, "#00C896")
         ref_data.append([
-            Paragraph(f'<font color="{p_hex}"><b>{pname}</b></font>', body_bold),
-            Paragraph(core_values.get(pname, "—"), small),
-            Paragraph(focus_areas.get(pname, "—"), small),
+            Paragraph(f'<b>{pname}</b>', body_bold_s),
+            Paragraph(core_values.get(pname, "\u2014"), small_s),
+            Paragraph(focus_areas.get(pname, "\u2014"), small_s),
         ])
 
-    ref_tbl = Table(ref_data, colWidths=[42 * mm, 32 * mm, 88 * mm])
+    ref_tbl = Table(ref_data, colWidths=[40 * mm, 30 * mm, usable_w - 70 * mm])
     ref_tbl.setStyle(TableStyle([
-        ("BACKGROUND",   (0, 0), (-1, 0),  KPMG_BLUE),
-        ("TEXTCOLOR",    (0, 0), (-1, 0),  KPMG_WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0),  "Helvetica-Bold"),
-        ("FONTSIZE",     (0, 0), (-1, 0),  9),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
-        ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
-        ("TOPPADDING",   (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING",(0, 0), (-1, -1), 6),
-        ("LEFTPADDING",  (0, 0), (-1, -1), 8),
-        ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+        ("BACKGROUND",    (0, 0), (-1, 0),  KPMG_BLUE),
+        ("TEXTCOLOR",     (0, 0), (-1, 0),  KPMG_WHITE),
+        ("ROWBACKGROUNDS",(0, 1), (-1, -1), [KPMG_WHITE, KPMG_LIGHT_GREY]),
+        ("GRID",          (0, 0), (-1, -1), 0.5, KPMG_MID_GREY),
+        ("TOPPADDING",    (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
     ]))
     elements.append(ref_tbl)
     elements.append(Spacer(1, 6 * mm))
 
     # Score legend
-    elements.append(Paragraph("<b>Score Interpretation</b>", body_bold))
-    elements.append(Spacer(1, 2))
-    legend_data = [
-        ["75 – 100", "Compliant",     "Meets KPMG Trusted AI standards. Continue monitoring."],
-        ["55 – 74",  "Conditional",   "Partial compliance. Remediation required within 90 days."],
-        ["0 – 54",   "Non-Compliant", "Critical gaps identified. Immediate remediation required."],
+    elements.append(Paragraph("<b>Score Interpretation Guide</b>", body_bold_s))
+    elements.append(Spacer(1, 3))
+    legend_rows = [
+        ("75 \u2013 100", "Compliant",     KPMG_GREEN, "Meets KPMG Trusted AI standards. Continue monitoring and document evidence for regulatory filing."),
+        ("55 \u2013 74",  "Conditional",   KPMG_AMBER, "Partial compliance detected. Targeted remediation required within 90 days of audit date."),
+        ("0 \u2013 54",   "Non-Compliant", KPMG_RED,   "Critical governance gaps identified. Immediate remediation required before production deployment."),
     ]
-    leg_tbl = Table([[
-        Paragraph(r[0], S(f"lg{i}s", fontSize=9, leading=12, fontName="Helvetica-Bold",
-            textColor=score_to_color(int(r[0].split("–")[0].strip())))),
-        Paragraph(f"<b>{r[1]}</b>", S(f"lg{i}l", fontSize=9, leading=12, fontName="Helvetica-Bold",
-            textColor=score_to_color(int(r[0].split("–")[0].strip())))),
-        Paragraph(r[2], small),
-    ] for i, r in enumerate(legend_data)],
-        colWidths=[22 * mm, 30 * mm, 110 * mm])
+    leg_data = []
+    for rng, lbl, col, desc in legend_rows:
+        leg_data.append([
+            Paragraph(f'<font color="#{col.hexval()[2:]}"><b>{rng}</b></font>',
+                      S(f"lg_{lbl}", fontSize=9, leading=12, fontName="Helvetica-Bold")),
+            Paragraph(f'<font color="#{col.hexval()[2:]}"><b>{lbl}</b></font>',
+                      S(f"lgl_{lbl}", fontSize=9, leading=12, fontName="Helvetica-Bold")),
+            Paragraph(desc, small_s),
+        ])
+    leg_tbl = Table(leg_data, colWidths=[24 * mm, 30 * mm, usable_w - 54 * mm])
     leg_tbl.setStyle(TableStyle([
-        ("TOPPADDING",   (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING",(0, 0), (-1, -1), 5),
-        ("LINEBELOW",    (0, 0), (-1, -2), 0.5, colors.HexColor("#E5E7EB")),
+        ("TOPPADDING",    (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LINEBELOW",     (0, 0), (-1, -2), 0.5, KPMG_MID_GREY),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 4),
     ]))
     elements.append(leg_tbl)
 
-    # ── Build PDF ────────────────────────────────────────────────────────────
+    # ── Build ─────────────────────────────────────────────────────────────
     doc.build(elements,
               onFirstPage=template.on_page,
               onLaterPages=template.on_page)
@@ -1056,19 +1973,29 @@ def build_pdf(report: dict) -> BytesIO:
     return buffer
 
 
-# ─── List reports for current user ────────────────────────────────────────────
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+def _friendly_report_id(ai_name: str, evaluated_at: str) -> str:
+    """Generate a human-readable report ID: <AIName>_<YYYYMMDD>_<HHMM>"""
+    try:
+        dt = datetime.datetime.fromisoformat(evaluated_at)
+        date_part = dt.strftime("%Y%m%d_%H%M")
+    except Exception:
+        date_part = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M")
+
+    safe_name = "".join(c if c.isalnum() else "_" for c in ai_name.strip()).strip("_")
+    safe_name = safe_name[:30]
+    return f"{safe_name}_{date_part}"
+
+
+# ─── List reports for current user ───────────────────────────────────────────
 @router.get("")
 def list_reports(current_user=Depends(get_current_user)):
-    """Return all evaluate-pipeline reports owned by the current user,
-    newest first, without the heavy trusted_ai_principles sub-parameter
-    detail (to keep payloads small for the list view)."""
     docs = list(
         reports_collection.find(
             {"owner_id": str(current_user["_id"])},
             {
                 "_id": 0,
                 "sample_records": 0,
-                # Omit large nested blobs from the list view
                 "trusted_ai_principles": 0,
                 "risk_analysis.risk_items": 0,
             },
@@ -1080,11 +2007,9 @@ def list_reports(current_user=Depends(get_current_user)):
     return {"reports": docs}
 
 
-# ─── Single report by report_id ───────────────────────────────────────────────
+# ─── Single report by report_id ──────────────────────────────────────────────
 @router.get("/{report_id}")
 def get_report(report_id: str, current_user=Depends(get_current_user)):
-    """Return a single full report by its report_id.
-    Ownership is enforced — users can only fetch their own reports."""
     doc = reports_collection.find_one(
         {"report_id": report_id, "owner_id": str(current_user["_id"])},
         {"_id": 0, "sample_records": 0},
@@ -1106,7 +2031,12 @@ async def download_report_pdf(report_id: str, current_user=Depends(get_current_u
 
     buffer = build_pdf(report)
 
-    filename = f"AuditReport_{report.get('ai_name','AI')}_{report_id[:8]}.pdf"
+    # Friendly filename: <AIName>_<YYYYMMDD>_<HHMM>_AuditReport.pdf
+    ai_name = report.get("ai_name", "AI")
+    evaluated_at = report.get("evaluated_at", "")
+    friendly_id = _friendly_report_id(ai_name, evaluated_at)
+    filename = f"{friendly_id}_AuditReport.pdf"
+
     return StreamingResponse(
         buffer,
         media_type="application/pdf",

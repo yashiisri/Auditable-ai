@@ -468,7 +468,7 @@ const Home = () => {
       <section className="home-hero">
         <div className="home-hero-left">
           <div className="hero-eyebrow">
-            <span>🔷</span> KPMG Trusted AI Framework
+            <span></span> KPMG Trusted AI Framework
           </div>
           <h1 className="hero-title">
             AI Governance<br />
@@ -483,8 +483,8 @@ const Home = () => {
           </div>
           <div className="trust-row">
             <div className="trust-badge"><span>🇪🇺</span><span>EU AI Act Ready</span></div>
-            <div className="trust-badge"><span>🏅</span><span>ISO 42001 Aligned</span></div>
-            <div className="trust-badge"><span>🏛️</span><span>NIST AI RMF</span></div>
+            <div className="trust-badge"><span></span><span>ISO 42001 Aligned</span></div>
+            <div className="trust-badge"><span></span><span>NIST AI RMF</span></div>
           </div>
         </div>
 
@@ -497,11 +497,11 @@ const Home = () => {
             <div className="score-panel-body">
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[
-                  { icon: "🔍", title: "Detect governance gaps before regulators do", desc: "Proactive auditing across 10 KPMG Trusted AI Principles." },
-                  { icon: "📋", title: "EU AI Act & ISO 42001 ready", desc: "Automated compliance mapping against global standards." },
-                  { icon: "🛡️", title: "Black-box ", desc: "Audit any AI — with or without access to the model." },
-                  { icon: "📄", title: "Regulatory-grade PDF reports", desc: "Client-ready documentation for auditors and boards." },
-                  { icon: "🔷", title: "Powered by KPMG Trusted AI Framework", desc: "Built on the same framework used by enterprise clients globally." },
+                  { icon: "", title: "Detect governance gaps before regulators do", desc: "Proactive auditing across 10 KPMG Trusted AI Principles." },
+                  { icon: "", title: "EU AI Act & ISO 42001 ready", desc: "Automated compliance mapping against global standards." },
+                  { icon: "", title: "Black-box ", desc: "Audit any AI — with or without access to the model." },
+                  { icon: "", title: "Regulatory-grade PDF reports", desc: "Client-ready documentation for auditors and boards." },
+                  { icon: "", title: "Powered by KPMG Trusted AI Framework", desc: "Built on the same framework used by enterprise clients globally." },
                 ].map(item => (
                   <div key={item.title} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, border: "1px solid rgba(0,94,184,0.15)" }}>{item.icon}</div>
@@ -541,12 +541,12 @@ const Home = () => {
         <p className="section-desc">From automated log ingestion to regulatory-grade PDF reports — one platform for your entire AI governance programme.</p>
         <div className="features-grid">
           {[
-            { icon: "📋", title: "AI Register", desc: "Centralise all your AI models with metadata, risk classification, and ownership tracking in one place." },
-            { icon: "📥", title: "Smart Ingestion", desc: "Upload audit logs or use SDCC for automatic data classification and schema detection." },
-            { icon: "🔍", title: "Blackbox Testing", desc: "Generate synthetic probes and run adversarial evaluations when real data is unavailable." },
-            { icon: "📊", title: "Full Governance Audit", desc: "Score across 10 Trusted AI principles with 50+ sub-parameters and detailed calculation transparency." },
-            { icon: "📑", title: "Regulatory Reports", desc: "Generate professional PDF reports aligned with EU AI Act, ISO 42001, and NIST AI RMF standards." },
-            { icon: "📈", title: "Continuous Monitoring", desc: "Track governance scores over time, detect drift, and receive alerts on compliance degradation." },
+            { icon: "", title: "AI Register", desc: "Centralise all your AI models with metadata, risk classification, and ownership tracking in one place." },
+            { icon: "", title: "Smart Ingestion", desc: "Upload audit logs or use SDCC for automatic data classification and schema detection." },
+            { icon: "", title: "Blackbox Testing", desc: "Generate synthetic probes and run adversarial evaluations when real data is unavailable." },
+            { icon: "", title: "Full Governance Audit", desc: "Score across 10 Trusted AI principles with 50+ sub-parameters and detailed calculation transparency." },
+            { icon: "", title: "Regulatory Reports", desc: "Generate professional PDF reports aligned with EU AI Act, ISO 42001, and NIST AI RMF standards." },
+            { icon: "", title: "Continuous Monitoring", desc: "Track governance scores over time, detect drift, and receive alerts on compliance degradation." },
           ].map(f => (
             <div key={f.title} className="feature-card">
               <div className="feature-icon">{f.icon}</div>
@@ -564,9 +564,9 @@ const Home = () => {
         <div className="frameworks-row">
           {[
             { icon: "🇪🇺", label: "EU AI Act", desc: "European Union AI Regulation" },
-            { icon: "🏅", label: "ISO/IEC 42001:2023", desc: "AI Management System Standard" },
-            { icon: "🏛️", label: "NIST AI RMF", desc: "AI Risk Management Framework" },
-            { icon: "🔷", label: "KPMG Trusted AI", desc: "Trusted AI Framework" },
+            { icon: "", label: "ISO/IEC 42001:2023", desc: "AI Management System Standard" },
+            { icon: "", label: "NIST AI RMF", desc: "AI Risk Management Framework" },
+            { icon: "", label: "KPMG Trusted AI", desc: "Trusted AI Framework" },
           ].map(f => (
             <div key={f.label} className="framework-pill">
               <span style={{ fontSize: 20 }}>{f.icon}</span>

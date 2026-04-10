@@ -268,7 +268,7 @@
 //   border-radius: 20px;
 //   border: 1px solid var(--border);
 
-//   /* 🔥 DEPTH */
+//   /*  DEPTH */
 //   box-shadow: 0 25px 60px rgba(0,51,141,0.12);
 
 //   transition: 0.3s;
@@ -469,7 +469,7 @@ const Login = () => {
 /* LAYOUT */
 .layout {
   height: 100vh;           /* full screen */
-  overflow: hidden;        /* 🚫 NO SCROLL */
+  overflow: hidden;        /*  NO SCROLL */
   display: flex;
   flex-direction: column;
 
@@ -506,7 +506,7 @@ const Login = () => {
   align-items: center;
   justify-content: center;
 
-  padding: 20px;           /* ❌ remove big padding */
+  padding: 20px;           /*  remove big padding */
 }
 
 /* CARD */

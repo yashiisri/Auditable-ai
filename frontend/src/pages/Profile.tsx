@@ -252,7 +252,7 @@
 //   if (profileError) {
 //     return (
 //       <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100vh", background:"#030C1E", gap:18, fontFamily:"'IBM Plex Sans',sans-serif" }}>
-//         <div style={{ fontSize:38 }}>⚠️</div>
+//         <div style={{ fontSize:38 }}></div>
 //         <p style={{ color:"#ff8787", fontSize:14 }}>{profileError}</p>
 //         <button onClick={() => navigate("/login")} style={{ padding:"11px 26px", background:"linear-gradient(135deg,#0091DA,#00C896)", border:"none", borderRadius:10, color:"white", fontWeight:600, cursor:"pointer", fontSize:13 }}>
 //           Back to Login
@@ -446,14 +446,14 @@
 //                   onClick={() => setEditMode(true)}
 //                   style={{ background:"none", border:"none", color:"#4AACDF", fontSize:13, cursor:"pointer", fontFamily:"inherit", padding:"4px 8px", borderRadius:6 }}
 //                 >
-//                   ✎ Edit
+//                    Edit
 //                 </button>
 //               </div>
 //             )}
 
 //             <div style={{ display:"flex", gap:8, marginTop:10, flexWrap:"wrap" }}>
 //               <span className="tag" style={{ background:"rgba(0,200,150,0.12)", border:"1px solid rgba(0,200,150,0.3)", color:"#00C896" }}>
-//                 ✓ Active
+//                  Active
 //               </span>
 //               <span className="tag" style={{ background:"rgba(0,145,218,0.12)", border:"1px solid rgba(0,145,218,0.3)", color:"#4AACDF", textTransform:"capitalize" }}>
 //                 {profile?.role || "Auditor"}
@@ -462,7 +462,7 @@
 
 //             {saveMsg && (
 //               <p style={{ margin:"10px 0 0", fontSize:12, color: saveMsg.ok ? "#00C896" : "#ff8787" }}>
-//                 {saveMsg.ok ? "✓" : "✗"} {saveMsg.text}
+//                 {saveMsg.ok ? "" : ""} {saveMsg.text}
 //               </p>
 //             )}
 //           </div>
@@ -488,7 +488,7 @@
 
 //           {/* LEFT – Account info */}
 //           <div className="p-panel" style={{ margin:0 }}>
-//             <p className="sec-heading">👤 Account Details</p>
+//             <p className="sec-heading"> Account Details</p>
 
 //             {[
 //               { label:"Email",        value: profile?.email },
@@ -525,7 +525,7 @@
 //           {/* RIGHT – Audit history */}
 //           <div className="p-panel" style={{ margin:0 }}>
 //             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-//               <p className="sec-heading" style={{ margin:0 }}>📁 My Projects</p>
+//               <p className="sec-heading" style={{ margin:0 }}> My Projects</p>
 //               <button className="btn-ghost" style={{ fontSize:12, padding:"7px 14px" }} onClick={() => navigate("/dashboard")}>
 //                 + New Audit
 //               </button>
@@ -538,7 +538,7 @@
 //               </div>
 //             ) : audits.length === 0 ? (
 //               <div style={{ textAlign:"center", padding:"52px 20px" }}>
-//                 <div style={{ fontSize:42, marginBottom:14 }}>🔍</div>
+//                 <div style={{ fontSize:42, marginBottom:14 }}></div>
 //                 <p style={{ color:"#9DBFE0", fontSize:13, margin:"0 0 14px" }}>No audits run yet.</p>
 //                 <button className="btn-primary" onClick={() => navigate("/dashboard")}>Run your first audit →</button>
 //               </div>
@@ -572,7 +572,7 @@
 //                       </span>
 
 //                       <span style={{ fontSize:11, color: audit.status === "completed" ? "#00C896" : "#ffb020", fontWeight:600, flexShrink:0 }}>
-//                         {audit.status === "completed" ? "✓ Done" : "⏳ " + audit.status}
+//                         {audit.status === "completed" ? " Done" : "⏳ " + audit.status}
 //                       </span>
 
 //                       <span style={{ color:"#4AACDF", fontSize:18, flexShrink:0 }}>›</span>
@@ -592,13 +592,13 @@
 
 //         {/* ── QUICK ACTIONS ── */}
 //         <div className="p-panel" style={{ ...fade(0.18) }}>
-//           <p className="sec-heading">⚡ Quick Actions</p>
+//           <p className="sec-heading"> Quick Actions</p>
 //           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(185px, 1fr))", gap:10 }}>
 //             {[
-//               { icon:"🛡", label:"New Black Box Audit",  path:"/dashboard"    },
-//               { icon:"📊", label:"Upload Logs (SDCC)",   path:"/dashboard"    },
-//               { icon:"📄", label:"Report Generation",    path:"/report"       },
-//               { icon:"🤖", label:"Register AI System",   path:"/register-ai"  },
+//               { icon:"", label:"New Black Box Audit",  path:"/dashboard"    },
+//               { icon:"", label:"Upload Logs (SDCC)",   path:"/dashboard"    },
+//               { icon:"", label:"Report Generation",    path:"/report"       },
+//               { icon:"", label:"Register AI System",   path:"/register-ai"  },
 //             ].map((a) => (
 //               <button key={a.label} className="quick-action-btn" onClick={() => navigate(a.path)}>
 //                 <span style={{ fontSize:18 }}>{a.icon}</span>
@@ -841,7 +841,7 @@ export default function Profile() {
   if (profileError) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F1F5F9", gap: 18, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-        <div style={{ fontSize: 38 }}>⚠️</div>
+        <div style={{ fontSize: 38 }}></div>
         <p style={{ color: "#DC2626", fontSize: 14 }}>{profileError}</p>
         <button onClick={() => navigate("/login")} style={{ padding: "11px 26px", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", border: "none", borderRadius: 10, color: "white", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
           Back to Login
@@ -1037,12 +1037,12 @@ export default function Profile() {
                   <button
                     onClick={() => setEditMode(true)}
                     style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: "4px 10px", borderRadius: 8, fontWeight: 600 }}
-                  >✎ Edit</button>
+                  > Edit</button>
                 </div>
               )}
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#DCFCE7", border: "1px solid #86EFAC", color: "#059669" }}>
-                  ✓ Active
+                   Active
                 </span>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", textTransform: "capitalize" }}>
                   {profile?.role || "Auditor"}
@@ -1053,7 +1053,7 @@ export default function Profile() {
               </div>
               {saveMsg && (
                 <p style={{ margin: "10px 0 0", fontSize: 12, color: saveMsg.ok ? "#059669" : "#DC2626", fontWeight: 600 }}>
-                  {saveMsg.ok ? "✓" : "✗"} {saveMsg.text}
+                  {saveMsg.ok ? "" : ""} {saveMsg.text}
                 </p>
               )}
             </div>
@@ -1080,7 +1080,7 @@ export default function Profile() {
 
           {/* LEFT – Account Details */}
           <div className="card" style={{ padding: "26px 28px" }}>
-            <p className="sec-heading" style={{ marginBottom: 18 }}>👤 Account Details</p>
+            <p className="sec-heading" style={{ marginBottom: 18 }}> Account Details</p>
 
             {[
               { label: "Email",        value: profile?.email },
@@ -1118,7 +1118,7 @@ export default function Profile() {
           {/* RIGHT – Audit History */}
           <div className="card" style={{ padding: "26px 28px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <p className="sec-heading">📁 My Projects</p>
+              <p className="sec-heading"> My Projects</p>
               <button className="btn-ghost" style={{ fontSize: 12, padding: "7px 14px" }} onClick={() => navigate("/dashboard")}>
                 + New Audit
               </button>
@@ -1131,7 +1131,7 @@ export default function Profile() {
               </div>
             ) : audits.length === 0 ? (
               <div style={{ textAlign: "center", padding: "52px 20px" }}>
-                <div style={{ fontSize: 42, marginBottom: 14 }}>🔍</div>
+                <div style={{ fontSize: 42, marginBottom: 14 }}></div>
                 <p style={{ color: "#94A3B8", fontSize: 13, marginBottom: 16 }}>No audits run yet.</p>
                 <button className="btn-primary" onClick={() => navigate("/dashboard")}>Run your first audit →</button>
               </div>
@@ -1171,7 +1171,7 @@ export default function Profile() {
                         background: audit.status === "completed" ? "#DCFCE7" : "#FEF3C7",
                         border: `1px solid ${audit.status === "completed" ? "#86EFAC" : "#FCD34D"}`,
                       }}>
-                        {audit.status === "completed" ? "✓ Done" : "⏳ " + audit.status}
+                        {audit.status === "completed" ? " Done" : "⏳ " + audit.status}
                       </span>
 
                       <span style={{ color: "#2563EB", fontSize: 18, flexShrink: 0, fontWeight: 700 }}>›</span>
@@ -1191,13 +1191,13 @@ export default function Profile() {
 
         {/* ── QUICK ACTIONS ── */}
         <div className="card" style={{ padding: "26px 28px", ...fade(0.18) }}>
-          <p className="sec-heading" style={{ marginBottom: 16 }}>⚡ Quick Actions</p>
+          <p className="sec-heading" style={{ marginBottom: 16 }}> Quick Actions</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: 12 }}>
             {[
-              { icon: "🛡", label: "New Black Box Audit", path: "/dashboard",   accent: "#2563EB" },
-              { icon: "📊", label: "Upload Logs (SDCC)",  path: "/dashboard",   accent: "#059669" },
-              { icon: "📄", label: "Report Generation",   path: "/report",      accent: "#7C3AED" },
-              { icon: "🤖", label: "Register AI System",  path: "/register-ai", accent: "#D97706" },
+              { icon: "", label: "New Black Box Audit", path: "/dashboard",   accent: "#2563EB" },
+              { icon: "", label: "Upload Logs (SDCC)",  path: "/dashboard",   accent: "#059669" },
+              { icon: "", label: "Report Generation",   path: "/report",      accent: "#7C3AED" },
+              { icon: "", label: "Register AI System",  path: "/register-ai", accent: "#D97706" },
             ].map((a) => (
               <button
                 key={a.label}
