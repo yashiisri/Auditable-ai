@@ -213,3 +213,7 @@ export const getAllBlackBoxHistory = () =>
 
 export const getBlackBoxAuditById = (auditId: string) =>
   api.get(`/blackbox/audit/${auditId}`);
+
+// ── Chat History Ingest ───────────────────────────────────────────────────
+export const ingestChatHistory = (aiName: string, text: string, source = "") =>
+  api.post(`/sdcc/ingest-chat/${aiName}`, { text, source });

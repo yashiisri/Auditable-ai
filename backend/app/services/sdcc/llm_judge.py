@@ -410,6 +410,26 @@ def _build_verdict_prompt(
     return system, user
 
 
+def _build_direct_verdict_prompt(question: str, ai_output: str) -> tuple[str, str]:
+    """
+    Single-call verdict prompt — no reference generation needed.
+    The judge uses its own world knowledge to evaluate correctness directly.
+    """
+    system = (
+        "You are an expert, impartial AI evaluator. "
+        "Evaluate whether the AI system's response is CORRECT using your world knowledge.\n\n"
+        "CORRECT means: factually accurate, coherent, helpful, and not misleading.\n"
+        "INCORRECT means: factually wrong, incoherent, harmful, or meaningfully misleading.\n\n"
+        'Respond ONLY with valid JSON: {"correct": true|false, "reason": "<one concise sentence>"}'
+    )
+    user = (
+        f"QUESTION:\n{question}\n\n"
+        f"AI SYSTEM RESPONSE:\n{ai_output}\n\n"
+        "Is the AI response correct?"
+    )
+    return system, user
+
+
 def _build_generate_answer_prompt(question: str) -> tuple[str, str]:
     """Build system + user prompt to ask a judge to GENERATE a reference answer."""
     system = (
@@ -598,6 +618,56 @@ class JudgePanel:
             )
 
         return {"answers": results, "agreed": agreed, "best_answer": best}
+
+    def vote_direct(self, question: str, ai_output: str) -> dict:
+        """
+        Single-call verdict using each judge's world knowledge directly.
+        No reference generation step — avoids double API calls and rate limits.
+        """
+        system, user = _build_direct_verdict_prompt(question, ai_output)
+        votes:   dict[str, bool] = {}
+        reasons: dict[str, str]  = {}
+
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            futures = {
+                pool.submit(self._call_one, j, system, user, True): j["name"]
+                for j in self.judges
+            }
+            for future in as_completed(futures):
+                name   = futures[future]
+                parsed = _parse_verdict(future.result())
+                if parsed is not None:
+                    votes[name]   = bool(parsed.get("correct", False))
+                    reasons[name] = parsed.get("reason", "")
+
+        if not votes:
+            return {
+                "votes": {}, "reasons": {}, "correct": False,
+                "confidence": "low", "vote_count": 0,
+                "total_votes": 0, "disputed": True,
+            }
+
+        total       = len(votes)
+        correct_cnt = sum(1 for v in votes.values() if v)
+        majority    = correct_cnt > (total / 2)
+        disputed    = (correct_cnt == total - correct_cnt)
+
+        if correct_cnt == total or correct_cnt == 0:
+            confidence = "high"
+        elif abs(correct_cnt - (total - correct_cnt)) == 1:
+            confidence = "medium"
+        else:
+            confidence = "low"
+
+        return {
+            "votes":       votes,
+            "reasons":     reasons,
+            "correct":     majority,
+            "confidence":  confidence,
+            "vote_count":  correct_cnt,
+            "total_votes": total,
+            "disputed":    disputed,
+        }
 
     def vote_on_verdict(
         self,
@@ -788,34 +858,19 @@ def run_llm_judge(
         kb_context = _find_kb_answer(question, kb_chunks) if kb_chunks else None
 
         if kb_context:
-            # KB path: reference is ground truth from the knowledge base
-            reference        = kb_context
-            reference_source = "knowledge_base"
-            kb_used          = True
+            # KB path: judge against ground truth from knowledge base
+            verdict = panel.vote_on_verdict(
+                question=question,
+                ai_output=ai_output,
+                reference=kb_context,
+                reference_source="knowledge_base",
+            )
+            kb_used = True
         else:
-            # LLM path: ask judges to independently generate the reference answer
-            gen_result = panel.generate_reference_answers(question)
-            if not gen_result["best_answer"]:
-                skipped += 1
-                row_index += 1
-                continue
-            reference        = gen_result["best_answer"]
-            reference_source = "judge_panel"
-            kb_used          = False
-
-            if not gen_result["agreed"]:
-                warnings.append(
-                    f"Row {row_index}: judges disagreed on reference answer. "
-                    f"Verdict confidence may be lower."
-                )
-
-        # ── Step 2: Vote on whether AI output matches reference ───────────────
-        verdict = panel.vote_on_verdict(
-            question=question,
-            ai_output=ai_output,
-            reference=reference,
-            reference_source=reference_source,
-        )
+            # Direct path: single-call verdict using judge's world knowledge
+            # (avoids double API calls + rate limits from the generate-then-vote pattern)
+            verdict = panel.vote_direct(question=question, ai_output=ai_output)
+            kb_used = False
 
         if not verdict["votes"]:
             skipped += 1

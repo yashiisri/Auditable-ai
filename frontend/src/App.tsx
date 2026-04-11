@@ -147,7 +147,7 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Home       from "./pages/Home";
+import Glossary   from "./pages/Glossary";
 import Login      from "./pages/Login";
 import Register   from "./pages/Register";
 import Dashboard  from "./pages/Dashboard";
@@ -166,18 +166,17 @@ function App() {
       <ChatWidget />
       <Routes>
         {/* PUBLIC */}
-        <Route path="/"         element={<Home />} />
+        <Route path="/"         element={<Glossary />} />
         <Route path="/login"    element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/self-report" element={<SelfReportPage />} />
         <Route path="/audit" element={<PdfReportDashboard />} />
 
         {/* PROTECTED */}
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/report"    element={<ProtectedRoute><Report /></ProtectedRoute>} />
+        <Route path="/dashboard"   element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/report"      element={<ProtectedRoute><Report /></ProtectedRoute>} />
         <Route path="/register-ai" element={<ProtectedRoute><RegisterAI /></ProtectedRoute>} />
-        <Route path="/profile"   element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        {/* <Route path="/pdf-report" element={<ProtectedRoute><PdfReportDashboard /></ProtectedRoute>} /> */}
+        <Route path="/profile"     element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

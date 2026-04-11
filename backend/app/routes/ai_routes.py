@@ -77,19 +77,119 @@ def ingest_logs(
     file: UploadFile = File(...),
     current_user=Depends(get_current_user),
 ):
-    """
-    Upload an inference log file.
-
-    Required columns in CSV/JSON:
-      task_id  — unique identifier per row
-      input    — user prompt / question
-      output   — AI system's response
-      latency  — response time in ms
-
-    Optional:
-      knowledgebase / context / chunks — inline KB text per row
-    """
     result = run_sdcc_pipeline(ai_name, file, current_user)
+    sdcc_collection.update_one(
+        {"ai_name": ai_name, "owner_id": str(current_user["_id"])},
+        {"$set": {
+            **result,
+            "ai_name":    ai_name,
+            "owner_id":   str(current_user["_id"]),
+            "updated_at": datetime.utcnow(),
+            "kb_chunks": [],
+        }},
+        upsert=True,
+    )
+    return {k: v for k, v in result.items() if k != "sample_records"}
+
+
+# ── Ingest chat history text (paste from ChatGPT, Claude, etc.) ───────────────
+
+class ChatHistoryRequest(BaseModel):
+    text: str          # raw pasted conversation text
+    source: str = ""   # e.g. "chatgpt", "claude", "gemini"
+
+@router.post("/sdcc/ingest-chat/{ai_name}")
+def ingest_chat_history(
+    ai_name: str,
+    payload: ChatHistoryRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Parse pasted chat history text into input/output pairs and ingest into SDCC.
+    Supports ChatGPT, Claude, Gemini, and generic "You: / AI:" formats.
+    """
+    import re, io, time
+
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="No text provided.")
+
+    # ── Parse conversation turns ───────────────────────────────────────────
+    # Try multiple patterns in order of specificity
+    pairs: list[dict] = []
+
+    # Pattern 1: "You\n<text>\nChatGPT\n<text>" (ChatGPT export format)
+    blocks = re.split(r'\n(?=You\n|ChatGPT\n|Assistant\n|Claude\n|Gemini\n|Human\n|AI\n)', text)
+    if len(blocks) >= 2:
+        i = 0
+        while i < len(blocks) - 1:
+            user_block = blocks[i].strip()
+            ai_block   = blocks[i + 1].strip()
+            # Extract role and content
+            user_match = re.match(r'^(You|Human)\n(.+)', user_block, re.DOTALL)
+            ai_match   = re.match(r'^(ChatGPT|Assistant|Claude|Gemini|AI|Copilot)\n(.+)', ai_block, re.DOTALL)
+            if user_match and ai_match:
+                pairs.append({
+                    "input":  user_match.group(2).strip()[:2000],
+                    "output": ai_match.group(2).strip()[:2000],
+                })
+                i += 2
+            else:
+                i += 1
+
+    # Pattern 2: "User: <text>\nAssistant: <text>" inline format
+    if not pairs:
+        inline = re.findall(
+            r'(?:You|User|Human):\s*(.+?)(?:\n|$).*?(?:ChatGPT|Assistant|Claude|AI|Gemini|Copilot):\s*(.+?)(?=\n(?:You|User|Human):|$)',
+            text, re.DOTALL | re.IGNORECASE
+        )
+        pairs = [{"input": u.strip()[:2000], "output": a.strip()[:2000]} for u, a in inline if u.strip() and a.strip()]
+
+    # Pattern 3: Alternating lines fallback — split by double newline
+    if not pairs:
+        chunks = [c.strip() for c in re.split(r'\n{2,}', text) if c.strip()]
+        for i in range(0, len(chunks) - 1, 2):
+            pairs.append({"input": chunks[i][:2000], "output": chunks[i + 1][:2000]})
+
+    if not pairs:
+        raise HTTPException(
+            status_code=422,
+            detail="Could not parse conversation turns. Paste the full chat history including 'You' and 'ChatGPT' (or similar) labels."
+        )
+
+    # ── Build CSV and ingest via SDCC pipeline ─────────────────────────────
+    header = "task_id,input,output,latency"
+    def esc(v: str) -> str:
+        return '"' + v.replace('"', '""') + '"'
+
+    rows = [
+        f"{esc(f'chat-{i+1}')},{esc(p['input'])},{esc(p['output'])},0"
+        for i, p in enumerate(pairs)
+    ]
+    csv_content = "\n".join([header] + rows).encode("utf-8")
+
+    # Wrap as UploadFile-compatible object
+    class _FakeUpload:
+        filename = f"{payload.source or 'chat'}_history.csv"
+        content_type = "text/csv"
+        def read(self): return csv_content
+        async def read(self): return csv_content  # type: ignore
+
+    fake_file = _FakeUpload()
+
+    # Use a real SpooledTemporaryFile so run_sdcc_pipeline can seek/read it
+    import tempfile
+    with tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024) as tmp:
+        tmp.write(csv_content)
+        tmp.seek(0)
+
+        class _Upload:
+            filename = fake_file.filename
+            content_type = "text/csv"
+            file = tmp
+            def read(self): return tmp.read()
+
+        result = run_sdcc_pipeline(ai_name, _Upload(), current_user)
 
     sdcc_collection.update_one(
         {"ai_name": ai_name, "owner_id": str(current_user["_id"])},
@@ -98,13 +198,16 @@ def ingest_logs(
             "ai_name":    ai_name,
             "owner_id":   str(current_user["_id"]),
             "updated_at": datetime.utcnow(),
-            # Clear any previously stored KB chunks when new logs are uploaded
-            "kb_chunks": [],
+            "kb_chunks":  [],
         }},
         upsert=True,
     )
 
-    return {k: v for k, v in result.items() if k != "sample_records"}
+    return {
+        **{k: v for k, v in result.items() if k != "sample_records"},
+        "turns_parsed": len(pairs),
+        "source": payload.source or "chat",
+    }
 
 
 # ── Upload knowledge base (optional, separate endpoint) ────────────────────────

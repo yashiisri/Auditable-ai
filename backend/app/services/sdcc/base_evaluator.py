@@ -133,7 +133,6 @@ class BaseEvaluator(ABC):
     _CTX_PATTERNS = None  # compiled lazily
 
     @classmethod
-    @classmethod
     def _extract_context_from_input(cls, input_text: str) -> "Optional[str]":
         """
         Extract embedded context/document from an input prompt.

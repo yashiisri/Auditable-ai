@@ -323,18 +323,41 @@ def compute_data_quality(df: pd.DataFrame) -> dict:
     missing = df.isna().sum().sum()
     missing_ratio = float(missing / total) if total > 0 else 0.0
 
-    # ── Duplicate detection: only non-unique task_ids count as duplicates ──────
-    # Previously this used df.duplicated() which flagged identical rows.
-    # Now: duplicates = rows with a repeated task_id value.
+    # ── Duplicate detection ────────────────────────────────────────────────────
     task_id_col = _find_task_id_col(df)
     if task_id_col:
         duplicates = int(df[task_id_col].duplicated().sum())
     else:
-        # No task_id column: fall back to row-level deduplication but note it
         duplicates = int(df.duplicated().sum())
 
+    # ── Column coverage penalty ────────────────────────────────────────────────
+    # Check for the 4 key columns: task_id, input, output, latency
+    # Each missing column deducts from the score so auto-generated CSVs
+    # with all columns present still score well, but real-world logs with
+    # missing columns are penalised accurately.
+    schema_result = validate_schema(df)
+    key_cols_present = sum([
+        schema_result["has_task_id"],
+        schema_result["has_input"],
+        schema_result["has_output"],
+        schema_result["has_latency"],
+    ])
+    column_coverage = key_cols_present / 4.0  # 0.25 per column
+
+    # ── Duplicate penalty ──────────────────────────────────────────────────────
+    dup_ratio = duplicates / max(len(df), 1)
+    dup_penalty = min(dup_ratio * 20, 15)  # max 15 point deduction
+
+    # ── Final score ────────────────────────────────────────────────────────────
+    # Completeness (no missing values): 50 pts
+    # Column coverage (right columns present): 35 pts
+    # Duplicate cleanliness: 15 pts
+    completeness_score  = (1 - missing_ratio) * 50
+    coverage_score      = column_coverage * 35
+    duplicate_score     = 15 - dup_penalty
+    dq_score = min(int(completeness_score + coverage_score + duplicate_score), 100)
+
     schema_conf = 1.0 - (missing_ratio * 0.5)
-    dq_score = min(int(((1 - missing_ratio) * 70) + (schema_conf * 30)), 100)
 
     text_cols = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c])]
     num_cols  = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
@@ -345,6 +368,8 @@ def compute_data_quality(df: pd.DataFrame) -> dict:
         "duplicate_basis":    "task_id" if task_id_col else "row",
         "schema_confidence":  round(schema_conf, 3),
         "data_quality_score": dq_score,
+        "column_coverage":    round(column_coverage, 2),
+        "key_cols_present":   key_cols_present,
         "total_columns":      len(df.columns),
         "text_columns":       len(text_cols),
         "numeric_columns":    len(num_cols),

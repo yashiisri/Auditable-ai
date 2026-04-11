@@ -297,233 +297,99 @@ export default function RegisterAI() {
   };
 
   return (
-    <div className="layout">
+    <div style={{ display:"flex", height:"100vh", fontFamily:"'Plus Jakarta Sans','Inter',sans-serif", overflow:"hidden" }}>
       <style>{`
-:root {
-  --kpmg-dark: #00338D;
-  --kpmg-mid: #005EB8;
-  --kpmg-light: #0091DA;
-
-  --bg: #F4F7FB;
-  --surface: #FFFFFF;
-
-  --text: #0B1F33;
-  --muted: #6B7C93;
-  --border: #E3EAF3;
-}
-
-/* LAYOUT (NO SCROLL) */
-.layout {
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  font-family: 'Inter', system-ui, sans-serif;
-
-  background:
-    radial-gradient(circle at 20% 20%, #E6F2FB, transparent 40%),
-    radial-gradient(circle at 80% 70%, #E0ECFF, transparent 40%),
-    var(--bg);
-}
-
-/* NAVBAR (SAME AS LOGIN) */
-.navbar {
-  padding: 16px 60px;
-  display: flex;
-  align-items: center;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  height: 76px;
-}
-
-.logo img {
-  height: 90px;
-}
-
-/* CENTER */
-.auth-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-/* CARD */
-.auth-card {
-  width: 100%;
-  max-width: 480px;
-  min-height: 560px;
-
-  background: white;
-  padding: 60px 42px;
-
-  border-radius: 22px;
-  border: 1px solid var(--border);
-
-  box-shadow: 0 25px 60px rgba(0,51,141,0.12);
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  animation: fadeUp 0.6s ease;
-}
-
-.auth-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 30px 70px rgba(0,51,141,0.18);
-}
-
-/* ANIMATION */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* TEXT */
-.auth-card h2 {
-  font-size: 30px;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 14px;
-}
-
-.auth-subtext {
-  text-align: center;
-  font-size: 14px;
-  color: var(--muted);
-  margin-bottom: 30px;
-}
-
-/* INPUT */
-.auth-card input {
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 18px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  font-size: 14px;
-  transition: 0.2s;
-}
-
-.auth-card input:focus {
-  border-color: var(--kpmg-mid);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0,94,184,0.15);
-}
-
-/* BUTTON */
-.primary-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #00338D, #005EB8);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 14px;
-  transition: 0.3s;
-}
-
-.primary-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0,51,141,0.3);
-}
-
-.primary-btn:disabled {
-  opacity: 0.6;
-}
-
-/* ERROR */
-.error-message {
-  color: #e5484d;
-  font-size: 13px;
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-/* FOOTER */
-.auth-footer {
-  text-align: center;
-  font-size: 14px;
-  color: var(--muted);
-  margin-top: 18px;
-}
-
-.auth-footer span {
-  color: var(--kpmg-mid);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.auth-footer span:hover {
-  text-decoration: underline;
-}
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        .rai{width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid #E3EAF3;font-size:14px;font-family:inherit;color:#0B1F33;background:#fff;transition:all 0.2s;outline:none;resize:none;}
+        .rai:focus{border-color:#005EB8;box-shadow:0 0 0 4px rgba(0,94,184,0.1);}
+        .rai::placeholder{color:#A0B4CC;}
+        .ras{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#00338D,#005EB8);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(0,51,141,0.25);}
+        .ras:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,51,141,0.35);}
+        .ras:disabled{opacity:0.55;cursor:not-allowed;transform:none;}
+        .ralp{flex:1;background:linear-gradient(145deg,#00338D 0%,#005EB8 55%,#0091DA 100%);display:flex;flex-direction:column;justify-content:center;padding:64px;position:relative;overflow:hidden;}
+        .ralp::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;}
+        .raorb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}
+        .rarp{width:520px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:56px;background:#fff;overflow-y:auto;}
+        .rapill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;padding:6px 14px;border-radius:100px;letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;backdrop-filter:blur(8px);}
+        .rapd{width:6px;height:6px;border-radius:50%;background:#00A3A1;animation:rapulse 2s ease-in-out infinite;}
+        @keyframes rapulse{0%,100%{transform:scale(1);}50%{transform:scale(1.5);opacity:0.6;}}
+        .ra-step{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.08);}
+        .ra-step:last-child{border-bottom:none;}
+        .ra-step-num{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.15);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .ra-step-text{font-size:13.5px;color:rgba(255,255,255,0.75);line-height:1.4;}
+        .ra-step-text strong{color:#fff;font-weight:700;}
+        .ra-label{font-size:11.5px;font-weight:700;color:#5A7090;letter-spacing:0.5px;margin-bottom:6px;}
+        @keyframes raUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+        @media(max-width:768px){.ralp{display:none;}.rarp{width:100%;padding:40px 28px;}}
       `}</style>
 
-      {/* NAVBAR */}
-      <div className="navbar">
-        <div className="logo">
-          <img src="/kpmg-logo.png" alt="KPMG Logo" />
+      {/* LEFT */}
+      <div className="ralp">
+        <div className="raorb" style={{ width:420, height:420, background:"rgba(255,255,255,0.05)", top:-100, right:-80 }} />
+        <div className="raorb" style={{ width:300, height:300, background:"rgba(0,163,161,0.14)", bottom:-80, left:-60 }} />
+        <div style={{ position:"relative" }}>
+          <div className="rapill"><div className="rapd" />Step 2 of 3</div>
+          <h1 style={{ fontSize:"clamp(28px,3vw,44px)", fontWeight:900, color:"#fff", letterSpacing:"-1.5px", lineHeight:1.1, marginBottom:14 }}>
+            Register your<br />AI system.
+          </h1>
+          <p style={{ fontSize:15, color:"rgba(255,255,255,0.6)", lineHeight:1.75, marginBottom:44, maxWidth:360 }}>
+            Tell us about your AI. We'll detect its type automatically from your logs.
+          </p>
+          <div>
+            {[
+              ["Name your AI", "Give it a unique identifier for your audit workspace."],
+              ["Add context", "Domain and description help calibrate the evaluation."],
+              ["Auto-detection", "Our ML classifier identifies the model type from your logs."],
+              ["Go to Dashboard", "Start uploading logs and running your first audit."],
+            ].map(([t, d], i) => (
+              <div className="ra-step" key={t}>
+                <div className="ra-step-num">{String(i + 1).padStart(2, "0")}</div>
+                <div className="ra-step-text"><strong>{t}</strong> — {d}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* FORM */}
-      <div className="auth-container">
-        <div className="auth-card">
-
-          <h2>Register AI System</h2>
-          <p className="auth-subtext">
-            Configure your AI model before starting the audit
-          </p>
-
-          <input
-            type="text"
-            placeholder="AI Name (e.g. Sentiment Analyzer v2)"
-            value={aiName}
-            onChange={(e) => setAiName(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="Description (Optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="Domain / Use Case (e.g. Healthcare)"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-          />
-
-          {error && <div className="error-message">{error}</div>}
-
-          <button
-            className="primary-btn"
-            onClick={handleRegister}
-            disabled={loading || !aiName}
-          >
-            {loading ? "Registering..." : "Register AI"}
-          </button>
-
-          <div className="auth-footer">
-            Already configured?{" "}
-            <span onClick={() => navigate("/dashboard")}>
-              Go to Dashboard
-            </span>
+      {/* RIGHT */}
+      <div className="rarp">
+        <div style={{ animation:"raUp 0.7s cubic-bezier(.16,1,.3,1) both" }}>
+          <div style={{ marginBottom:32 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"#005EB8", letterSpacing:"2.5px", textTransform:"uppercase", marginBottom:10 }}>Almost there</div>
+            <h2 style={{ fontSize:32, fontWeight:900, color:"#00338D", letterSpacing:"-1px", marginBottom:8 }}>Register AI System</h2>
+            <p style={{ fontSize:14, color:"#8FA3BF", lineHeight:1.6 }}>Configure your AI before starting the audit pipeline.</p>
           </div>
 
+          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            <div>
+              <div className="ra-label">AI Name *</div>
+              <input className="rai" type="text" placeholder="e.g. Sentiment Analyzer v2" value={aiName} onChange={e => setAiName(e.target.value)} />
+            </div>
+            <div>
+              <div className="ra-label">Description <span style={{ color:"#A0B4CC", fontWeight:400 }}>(optional)</span></div>
+              <input className="rai" type="text" placeholder="What does this AI do?" value={description} onChange={e => setDescription(e.target.value)} />
+            </div>
+            <div>
+              <div className="ra-label">Domain / Use Case <span style={{ color:"#A0B4CC", fontWeight:400 }}>(optional)</span></div>
+              <input className="rai" type="text" placeholder="e.g. Healthcare, Finance, Legal" value={domain} onChange={e => setDomain(e.target.value)} />
+            </div>
+          </div>
+
+          {error && (
+            <div style={{ marginTop:14, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:10, fontSize:13, color:"#C53030" }}>
+              {error}
+            </div>
+          )}
+
+          <button className="ras" style={{ marginTop:24 }} onClick={handleRegister} disabled={loading || !aiName}>
+            {loading ? "Registering…" : "Register & Go to Dashboard →"}
+          </button>
+
+          <div style={{ marginTop:20, textAlign:"center", fontSize:14, color:"#8FA3BF" }}>
+            Already registered an AI?{" "}
+            <span style={{ color:"#005EB8", fontWeight:700, cursor:"pointer" }} onClick={() => navigate("/dashboard")}>Go to Dashboard</span>
+          </div>
         </div>
       </div>
     </div>
