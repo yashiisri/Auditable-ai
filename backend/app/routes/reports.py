@@ -1,3 +1,5 @@
+
+
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import A4
@@ -355,11 +357,11 @@ def score_to_color(score: int) -> colors.Color:
 
 def score_to_label(score: int) -> str:
     if score >= 75:
-        return "Compliant"
+        return "High"
     elif score >= 55:
-        return "Conditional"
+        return "Medium"
     else:
-        return "Non-Compliant"
+        return "Low"
 
 
 def risk_color(level: str) -> colors.Color:
@@ -1197,6 +1199,143 @@ class KPMGPageTemplate:
         canvas_obj.restoreState()
 
 
+# ─── Dynamic Report Helpers ───────────────────────────────────────────────────
+
+def _finding_why_it_matters(category: str, severity: str) -> str:
+    """Return a contextual 'why this matters' sentence for a finding category."""
+    cat = category.lower()
+    severity_phrase = {
+        "High":   "This is a critical governance gap that directly undermines stakeholder trust and regulatory standing.",
+        "Medium": "Left unaddressed, this gap will compound over time and may escalate into a higher-severity risk.",
+        "Low":    "While lower priority, resolving this finding improves overall governance maturity.",
+    }.get(severity, "This finding affects the overall governance posture of the AI system.")
+
+    category_context = {
+        "fairness":       "Fairness gaps can lead to discriminatory outcomes affecting real users and triggering regulatory action under the EU AI Act and existing anti-discrimination law.",
+        "transparency":   "Lack of transparency prevents stakeholders from understanding AI decisions, eroding trust and making it impossible to challenge incorrect outcomes.",
+        "explainability": "Without explainability, affected individuals cannot exercise their right to explanation under GDPR Article 22, and audit teams cannot validate model behaviour.",
+        "accountability": "Accountability gaps mean that when something goes wrong, no clear ownership path exists — making incident response, regulatory reporting, and remediation significantly harder.",
+        "data integrity": "Poor data quality directly degrades every downstream metric, making all governance assessments unreliable and potentially misleading to decision-makers.",
+        "reliability":    "Reliability failures translate directly into user-facing errors, missed SLAs, and compounding reputational risk with each production incident.",
+        "security":       "Security weaknesses expose the AI system to adversarial manipulation, data exfiltration, and model extraction attacks that can compromise the entire pipeline.",
+        "safety":         "Safety gaps mean the AI system could cause real-world harm without adequate safeguards, creating direct liability exposure for the deploying organisation.",
+        "privacy":        "Privacy failures carry mandatory notification obligations under GDPR, DPDP Act, and CCPA, with potential fines up to 4% of global annual turnover.",
+        "sustainability": "Sustainability inefficiencies translate into higher operational costs, increased carbon footprint, and growing ESG reporting obligations under CSRD and similar frameworks.",
+    }
+    for key, ctx in category_context.items():
+        if key in cat:
+            return f"{ctx} {severity_phrase}"
+    return f"This governance gap affects the AI system's alignment with the KPMG Trusted AI Framework. {severity_phrase}"
+
+
+def _principle_score_narrative(pname: str, score: int, params: dict) -> str:
+    """Generate a plain-English narrative explaining what the principle score means."""
+    n_params = len(params)
+    n_strong  = sum(1 for v in params.values() if int(v) >= 75)
+    n_partial = sum(1 for v in params.values() if 55 <= int(v) < 75)
+    n_weak    = sum(1 for v in params.values() if int(v) < 55)
+
+    weakest = min(params, key=lambda k: int(params[k])) if params else None
+    strongest = max(params, key=lambda k: int(params[k])) if params else None
+
+    if score >= 75:
+        narrative = (
+            f"Of the {n_params} sub-parameters evaluated, {n_strong} demonstrate strong governance "
+            f"practices (≥75/100). "
+        )
+        if n_partial:
+            narrative += f"{n_partial} sub-parameter(s) show partial alignment and represent opportunities for further improvement. "
+        if n_weak:
+            narrative += f"{n_weak} sub-parameter(s) need attention to sustain this level of alignment. "
+    elif score >= 55:
+        narrative = (
+            f"Of the {n_params} sub-parameters evaluated, {n_strong} are performing well, "
+            f"{n_partial} show partial alignment, and {n_weak} require active remediation. "
+        )
+        if weakest:
+            narrative += f"The weakest area is '{weakest}' ({params[weakest]}/100), which should be prioritised in the next governance cycle. "
+    else:
+        narrative = (
+            f"This principle has significant gaps: only {n_strong} of {n_params} sub-parameters "
+            f"demonstrate adequate governance. {n_weak} sub-parameter(s) score below 55, indicating "
+            f"material governance deficiencies that require immediate attention. "
+        )
+        if weakest:
+            narrative += f"'{weakest}' ({params[weakest]}/100) is the most critical area to address. "
+
+    if strongest and int(params[strongest]) >= 70:
+        narrative += f"The strongest area is '{strongest}' ({params[strongest]}/100), which can serve as a model for improving other sub-parameters."
+    return narrative
+
+
+def _subparam_score_meaning(param: str, score: int) -> str:
+    """Generate a plain-English sentence explaining what this sub-parameter score means for the system."""
+    if score >= 90:
+        tier = "excellent — this area is a governance strength and requires only routine monitoring"
+    elif score >= 75:
+        tier = "good — governance practices are in place and functioning, with minor room for improvement"
+    elif score >= 60:
+        tier = "moderate — basic controls exist but there are identifiable gaps that should be addressed in the next review cycle"
+    elif score >= 40:
+        tier = "below expectations — controls are inconsistent or partially absent, creating meaningful governance risk"
+    else:
+        tier = "poor — this area has significant deficiencies and represents an active governance risk requiring prompt remediation"
+
+    param_lower = param.lower()
+    context = ""
+    if any(k in param_lower for k in ["pii", "privacy", "biometric"]):
+        context = " In a privacy context, this directly affects data protection compliance."
+    elif any(k in param_lower for k in ["safety", "harm", "override"]):
+        context = " Given the safety implications, this score warrants particular attention."
+    elif any(k in param_lower for k in ["audit", "trail", "logging", "accountability"]):
+        context = " Without strong audit coverage, regulatory accountability obligations cannot be demonstrated."
+    elif any(k in param_lower for k in ["fairness", "equity", "bias", "balance"]):
+        context = " Fairness gaps can translate directly into discriminatory outcomes at scale."
+    elif any(k in param_lower for k in ["security", "injection", "adversarial"]):
+        context = " Security weaknesses may be actively exploitable in production."
+
+    return f"A score of {score}/100 is {tier}.{context}"
+
+
+def _subparam_improvement(param: str, score: int) -> str:
+    """Return an actionable improvement suggestion for a sub-parameter based on its score."""
+    param_lower = param.lower()
+
+    # Priority lookup — specific param names first
+    specific = {
+        "audit trail coverage":        "Ensure every AI event is logged with timestamp, user ID, model version, input, and output. Implement structured logging from day one rather than retrofitting.",
+        "human oversight":             "Define and test a formal escalation pathway. Route uncertain or high-stakes outputs to human reviewers before action is taken.",
+        "pii":                         "Deploy a PII scanning layer (regex + NER) on all outputs. Implement automatic redaction for detected personal identifiers.",
+        "class balance":               "Apply SMOTE oversampling or class-weighted loss to address minority class underrepresentation. Monitor class distribution drift in production.",
+        "fairness":                    "Run stratified bias tests across demographic segments. Use equalised-odds or demographic-parity constraints during model fine-tuning.",
+        "hallucination":               "Add a self-consistency check — run the same query multiple times and flag divergent answers. Use retrieval-augmented generation to ground responses in source documents.",
+        "toxicity":                    "Implement a multi-layer content filter: a fast keyword blocker as the first layer, and an NLI-based classifier as the second. Review flagged outputs weekly.",
+        "latency":                     "Profile inference bottlenecks using a tracing tool. Consider model quantisation, caching of frequent queries, or switching to a lighter model variant.",
+        "schema":                      "Enforce a schema contract at the data ingestion layer. Reject or quarantine records that do not conform before they enter the evaluation pipeline.",
+        "completeness":                "Audit your data pipeline for fields that are frequently null or missing. Add validation checks at the source system to prevent incomplete records.",
+        "version":                     "Tag every prediction record with the model version that produced it. Use a model registry (MLflow, W&B) to manage version metadata.",
+        "injection":                   "Implement an input sanitisation layer that detects and blocks known injection patterns. Run regular red-team exercises against the production endpoint.",
+        "transparency":                "Add confidence scores and uncertainty indicators to model outputs. Document known failure modes and limitations in a public model card.",
+        "explainability":              "Integrate SHAP or LIME for local feature importance. Provide natural-language explanations alongside predictions for non-technical stakeholders.",
+        "sustainability":              "Measure and report inference energy consumption per 1,000 requests. Explore model distillation or pruning to reduce compute without sacrificing accuracy.",
+        "data minimisation":           "Audit what data fields are actually used at inference time. Remove any fields collected but not needed — collect less, store less, expose less.",
+        "reliability":                 "Implement automated regression testing after every model update. Set up alerting for production metric degradation beyond defined thresholds.",
+        "safety":                      "Implement a multi-stage output review for safety-critical applications. Define and test a kill-switch procedure that can halt the system within minutes.",
+        "privacy":                     "Conduct a Data Protection Impact Assessment (DPIA). Implement privacy-by-design controls — anonymisation, data minimisation, and access controls — before deployment.",
+    }
+    for key, suggestion in specific.items():
+        if key in param_lower:
+            return suggestion
+
+    # Score-tier fallback
+    if score >= 60:
+        return f"This area is performing reasonably well. Focus on formalising existing informal practices into documented governance controls, and set up automated monitoring to detect regression."
+    elif score >= 40:
+        return f"Prioritise a targeted improvement sprint for this area. Identify the root cause of the score gap — missing data fields, absent controls, or process failures — and address each in turn."
+    else:
+        return f"This area requires immediate remediation planning. Assign ownership, define a timeline, and treat it as a governance action item in the next audit cycle. Do not wait for the next scheduled audit to address this."
+
+
 # ─── Main PDF Builder ─────────────────────────────────────────────────────────
 def build_pdf(report: dict) -> BytesIO:
     buffer = BytesIO()
@@ -1435,12 +1574,12 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 1 — REGULATORY COMPLIANCE
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("1. Regulatory &amp; Framework Compliance", sec_title_s))
+    elements.append(Paragraph("1. Regulatory &amp; Framework Alignment", sec_title_s))
     elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
         "This AI system was assessed against four major international AI governance frameworks. "
-        "Compliance status is derived from the overall Trusted AI score and individual principle "
-        "scores. Each framework sets specific thresholds that must be met for full certification readiness.",
+        "Alignment status is derived from the overall Trusted AI score and individual principle "
+        "scores. Each framework defines specific governance expectations mapped to the principles evaluated.",
         sec_sub_s))
 
     FW_META = {
@@ -1449,31 +1588,44 @@ def build_pdf(report: dict) -> BytesIO:
         "NIST_AI_RMF": ("NIST AI RMF",        "US National Institute of Standards AI Risk Management Framework"),
         "KPMG_TAF":    ("KPMG Trusted AI",    "KPMG Trusted AI Framework — 10 Principle Assessment"),
     }
-    thresholds = {
-        "EU_AI_Act":   "Score \u2265 75",
-        "ISO_42001":   "Score \u2265 80",
-        "NIST_AI_RMF": "Score \u2265 70",
-        "KPMG_TAF":    "All audits",
+    FW_FOCUS = {
+        "EU_AI_Act":   "Risk classification, human oversight, transparency obligations, and prohibited AI practices.",
+        "ISO_42001":   "AI management system requirements, risk treatment, and continual improvement.",
+        "NIST_AI_RMF": "Govern, Map, Measure, and Manage functions across the full AI lifecycle.",
+        "KPMG_TAF":    "10-principle assessment across Values-led, Trustworthy, and Human-centric dimensions.",
     }
 
+    def _fw_alignment_label(status: str) -> tuple:
+        if status in ("Compliant", "Certified Ready", "Aligned", "Assessed"):
+            if overall_score >= 75:
+                return "Good Alignment", "#059669"
+            elif overall_score >= 55:
+                return "Partial Alignment", "#D97706"
+            else:
+                return "Limited Alignment", "#DC2626"
+        if overall_score >= 75:
+            return "Good Alignment", "#059669"
+        elif overall_score >= 55:
+            return "Partial Alignment", "#D97706"
+        return "Limited Alignment", "#DC2626"
+
     fw_data = [[
-        Paragraph("Framework",  S("fwh0", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
-        Paragraph("Standard",   S("fwh1", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
-        Paragraph("Status",     S("fwh2", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
-        Paragraph("Threshold",  S("fwh3", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Framework",         S("fwh0", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Standard",          S("fwh1", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Alignment",         S("fwh2", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
+        Paragraph("Key Governance Focus", S("fwh3", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
     ]]
     for key, status in framework.items():
         meta = FW_META.get(key, (key, ""))
-        is_good = status in ("Compliant", "Certified Ready", "Aligned", "Assessed")
-        sc = KPMG_GREEN if is_good else KPMG_AMBER
+        align_label, align_hex = _fw_alignment_label(status)
         fw_data.append([
             Paragraph(f"<b>{meta[0]}</b>", body_bold_s),
             Paragraph(meta[1], small_s),
-            Paragraph(f"<font color=\"{'#059669' if is_good else '#D97706'}\"><b>{status}</b></font>", body_bold_s),
-            Paragraph(thresholds.get(key, "\u2014"), small_s),
+            Paragraph(f'<font color="{align_hex}"><b>{align_label}</b></font>', body_bold_s),
+            Paragraph(FW_FOCUS.get(key, "\u2014"), small_s),
         ])
 
-    fw_tbl = Table(fw_data, colWidths=[36 * mm, 72 * mm, 32 * mm, 28 * mm])
+    fw_tbl = Table(fw_data, colWidths=[36 * mm, 58 * mm, 36 * mm, usable_w - 130 * mm])
     fw_tbl.setStyle(TableStyle([
         ("BACKGROUND",    (0, 0), (-1, 0),  KPMG_BLUE),
         ("TEXTCOLOR",     (0, 0), (-1, 0),  KPMG_WHITE),
@@ -1494,9 +1646,9 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
         "Each of the 10 KPMG Trusted AI principles was evaluated across multiple sub-parameters "
-        "derived from the structure and content of the ingested dataset. The radar chart below "
-        "provides an executive overview; the bar chart shows each principle's individual score "
-        "relative to compliance thresholds (green \u2265 75, amber 55\u201374, red < 55).",
+        "derived from the structure and content of the ingested dataset. The radar chart provides "
+        "an executive overview; the bar chart shows each principle's individual score "
+        "(green \u2265 75: Strong Alignment, amber 55\u201374: Partial Alignment, red &lt; 55: Needs Improvement).",
         sec_sub_s))
 
     # Full-width charts
@@ -1559,15 +1711,122 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 3 — DETAILED PRINCIPLE BREAKDOWN
+    # SECTION 3 — AUDIT FINDINGS & RECOMMENDATIONS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("3. Detailed Principle Assessment", sec_title_s))
+    elements.append(Paragraph("3. Audit Findings &amp; Recommendations", sec_title_s))
+    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
+
+    if not findings:
+        elements.append(Paragraph(
+            "No critical governance findings were identified during this evaluation. "
+            "The dataset demonstrates good alignment with the KPMG Trusted AI Framework. "
+            "Continued monitoring and periodic re-evaluation are recommended to maintain this standard.",
+            body_s))
+    else:
+        elements.append(Paragraph(
+            f"{len(findings)} governance gap(s) were identified across the evaluated principles. "
+            "Each finding is classified by severity — High, Medium, or Low — and includes a targeted, "
+            "actionable recommendation. Findings are listed in order of priority, with High severity "
+            "items requiring the most immediate attention.",
+            sec_sub_s))
+
+        for idx, f in enumerate(findings, 1):
+            cat      = f.get("category", "N/A")
+            severity = f.get("severity", "Medium")
+            issue    = f.get("issue", "")
+            rec      = f.get("recommendation", "")
+
+            # Determine principle score for context
+            principle_score = None
+            for pname, pdata in principles.items():
+                if pname.lower() in cat.lower() or cat.lower() in pname.lower():
+                    principle_score = pdata.get("score")
+                    break
+
+            sev_bg     = colors.HexColor("#FEF2F2") if severity == "High" else colors.HexColor("#E8EEF7") if severity == "Low" else colors.HexColor("#FFFBEB")
+            sev_border = KPMG_RED if severity == "High" else KPMG_BLUE if severity == "Low" else KPMG_AMBER
+
+            score_context = f" (Principle Score: {principle_score}/100)" if principle_score is not None else ""
+
+            f_hdr = Table([[
+                Paragraph(f"<b>{idx}. {cat}{score_context}</b>",
+                          S(f"fcat{idx}", fontSize=10, leading=14, textColor=sev_border,
+                            fontName="Helvetica-Bold")),
+                Paragraph(f"<b>{severity} Severity</b>",
+                          S(f"fsev{idx}", fontSize=9, leading=12, textColor=sev_border,
+                            fontName="Helvetica-Bold", alignment=TA_RIGHT)),
+            ]], colWidths=[usable_w - 35 * mm, 35 * mm])
+            f_hdr.setStyle(TableStyle([
+                ("BACKGROUND",    (0, 0), (-1, -1), sev_bg),
+                ("TOPPADDING",    (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+                ("LINEBELOW",     (0, 0), (-1, -1), 2, sev_border),
+            ]))
+
+            # Build rich finding body with What/Why/How structure
+            finding_body_rows = [
+                [Paragraph("<b>What was found:</b>", S(f"fwhat{idx}", fontSize=8,
+                    fontName="Helvetica-Bold", textColor=colors.HexColor("#374151")))],
+                [Paragraph(issue, finding_txt_s)],
+                [Spacer(1, 4)],
+                [Paragraph("<b>Why this matters:</b>", S(f"fwhy{idx}", fontSize=8,
+                    fontName="Helvetica-Bold", textColor=colors.HexColor("#374151")))],
+                [Paragraph(
+                    _finding_why_it_matters(cat, severity),
+                    S(f"fwhytxt{idx}", fontSize=8, leading=12,
+                      textColor=colors.HexColor("#4B5563"), fontName="Helvetica",
+                      spaceAfter=3, alignment=TA_JUSTIFY))],
+                [Spacer(1, 4)],
+                [Paragraph("<b>Recommended Action:</b>", S(f"frech{idx}", fontSize=8,
+                    fontName="Helvetica-Bold", textColor=colors.HexColor("#1D4ED8")))],
+                [Paragraph(rec, rec_txt_s)],
+            ]
+            f_body = Table(finding_body_rows, colWidths=[usable_w])
+            f_body.setStyle(TableStyle([
+                ("BACKGROUND",    (0, 0), (-1, -1), KPMG_WHITE),
+                ("TOPPADDING",    (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING",   (0, 0), (-1, -1), 12),
+                ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+                ("BOX",           (0, 0), (-1, -1), 0.5, KPMG_MID_GREY),
+                ("LINEBEFORE",    (0, 0), (0, -1),  3, sev_border),
+            ]))
+
+            elements.append(KeepTogether([f_hdr, f_body, Spacer(1, 4 * mm)]))
+
+    # Overall recommendation
+    if recommendation:
+        elements.append(Spacer(1, 4 * mm))
+        elements.append(Paragraph("Overall Assessment &amp; Recommendation", sec_title_s))
+        elements.append(HRFlowable(width="100%", thickness=1, color=KPMG_AMBER, spaceAfter=5))
+        rec_tbl = Table([[Paragraph(recommendation,
+            S("ov_rec", fontSize=8.5, leading=13, textColor=colors.HexColor("#1F2937"),
+              fontName="Helvetica", alignment=TA_JUSTIFY))]],
+            colWidths=[usable_w])
+        rec_tbl.setStyle(TableStyle([
+            ("BACKGROUND",   (0, 0), (-1, -1), colors.HexColor("#E8EEF7")),
+            ("LEFTPADDING",  (0, 0), (-1, -1), 14),
+            ("TOPPADDING",   (0, 0), (-1, -1), 10),
+            ("BOTTOMPADDING",(0, 0), (-1, -1), 10),
+            ("LINEBEFORE",   (0, 0), (0, -1), 4, KPMG_BLUE),
+            ("BOX",          (0, 0), (-1, -1), 0.5, colors.HexColor("#B8C9E4")),
+        ]))
+        elements.append(rec_tbl)
+
+    elements.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 4 — DETAILED PRINCIPLE BREAKDOWN
+    # ══════════════════════════════════════════════════════════════════════════
+    elements.append(Paragraph("4. Detailed Principle Assessment", sec_title_s))
     elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
         "Each principle is evaluated across multiple sub-parameters reflecting structural signals "
-        "in the dataset — including field presence, completeness, volume, and semantic diversity. "
-        "Each sub-parameter includes a full definition explaining what it measures and why it matters, "
-        "followed by how its score was calculated from the uploaded dataset.",
+        "in the dataset. For each sub-parameter, this section explains: what it measures, "
+        "what the score actually means for this AI system, and — where improvement is needed — "
+        "a specific, actionable recommendation. Scores below 75 indicate areas with governance gaps.",
         sec_sub_s))
 
     for i, (pname, pdata) in enumerate(principles.items(), 1):
@@ -1583,28 +1842,32 @@ def build_pdf(report: dict) -> BytesIO:
         p_donut = _build_compliance_donut(sc, 60, 60)
         p_donut_img = _drawing_to_image(p_donut, 60, 60)
 
-        # Principle header — KPMG blue with score badge
+        # Principle header — KPMG blue background, all text readable on dark
         sc_color_hex = "#059669" if sc >= 75 else "#D97706" if sc >= 55 else "#DC2626"
+        # Score pill background: lighter tint so coloured score is readable
+        score_pill_bg = colors.HexColor("#0D47A1")  # slightly lighter than KPMG_BLUE for contrast
         hdr_left = Paragraph(
             f'<b>{i}. {pname}</b>',
             S(f"ph{i}", fontSize=12, leading=16, textColor=KPMG_WHITE, fontName="Helvetica-Bold"))
         hdr_mid = Paragraph(
-            f'<font color="#9DBFE0">{label}</font>',
-            S(f"ps{i}", fontSize=8, leading=12, textColor=colors.HexColor("#9DBFE0"),
+            f'{label}',
+            S(f"ps{i}", fontSize=8, leading=12, textColor=colors.HexColor("#C7DCF0"),
               fontName="Helvetica", alignment=TA_RIGHT))
+        # Score rendered on a white pill so colour is visible regardless of score
         hdr_score = Paragraph(
-            f'<b>{sc}</b>',
+            f'<font color="{sc_color_hex}"><b>{sc}</b></font>',
             S(f"psc{i}", fontSize=20, leading=24, textColor=colors.HexColor(sc_color_hex),
               fontName="Helvetica-Bold", alignment=TA_CENTER))
         score_sub = Paragraph(
             "/100",
-            S(f"psub{i}", fontSize=7, leading=9, textColor=colors.HexColor("#9DBFE0"),
+            S(f"psub{i}", fontSize=7, leading=9, textColor=colors.HexColor("#C7DCF0"),
               fontName="Helvetica", alignment=TA_CENTER))
 
         score_cell = Table([[hdr_score],[score_sub]], colWidths=[22*mm])
         score_cell.setStyle(TableStyle([
-            ("TOPPADDING",    (0, 0), (-1, -1), 2),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ("BACKGROUND",    (0, 0), (-1, -1), colors.HexColor("#FFFFFF")),
+            ("TOPPADDING",    (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
             ("LEFTPADDING",   (0, 0), (-1, -1), 0),
             ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
         ]))
@@ -1668,29 +1931,71 @@ def build_pdf(report: dict) -> BytesIO:
             ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
         ]))
 
-        # Sub-parameter definitions drill-down
-        drill_items = [Paragraph("<b>Sub-Parameter Definitions &amp; Methodology</b>",
-                                  S(f"dh_{i}", fontSize=8, fontName="Helvetica-Bold",
-                                    textColor=KPMG_BLUE, spaceBefore=6, spaceAfter=3))]
+        # Sub-parameter definitions drill-down — rich version with score interpretation
+        drill_items = [Paragraph("<b>Sub-Parameter Definitions, Score Interpretation &amp; Improvement Guidance</b>",
+                                  S(f"dh_{i}", fontSize=8.5, fontName="Helvetica-Bold",
+                                    textColor=KPMG_BLUE, spaceBefore=8, spaceAfter=4))]
+
+        drill_items.append(Paragraph(
+            f"The {pname} principle scored <b>{sc}/100</b>, indicating "
+            f"<b>{score_to_label(sc)}</b> with KPMG Trusted AI standards. "
+            + _principle_score_narrative(pname, sc, params),
+            S(f"pnarr_{i}", fontSize=8, leading=12.5, textColor=colors.HexColor("#374151"),
+              fontName="Helvetica", spaceAfter=6, alignment=TA_JUSTIFY)))
 
         for param, val in params.items():
+            v = int(val)
+            vhex = "#059669" if v >= 75 else "#D97706" if v >= 55 else "#DC2626"
             expl = _parameter_explanation(param, report)
-            # expl is now always a (definition, calculation) tuple
             if isinstance(expl, tuple):
                 rich_def, calc_note = expl
             else:
                 rich_def, calc_note = "", str(expl)
-            # Fallback: if no rich_def from new function, try legacy dict
             if not rich_def:
                 rich_def = SUB_PARAMETER_DEFINITIONS.get(param, "")
-            drill_items.append(Paragraph(
-                f"<b>{param}:</b>",
-                S(f"dn_{i}_{param}", fontSize=7.5, fontName="Helvetica-Bold",
-                  textColor=colors.HexColor("#111827"), spaceBefore=3, spaceAfter=1)))
+
+            # Score meaning sentence
+            score_meaning = _subparam_score_meaning(param, v)
+            # Improvement guidance
+            improvement = _subparam_improvement(param, v)
+
+            # Param name line with inline score badge
+            drill_items.append(Table([[
+                Paragraph(f"<b>{param}</b>",
+                    S(f"dn_{i}_{param}", fontSize=7.5, fontName="Helvetica-Bold",
+                      textColor=colors.HexColor("#111827"))),
+                Paragraph(f'<font color="{vhex}"><b>{v}/100 — {score_to_label(v)}</b></font>',
+                    S(f"dnscore_{i}_{param}", fontSize=7.5, fontName="Helvetica-Bold",
+                      alignment=TA_RIGHT)),
+            ]], colWidths=[usable_w * 0.62, usable_w * 0.38],
+            style=[
+                ("TOPPADDING",    (0,0),(-1,-1), 5),
+                ("BOTTOMPADDING", (0,0),(-1,-1), 2),
+                ("LEFTPADDING",   (0,0),(-1,-1), 0),
+                ("BACKGROUND",    (0,0),(-1,-1), colors.HexColor("#F0F4FA")),
+                ("LINEBELOW",     (0,0),(-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+            ]))
+
             if rich_def:
                 drill_items.append(Paragraph(rich_def, def_txt_s))
+
+            # What this score means for this system
             drill_items.append(Paragraph(
-                f"<i>Calculation: {calc_note}</i>", calc_txt_s))
+                f"<b>What this score means:</b> {score_meaning}",
+                S(f"dsm_{i}_{param}", fontSize=7.5, leading=11.5,
+                  textColor=colors.HexColor("#374151"), fontName="Helvetica",
+                  spaceAfter=2, leftIndent=8, alignment=TA_JUSTIFY)))
+
+            # How to improve (only show if not already strong)
+            if v < 85:
+                drill_items.append(Paragraph(
+                    f"<b>How to improve:</b> {improvement}",
+                    S(f"dimp_{i}_{param}", fontSize=7.5, leading=11.5,
+                      textColor=colors.HexColor("#1D4ED8"), fontName="Helvetica-Oblique",
+                      spaceAfter=2, leftIndent=8, alignment=TA_JUSTIFY)))
+
+            drill_items.append(Paragraph(
+                f"<i>Calculation method: {calc_note}</i>", calc_txt_s))
 
         block = KeepTogether([
             hdr_with_donut,
@@ -1706,9 +2011,9 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 4 — DATASET DIAGNOSTICS
+    # SECTION 5 — DATASET DIAGNOSTICS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("4. Dataset Diagnostics", sec_title_s))
+    elements.append(Paragraph("5. Dataset Diagnostics", sec_title_s))
     elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
     elements.append(Paragraph(
         "Structural analysis of the ingested dataset underpins every score in this report. "
@@ -1795,87 +2100,6 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 5 — AUDIT FINDINGS
-    # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("5. Audit Findings &amp; Recommendations", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
-
-    if not findings:
-        elements.append(Paragraph(
-            "No critical governance findings were identified during this evaluation. "
-            "The dataset aligns well with the KPMG Trusted AI Framework standards. "
-            "Continued monitoring is recommended.",
-            body_s))
-    else:
-        elements.append(Paragraph(
-            f"{len(findings)} governance gap(s) were identified. Each finding is classified by "
-            "severity (High / Medium / Low) and includes a targeted, actionable recommendation "
-            "for remediation within the next audit cycle.",
-            sec_sub_s))
-
-        for idx, f in enumerate(findings, 1):
-            cat      = f.get("category", "N/A")
-            severity = f.get("severity", "Medium")
-            issue    = f.get("issue", "")
-            rec      = f.get("recommendation", "")
-
-            sev_bg     = colors.HexColor("#FEF2F2") if severity == "High" else colors.HexColor("#E8EEF7") if severity == "Low" else colors.HexColor("#FFFBEB")
-            sev_border = KPMG_RED if severity == "High" else KPMG_BLUE if severity == "Low" else KPMG_AMBER
-
-            f_hdr = Table([[
-                Paragraph(f"<b>{idx}. {cat}</b>",
-                          S(f"fcat{idx}", fontSize=10, leading=14, textColor=sev_border,
-                            fontName="Helvetica-Bold")),
-                Paragraph(f"<b>{severity}</b>",
-                          S(f"fsev{idx}", fontSize=9, leading=12, textColor=sev_border,
-                            fontName="Helvetica-Bold", alignment=TA_RIGHT)),
-            ]], colWidths=[usable_w - 25 * mm, 25 * mm])
-            f_hdr.setStyle(TableStyle([
-                ("BACKGROUND",    (0, 0), (-1, -1), sev_bg),
-                ("TOPPADDING",    (0, 0), (-1, -1), 7),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
-                ("LEFTPADDING",   (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
-                ("LINEBELOW",     (0, 0), (-1, -1), 1.5, sev_border),
-            ]))
-
-            f_body = Table([[Paragraph(issue, finding_txt_s)],
-                            [Spacer(1, 2)],
-                            [Paragraph(f"<b>Recommendation:</b> {rec}", rec_txt_s)]],
-                           colWidths=[usable_w])
-            f_body.setStyle(TableStyle([
-                ("BACKGROUND",    (0, 0), (-1, -1), KPMG_WHITE),
-                ("TOPPADDING",    (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("LEFTPADDING",   (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
-                ("BOX",           (0, 0), (-1, -1), 0.5, KPMG_MID_GREY),
-            ]))
-
-            elements.append(KeepTogether([f_hdr, f_body, Spacer(1, 4 * mm)]))
-
-    # Overall recommendation
-    if recommendation:
-        elements.append(Spacer(1, 4 * mm))
-        elements.append(Paragraph("Overall Recommendation", sec_title_s))
-        elements.append(HRFlowable(width="100%", thickness=1, color=KPMG_AMBER, spaceAfter=5))
-        rec_tbl = Table([[Paragraph(recommendation,
-            S("ov_rec", fontSize=8.5, leading=13, textColor=colors.HexColor("#1F2937"),
-              fontName="Helvetica", alignment=TA_JUSTIFY))]],
-            colWidths=[usable_w])
-        rec_tbl.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, -1), colors.HexColor("#E8EEF7")),
-            ("LEFTPADDING",  (0, 0), (-1, -1), 14),
-            ("TOPPADDING",   (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 10),
-            ("LINEBEFORE",   (0, 0), (0, -1), 4, KPMG_BLUE),
-            ("BOX",          (0, 0), (-1, -1), 0.5, colors.HexColor("#B8C9E4")),
-        ]))
-        elements.append(rec_tbl)
-
-    elements.append(PageBreak())
-
-    # ══════════════════════════════════════════════════════════════════════════
     # SECTION 6 — FRAMEWORK REFERENCE
     # ══════════════════════════════════════════════════════════════════════════
     elements.append(Paragraph("6. KPMG Trusted AI Framework — Reference Guide", sec_title_s))
@@ -1884,7 +2108,7 @@ def build_pdf(report: dict) -> BytesIO:
         "The KPMG Trusted AI Framework defines 10 interconnected principles organised around "
         "three core values: Values-led, Trustworthy, and Human-centric. These principles cover "
         "the full AI lifecycle from strategy and development through to deployment and monitoring. "
-        "Each principle maps to specific regulatory articles across the EU AI Act, ISO 42001, and NIST AI RMF.",
+        "Each principle maps to specific governance requirements across the EU AI Act, ISO 42001, and NIST AI RMF.",
         sec_sub_s))
 
     core_values = {
@@ -1942,9 +2166,9 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(Paragraph("<b>Score Interpretation Guide</b>", body_bold_s))
     elements.append(Spacer(1, 3))
     legend_rows = [
-        ("75 \u2013 100", "Compliant",     KPMG_GREEN, "Meets KPMG Trusted AI standards. Continue monitoring and document evidence for regulatory filing."),
-        ("55 \u2013 74",  "Conditional",   KPMG_AMBER, "Partial compliance detected. Targeted remediation required within 90 days of audit date."),
-        ("0 \u2013 54",   "Non-Compliant", KPMG_RED,   "Critical governance gaps identified. Immediate remediation required before production deployment."),
+        ("75 \u2013 100", "Strong",   KPMG_GREEN, "The AI system demonstrates strong governance practices aligned with this framework. Continue monitoring and document evidence for stakeholder reporting."),
+        ("55 \u2013 74",  "Medium",  KPMG_AMBER, "Moderate alignment detected with identifiable gaps. Targeted remediation is recommended within the next governance cycle."),
+        ("0 \u2013 54",   "Low",  KPMG_RED,   "Significant gaps identified. Remediation actions should be prioritised before expanded deployment or regulatory review."),
     ]
     leg_data = []
     for rng, lbl, col, desc in legend_rows:

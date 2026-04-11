@@ -6449,7 +6449,7 @@ export default function Dashboard() {
     setBbResult(null);
     setBbProgress(0);
 
-    const totalProbes = 14;
+    const totalProbes = 50;
     const interval = setInterval(() => {
       setBbProgress((p) => {
         if (p >= totalProbes - 1) { clearInterval(interval); return p; }
@@ -6468,6 +6468,33 @@ export default function Dashboard() {
       clearInterval(interval);
       setBbProgress(totalProbes);
       setBbResult(res.data);
+
+      // ── Auto-ingest probe results into SDCC ────────────────────────────
+      // Build a CSV blob directly from probe_results (already in memory).
+      // Columns: task_id, input, output, latency — exact SDCC schema.
+      const probes: any[] = res.data?.probe_results ?? [];
+      if (probes.length > 0 && aiName) {
+        try {
+          const header = "task_id,input,output,latency";
+          const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+          const rows   = probes.map((p: any) =>
+            [escape(p.probe_id ?? p.id ?? ""),
+             escape(p.prompt   ?? p.input   ?? ""),
+             escape(p.response ?? p.output  ?? ""),
+             p.latency_ms ?? p.latency ?? ""].join(",")
+          );
+          const csvBlob = new Blob([[header, ...rows].join("\n")], { type: "text/csv" });
+          const csvFile = new File([csvBlob], "blackbox_probes.csv", { type: "text/csv" });
+
+          const ingestRes = await sdccIngest(aiName, csvFile);
+          setSdccSummary(ingestRes.data);
+          setLogsCount(ingestRes.data?.logs_ingested ?? probes.length);
+          setUploaded(true);
+          setUploadSuccess(true);
+        } catch {
+          // Non-fatal — blackbox result is still shown even if SDCC ingest fails
+        }
+      }
     } catch (e: any) {
       clearInterval(interval);
       setBbError(extractErr(e));
@@ -6555,7 +6582,7 @@ export default function Dashboard() {
   };
 
   /* ── Render helpers ── */
-  const totalProbes  = 14;
+  const totalProbes  = 50;
   const progressPct  = Math.round((bbProgress / totalProbes) * 100);
 
   const noteEntries      = computationNotes
