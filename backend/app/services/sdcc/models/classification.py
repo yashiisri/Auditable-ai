@@ -1,3 +1,5 @@
+
+
 """
 services/sdcc/models/classification.py
 ==========================================
@@ -32,12 +34,27 @@ class ClassificationEvaluator(BaseEvaluator):
     }
 
     TAF_METRIC_WEIGHTS = {
-        "Fairness":       0.30,
-        "Reliability":    0.25,
-        "Safety":         0.20,
-        "Explainability": 0.15,
-        "Data Integrity": 0.10,
-    }
+        # class_balance is the strongest direct demographic-parity signal available
+        "Fairness":        0.22,
+        # f1, roc_auc, accuracy directly measure prediction reliability
+        "Reliability":     0.20,
+        # avg_confidence = how clearly the model communicates its certainty
+        "Transparency":    0.12,
+        # confidence distribution is the primary explainability signal for classifiers
+        "Explainability":  0.12,
+        # class_balance + accuracy on held-out data = data integrity
+        "Data Integrity":  0.10,
+        # precision/recall matter acutely for high-stakes decisions
+        "Accountability":  0.08,
+        # recall = catching dangerous false negatives (safety-critical use cases)
+        "Safety":          0.08,
+        # models may memorise training PII
+        "Privacy":         0.04,
+        # adversarial perturbation resistance
+        "Security":        0.02,
+        # latency ↔ compute per inference
+        "Sustainability":  0.02,
+    }  # sum = 1.00
 
     def model_metrics(self, df: pd.DataFrame, computed: dict | None = None) -> dict:
         c = computed or {}
