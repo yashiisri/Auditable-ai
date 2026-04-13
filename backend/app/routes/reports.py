@@ -1,4 +1,3 @@
-
 # from fastapi import APIRouter, HTTPException, Depends
 # from fastapi.responses import StreamingResponse
 # from reportlab.lib.pagesizes import A4
@@ -7083,13 +7082,13 @@ def build_pdf(report: dict) -> BytesIO:
              "Rows skipped due to missing data or judge API failure."),
             ("Disputed Rows",              str(disputed),     "#D97706" if disputed > 0 else "#059669",
              "Rows where judges could not reach majority agreement — excluded from accuracy."),
-            ("Active Judges",              str(panel_size),   KPMG_BLUE.hexval()[1:],
+            ("Active Judges",              str(panel_size),   "#00338D",
              f"Number of active judges: {', '.join(panel_names) if panel_names else 'N/A'}."),
             ("High Confidence Verdicts",   str(n_high),       "#059669",
              "Rows where all 3 judges agreed (most reliable verdicts)."),
             ("Medium Confidence Verdicts", str(n_med),        "#D97706",
              "Rows where 2/3 judges agreed (solid but watch disputed cases)."),
-            ("KB Reference Rows",          str(kb_used),      KPMG_BLUE.hexval()[1:],
+            ("KB Reference Rows",          str(kb_used),      "#00338D",
              "Rows where the knowledge base was used as the reference (highest accuracy path)."),
         ]
 
