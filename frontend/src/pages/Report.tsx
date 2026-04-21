@@ -6628,7 +6628,7 @@ export default function Report() {
         })()}
 
         {/* AUDIT FINDINGS */}
-        <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
+        {/* <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}><SvgAlert /></div>
             <div>
@@ -6691,7 +6691,92 @@ export default function Report() {
               })}
             </div>
           )}
+        </div> */}
+
+
+
+        {/* AUDIT FINDINGS */}
+      <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}>
+            <SvgAlert />
+          </div>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
+              Audit Findings
+              {(r.findings?.length || 0) > 0 && (
+                <span style={{ marginLeft: 10, fontSize: 16, fontWeight: 700, color: "#DC2626", background: "#FEE2E2", padding: "2px 10px", borderRadius: 20 }}>
+                  {r.findings.length}
+                </span>
+              )}
+            </h2>
+            <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Detailed governance issues identified during the audit</p>
+          </div>
         </div>
+
+        {(r.findings?.length || 0) > 0 && (
+          <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+            {[
+              { label: "High", color: "#DC2626", bg: "#FEE2E2", count: r.findings.filter(f => f.severity === "High").length },
+              { label: "Medium", color: KPMG_MID, bg: "#E6F2FB", count: r.findings.filter(f => f.severity === "Medium").length },
+              { label: "Low", color: "#059669", bg: "#DCFCE7", count: r.findings.filter(f => f.severity === "Low").length },
+            ].map(s => (
+              <div key={s.label} style={{ padding: "10px 18px", borderRadius: 10, background: s.bg, border: `1px solid ${s.color}20`, display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: s.color }}>{s.count}</div>
+                <div style={{ fontSize: 12, color: s.color, fontWeight: 600 }}>{s.label} Severity</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!r.findings?.length ? (
+          <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 14, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ color: "#166534" }}><SvgCheck /></span>
+            <span>No critical findings. Dataset aligns well with Trusted AI standards.</span>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {r.findings.map((f, i) => {
+              const sc = f.severity === "High" ? "#DC2626" : f.severity === "Medium" ? KPMG_MID : "#059669";
+              const scBg = f.severity === "High" ? "#FEE2E2" : f.severity === "Medium" ? "#E6F2FB" : "#DCFCE7";
+              const catColor = COLORS[f.category] || KPMG_MID;
+
+              return (
+                <div key={i} style={{ borderRadius: 16, background: "white", border: `1.5px solid ${sc}25`, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                  <div style={{ padding: "14px 20px", background: scBg, borderBottom: `1px solid ${sc}20`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: COLORS[f.category] || KPMG_MID }}>
+                        {(() => { const IC = ICONS[f.category]; return IC ? <IC /> : <SvgAlert />; })()}
+                      </span>
+                      <span style={{ color: catColor, fontWeight: 700, fontSize: 14 }}>{f.category}</span>
+                      {f.type && <span style={{ fontSize: 11, color: "#94A3B8", background: "white", padding: "2px 8px", borderRadius: 10, border: "1px solid #E2E8F0" }}>{f.type}</span>}
+                    </div>
+                    <span style={{ color: sc, fontWeight: 700, background: "white", padding: "4px 14px", borderRadius: 20, fontSize: 12, border: `1px solid ${sc}30` }}>{f.severity}</span>
+                  </div>
+
+                  <div style={{ padding: "18px 20px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>
+                      Issue Identified
+                    </div>
+                    
+                    {/* Cleaned issue - removes "governance gap detected" */}
+                    <p style={{ margin: "0 0 14px", color: "#1E293B", lineHeight: 1.7, fontSize: 14, fontWeight: 500 }}>
+                      {f.issue.replace(/ — governance gap detected\.?$/, '')}
+                    </p>
+
+                    <div style={{ padding: "12px 16px", borderRadius: 10, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}30` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
+                        Recommended Action
+                      </div>
+                      <p style={{ margin: 0, color: KPMG_BLUE, lineHeight: 1.65, fontSize: 13 }}>{f.recommendation}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
         {/* OVERALL RECOMMENDATION */}
         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.43) }}>

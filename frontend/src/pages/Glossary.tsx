@@ -385,7 +385,7 @@ export default function Glossary() {
         <h1 className="gl-hero-h1">Enterprise AI Governance,</h1>
         <div className="gl-hero-h1-grad">Automated.</div>
         <p className="gl-hero-sub">
-          The world's first end-to-end AI audit platform. Upload inference logs from your{" "}
+          An end-to-end AI audit platform. Upload inference logs from your{" "}
           <span className="gl-hero-tw">{typed}</span>
           {" "}and receive a full governance report in minutes — no ML expertise required.
         </p>

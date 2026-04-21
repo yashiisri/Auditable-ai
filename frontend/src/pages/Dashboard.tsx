@@ -812,7 +812,21 @@ body{background:#F4F7FB;}
 .db-check-v.red{color:#C53030;}
 
 @media(max-width:640px){.db-body{padding:20px 14px;}.db-nav{padding:0 16px;}.db-score-bar-name{min-width:80px;}}
+
+/* Report generation indeterminate slider */
+@keyframes eval-slide{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
+@keyframes eval-pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.db-eval-loader{margin-top:16px;}
+.db-eval-track{height:4px;background:#E3EAF3;border-radius:4px;overflow:hidden;position:relative;}
+.db-eval-bar{position:absolute;top:0;left:0;height:100%;width:30%;background:linear-gradient(to right,#00338D,#0091DA,#00A3A1);border-radius:4px;animation:eval-slide 1.6s ease-in-out infinite;}
+.db-eval-steps{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.db-eval-step{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:#EEF4FF;color:#005EB8;border:1px solid #C7D9F5;animation:eval-pulse 2s ease-in-out infinite;}
+.db-eval-step:nth-child(2){animation-delay:0.4s;}
+.db-eval-step:nth-child(3){animation-delay:0.8s;}
+.db-eval-step:nth-child(4){animation-delay:1.2s;}
+.db-eval-lbl{font-size:11px;color:#8FA3BF;margin-top:6px;text-align:center;}
 `;
+
 
 /* ── helper sub-components ── */
 
@@ -1041,10 +1055,10 @@ export default function Dashboard() {
       return;
     }
 
-    const iv = setInterval(() => setBbProgress(p => p>=39?p:p+1), 400);
+    const iv = setInterval(() => setBbProgress(p => p>=49?p:p+1), 400);
     try {
       const res = await runBlackBoxAudit({ ai_name:aiName||"external-ai", mode:bbTab, endpoint:bbEndpoint, api_key:bbApiKey, ui_url:bbUiUrl });
-      clearInterval(iv); setBbProgress(40); setBbResult(res.data); setBbDone(true);
+      clearInterval(iv); setBbProgress(50); setBbResult(res.data); setBbDone(true);
       const probes: any[] = res.data?.probe_results??[];
       if (probes.length>0 && aiName) {
         try {
@@ -1091,7 +1105,7 @@ export default function Dashboard() {
     finally { setEvalLoading(false); }
   };
 
-  const progressPct = Math.round((bbProgress/40)*100);
+  const progressPct = Math.round((bbProgress/50)*100);
   const stepNum = (done: boolean, active: boolean) => done ? "done" : active ? "active" : "";
 
   return (
@@ -1182,7 +1196,7 @@ export default function Dashboard() {
                   </button>
                   {bbLoading && bbTab!=="chat" && <>
                     <div className="db-prog"><div className="db-prog-fill" style={{ width:`${progressPct}%` }} /></div>
-                    <div className="db-prog-lbl">Probe {bbProgress} of 40 — {progressPct}%</div>
+                    <div className="db-prog-lbl">Probe {bbProgress} of 50 — {progressPct}%</div>
                   </>}
                 </div>
               )}
@@ -1312,6 +1326,18 @@ export default function Dashboard() {
                 <button className="db-btn big" onClick={handleEvaluate} disabled={!uploaded||evalLoading}>
                   {evalLoading?"Generating Report…":"Run Full Governance Evaluation →"}
                 </button>
+                {evalLoading && (
+                  <div className="db-eval-loader">
+                    <div className="db-eval-track"><div className="db-eval-bar" /></div>
+                    <div className="db-eval-steps">
+                      <span className="db-eval-step"> SDCC Analysis</span>
+                      <span className="db-eval-step"> LLM Judge Scoring</span>
+                      <span className="db-eval-step"> TAF Principles</span>
+                      <span className="db-eval-step"> PDF Report</span>
+                    </div>
+                    <div className="db-eval-lbl">This may take some time — please don't close the tab.</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

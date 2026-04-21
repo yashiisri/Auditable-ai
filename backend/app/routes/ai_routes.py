@@ -1119,9 +1119,22 @@ def evaluate_ai(
                 "started_at":  str(bb_doc.get("started_at", "")),
             }
 
-    # Merge: uploaded logs first, then blackbox probes
-    combined_recs = sample_recs + blackbox_rows
-    logs_count    = len(combined_recs)
+    # Merge: uploaded logs first, then blackbox probes.
+    # Deduplicate by task_id to prevent double-counting when blackbox probe
+    # rows were already auto-ingested into sdcc_collection (sample_records)
+    # AND are being pulled again here from blackbox_audits.
+    # Rows without a task_id (or with an empty one) are always kept.
+    seen_task_ids: set = set()
+    combined_recs: list = []
+    for row in sample_recs + blackbox_rows:
+        tid = row.get("task_id", "") or ""
+        if tid and tid in seen_task_ids:
+            continue          # duplicate — already counted from sample_records
+        if tid:
+            seen_task_ids.add(tid)
+        combined_recs.append(row)
+
+    logs_count = len(combined_recs)
 
     # ── Reconstruct DataFrame ──────────────────────────────────────────────────
     df = pd.DataFrame(combined_recs) if combined_recs else pd.DataFrame()
