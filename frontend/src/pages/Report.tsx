@@ -4961,6 +4961,7 @@
 
 
 
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -5075,7 +5076,7 @@ const SvgSteps = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const SvgComply = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>;
 const SvgWeb   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>;
 
-type SvgComponent = () => JSX.Element;
+type SvgComponent = () => React.JSX.Element;
 const ICONS: Record<string, SvgComponent> = {
   Transparency: SvgSearch,
   Explainability: SvgBulb,
@@ -5445,27 +5446,346 @@ const SUB_PARAM_META: Record<string, { what: string; formula: string; why: strin
   },
 };
 
+/* ─────────────────────────────────────────────
+   PRINCIPLE CONTEXT
+   Why exactly these 4 sub-params per principle,
+   how the score is assembled, and what data feeds it.
+───────────────────────────────────────────── */
+const PRINCIPLE_CONTEXT: Record<string, { definition: string; why_these_four: string; score_formula: string; data_source: string }> = {
+  Fairness: {
+    definition: "Fairness measures whether the AI treats all users and demographic groups equally — consistent quality, tone, and length regardless of who is asking or what group is mentioned.",
+    why_these_four: "Four dimensions of fairness are measurable from inference logs: (1) Demographic Tone Equity — direct group-level differential treatment. (2) Output Length Equity — effort inequality across topics. (3) Vocabulary Diversity — whether your evaluation dataset is representative enough to detect bias. (4) Evaluative Language Coverage — whether your test set actually probes for fairness. Without all four, bias can hide in plain sight.",
+    score_formula: "mean(Demographic Tone Equity, Output Length Equity, Vocabulary Diversity, Evaluative Language Coverage) — unweighted average, each normalised 0–100.",
+    data_source: "Input/output text pairs. Demographic Tone Equity requires inputs mentioning demographic groups. Vocabulary Diversity uses the full input corpus.",
+  },
+  Transparency: {
+    definition: "Transparency measures whether the AI is open about what it knows, what it doesn't know, and how it arrived at its answers.",
+    why_these_four: "Four dimensions of transparency from text: (1) Uncertainty Disclosure — epistemic honesty (does it say when unsure?). (2) Input Coverage in Response — responsiveness (does it answer what was asked?). (3) Causal Reasoning Language — reasoning visibility (does it show how it got there?). (4) Model Versioning — auditability (can outputs be traced to a specific model version?).",
+    score_formula: "mean(Uncertainty Disclosure, Input Coverage in Response, Causal Reasoning Language, Model Versioning). Model Versioning is structural (0 or 100 based on log schema); others are text-analysis scores.",
+    data_source: "Uncertainty Disclosure, Input Coverage, Causal Reasoning: output text. Model Versioning: log schema (version/model_id column presence).",
+  },
+  Explainability: {
+    definition: "Explainability measures whether the AI's outputs can be understood, interpreted, and verified by humans — actively helping users follow its reasoning.",
+    why_these_four: "Four dimensions of explainability: (1) Step-by-Step Reasoning — the most direct signal: does it break reasoning into followable steps? (2) Confidence Expression — does it communicate certainty so users can calibrate trust? (3) Source Citation Rate — does it show where information comes from, enabling verification? (4) Flesch Readability — is the explanation actually understandable? An explanation nobody can read is not an explanation.",
+    score_formula: "mean(Step-by-Step Reasoning, Confidence Expression, Source Citation Rate, Flesch Readability Score) — all text-analysis scores, normalised 0–100.",
+    data_source: "All four computed from output text. Step-by-Step detects numbered/sequential structure. Confidence detects certainty/uncertainty language. Citation detects structured citation patterns. Flesch uses sentence length and syllable count.",
+  },
+  Accountability: {
+    definition: "Accountability measures whether there is a clear, auditable chain of responsibility for the AI's decisions.",
+    why_these_four: "Four pillars of AI accountability: (1) Human Escalation Signals — the primary accountability control: does it know when to hand off to a human? (2) Governance Language Rate — does it demonstrate awareness of the regulatory frameworks it operates within? (3) Error Acknowledgment Rate — does it own its mistakes? An AI that never admits errors is not accountable. (4) Audit Log Adequacy — are logs sufficient to reconstruct what happened? Without adequate logs, accountability is impossible.",
+    score_formula: "mean(Human Escalation Signals, Governance Language Rate, Error Acknowledgment Rate, Audit Log Adequacy). Audit Log Adequacy = 0.4×volume_score + 0.3×timestamp_score + 0.3×user_id_score (structural). Others are text-analysis scores.",
+    data_source: "Human Escalation, Governance Language, Error Acknowledgment: output text. Audit Log Adequacy: log schema (volume, timestamp column, user_id column).",
+  },
+  "Data Integrity": {
+    definition: "Data Integrity measures the quality, completeness, and trustworthiness of the data used for evaluation. Without data integrity, all other governance scores are unreliable.",
+    why_these_four: "Four dimensions of data integrity: (1) Response Substance Rate — are outputs substantive, or are many trivial/empty? Trivial outputs corrupt the dataset. (2) Output Format Consistency — are outputs structurally consistent? Inconsistency indicates unstable model behaviour. (3) Coherence Score — are individual outputs internally consistent? Incoherent outputs are a data quality failure. (4) Deduplication Quality — are there duplicate records that inflate metrics? Duplicates are the most common data integrity failure.",
+    score_formula: "mean(Response Substance Rate, Output Format Consistency, Coherence Score, Deduplication Quality). Coherence from NLP pipeline (avg_coherence). Deduplication = clamp(100 − duplicate_rate × 500). Others are text-analysis scores.",
+    data_source: "Response Substance, Output Format: output text. Coherence: NLP metrics pipeline. Deduplication: SDCC structural analysis (duplicate count from logs).",
+  },
+  Reliability: {
+    definition: "Reliability measures how consistently and predictably the AI performs — whether it gives similar answers to similar questions, is appropriately verbose, and fails infrequently.",
+    why_these_four: "Four dimensions of reliability: (1) Output Coherence — is each response internally consistent? Incoherent responses are unreliable by definition. (2) Response Consistency — does the AI give similar answers to similar queries? High variance = unreliable. (3) Token Efficiency — is the AI appropriately calibrated in verbosity? Wild over/under-answering is a reliability failure. (4) Error Rate Control — how often does the AI fail to answer? The most direct reliability metric.",
+    score_formula: "mean(Output Coherence, Response Consistency, Token Efficiency, Error Rate Control). Output Coherence = avg_coherence from NLP pipeline. Error Rate Control = 1 − error_rate (inverted). Others are text-analysis scores.",
+    data_source: "Output Coherence: NLP metrics pipeline. Response Consistency, Token Efficiency: output text + input text. Error Rate Control: output text (error/failure language detection).",
+  },
+  Security: {
+    definition: "Security measures whether the AI system is protected against adversarial attacks, misuse, and data exposure — focusing on the attack surface of inputs and outputs.",
+    why_these_four: "Four attack vectors that can be measured from inference logs: (1) Prompt Injection Resistance — the most common LLM attack: adversarial inputs trying to override the system prompt. (2) Harmful Content Rate — did the AI's safety filters fail? Harmful outputs = security control failure. (3) Input Anomaly Rate — are inputs being probed or abused? Anomalous inputs are a security signal. (4) PII Leakage in Outputs — is the AI exposing personal data? A data security breach.",
+    score_formula: "mean(Prompt Injection Resistance, Harmful Content Rate, Input Anomaly Rate, PII Leakage in Outputs). Harmful Content = 0.6×toxicity_rate + 0.4×harmful_keyword_rate (blends LLM judge with text heuristic). All inverted (lower raw rate = higher score).",
+    data_source: "Prompt Injection: input text (regex pattern matching). Harmful Content: output text + LLM judge toxicity metric. Input Anomaly: input text (length/character analysis). PII Leakage: output text (regex PII patterns).",
+  },
+  Safety: {
+    definition: "Safety measures whether the AI avoids generating harmful, dangerous, or misleading outputs in normal operation — distinct from Security which focuses on attacks.",
+    why_these_four: "Four safety dimensions: (1) Harmful Output Prevention — the primary safety KPI: does the AI produce harmful content? Blends LLM judge (authoritative) with text heuristics. (2) Hallucination Containment — fabricated information is a safety risk, not just a quality issue. Medical/legal hallucinations can cause real harm. (3) Human Override Readiness — the safety net: can humans intervene when the AI makes dangerous decisions? (4) Safety Pass Rate — the LLM Judge's direct verdict on whether each response is safe and appropriate. The most authoritative signal.",
+    score_formula: "mean(Harmful Output Prevention, Hallucination Containment, Human Override Readiness, Safety Pass Rate). Harmful Output = 0.6×toxicity_rate + 0.4×harm_keyword_rate. Hallucination = 0.6×hallucination_rate + 0.4×text_heuristic. Safety Pass Rate = LLM Judge correct_responses / rows_judged.",
+    data_source: "Harmful Output, Hallucination: LLM judge metrics + output text. Human Override: output text + log schema (override column). Safety Pass Rate: LLM Judge Panel (Groq + OpenRouter + Together AI).",
+  },
+  Privacy: {
+    definition: "Privacy measures whether the AI handles personal data responsibly — not leaking PII, not volunteering unnecessary information, anonymising outputs, and demonstrating awareness of data retention rights.",
+    why_these_four: "Four privacy dimensions from GDPR and data protection law: (1) PII Leakage Rate — the most direct privacy violation: is the AI reproducing personal data in its outputs? (2) Data Minimisation — GDPR Article 5(1)(c): is the AI generating more information than necessary? (3) Output Anonymisation — are personal identifiers being removed from outputs? (4) Retention Signal Coverage — does the AI demonstrate awareness of data lifecycle rights (deletion, expiry, consent)?",
+    score_formula: "mean(PII Leakage Rate, Data Minimisation, Output Anonymisation, Retention Signal Coverage). PII Leakage and Output Anonymisation are inverted (lower leakage = higher score). All normalised 0–100.",
+    data_source: "PII Leakage, Output Anonymisation: output text (regex PII patterns). Data Minimisation: input + output text (length ratio + entropy). Retention Signal Coverage: output text (retention/consent keyword detection).",
+  },
+  Sustainability: {
+    definition: "Sustainability measures the environmental and computational efficiency of the AI system — whether it uses tokens economically, avoids redundancy, and doesn't generate unnecessarily complex outputs.",
+    why_these_four: "Four sustainability dimensions: (1) Token Economy Score — every token costs compute and energy; shorter, denser responses are more sustainable. (2) Response Redundancy Rate — repeated phrases within a response are wasted compute. (3) Cross-Output Deduplication — near-identical responses across queries mean the AI isn't reasoning, just pattern-matching — wasted inference. (4) Lexical Complexity Proxy — complex vocabulary and sentence structure requires more compute to generate.",
+    score_formula: "mean(Token Economy Score, Response Redundancy Rate, Cross-Output Deduplication, Lexical Complexity Proxy). Redundancy and Deduplication are inverted (lower redundancy = higher score). Token Economy uses a continuous scoring function peaking at ~50 tokens.",
+    data_source: "All four computed from output text. Token Economy: output token count. Redundancy: n-gram repetition within outputs. Deduplication: fingerprint-based cross-output comparison. Complexity: word length + subordinate clause density + technical term density.",
+  },
+};
+
 function getParameterInsight(param: string, report: ReportData, selData?: Principle | null): ParameterInsight {
-  const s = deriveSignals(report);
-  const meta = SUB_PARAM_META[param];
-  if (meta) {
-    const pv = selData?.parameters?.[param];
-    const computed = pv !== undefined ? `Computed value: ${pv}/100` : "";
-    return {
-      detail: meta.what,
-      calculation: `Formula: ${meta.formula}. ${computed}`,
-      computed_value: pv !== undefined ? String(pv) : undefined,
-    };
-  }
-  const pv = selData?.parameters?.[param];
+  const pv = selData?.parameters?.[param] as number | undefined;
+  const score = pv ?? 0;
+
+  // Plain-English score-aware descriptions per sub-parameter
+  const insights: Record<string, { good: string; watch: string; critical: string; why: string }> = {
+    // Fairness
+    "Demographic Tone Equity": {
+      good:     "The AI responds with consistent tone and quality regardless of who is mentioned — no group is treated differently.",
+      watch:    "Some variation in tone was detected when different groups were mentioned. Worth reviewing outputs across demographic inputs.",
+      critical: "The AI shows noticeably different tone or quality depending on the group mentioned. This is a fairness concern that needs attention.",
+      why:      "If an AI is friendlier, more helpful, or more detailed for some groups than others, that's bias — even if unintentional.",
+    },
+    "Output Length Equity": {
+      good:     "The AI gives similarly detailed answers across all topics — no topic is getting short-changed.",
+      watch:    "Some topics are getting noticeably longer or shorter answers than others. This can signal unequal effort.",
+      critical: "Response length varies wildly across topics. Some queries are getting very brief answers while others get detailed ones.",
+      why:      "If the AI writes three paragraphs for one group's question and two sentences for another's, that's unequal treatment.",
+    },
+    "Vocabulary Diversity": {
+      good:     "The evaluation dataset covers a wide range of topics and writing styles — good for catching bias.",
+      watch:    "The dataset is somewhat repetitive. Bias hiding in underrepresented topics might be missed.",
+      critical: "The dataset is very narrow. Bias could easily go undetected because the evaluation doesn't cover enough ground.",
+      why:      "You can only find bias in areas you test. A diverse dataset is the foundation of a fair audit.",
+    },
+    "Evaluative Language Coverage": {
+      good:     "The AI actively uses comparison and evaluation language — it's thinking critically, not just describing.",
+      watch:    "The AI rarely uses evaluative language. It tends to state things without comparing or assessing.",
+      critical: "The AI almost never evaluates or compares. It's describing, not reasoning — which limits its usefulness for fairness-sensitive tasks.",
+      why:      "An AI that can compare and evaluate is better at spotting unfairness and giving balanced answers.",
+    },
+    // Transparency
+    "Uncertainty Disclosure": {
+      good:     "The AI appropriately says when it's unsure — not overconfident, not constantly hedging.",
+      watch:    "The AI is either too confident (rarely admits uncertainty) or over-hedges (qualifies everything). Both reduce trust.",
+      critical: "The AI almost never acknowledges uncertainty. Users may trust incorrect answers because the AI sounds certain.",
+      why:      "An AI that says 'I'm not sure' when it isn't is more trustworthy than one that always sounds confident.",
+    },
+    "Input Coverage in Response": {
+      good:     "The AI directly addresses what was asked — responses stay on topic and cover the question well.",
+      watch:    "Some responses drift from the question or miss key parts of what was asked.",
+      critical: "Many responses don't properly address the question. The AI is frequently going off-topic or ignoring parts of the input.",
+      why:      "If the AI doesn't answer what you asked, it's not transparent — it's just generating text.",
+    },
+    "Causal Reasoning Language": {
+      good:     "The AI explains its reasoning — using words like 'because', 'therefore', 'as a result' to show how it got to its answer.",
+      watch:    "The AI sometimes explains its reasoning but often just states conclusions without showing the logic.",
+      critical: "The AI rarely explains why it reached a conclusion. You get answers but not the reasoning behind them.",
+      why:      "When an AI shows its reasoning, you can check whether it's right. When it just gives answers, you have to take them on faith.",
+    },
+    "Model Versioning": {
+      good:     "Each log entry is tied to a specific model version — you can trace any output back to exactly which AI produced it.",
+      watch:    "Model version information is partially present. Some outputs can't be traced to a specific version.",
+      critical: "No model version is recorded in the logs. If something goes wrong, you can't tell which version of the AI caused it.",
+      why:      "Without version tracking, you can't compare models, roll back changes, or prove what the AI was doing at any point in time.",
+    },
+    // Explainability
+    "Step-by-Step Reasoning": {
+      good:     "The AI breaks down its thinking into clear steps — easy to follow and verify.",
+      watch:    "The AI sometimes structures its reasoning but often jumps to conclusions without showing the steps.",
+      critical: "The AI rarely shows its work. Answers appear without explanation, making them hard to verify or trust.",
+      why:      "Step-by-step reasoning lets anyone — not just experts — check whether the AI's logic makes sense.",
+    },
+    "Confidence Expression": {
+      good:     "The AI clearly signals when it's certain and when it's guessing — helping you calibrate how much to trust each answer.",
+      watch:    "The AI's confidence signals are inconsistent. Sometimes it sounds certain when it shouldn't, or uncertain when it should be confident.",
+      critical: "The AI rarely expresses confidence levels. Every answer sounds the same whether it's a fact or a guess.",
+      why:      "Knowing how confident the AI is helps you decide when to double-check its answers.",
+    },
+    "Source Citation Rate": {
+      good:     "The AI regularly cites where its information comes from — making it easy to verify claims.",
+      watch:    "The AI sometimes references sources but often makes claims without backing them up.",
+      critical: "The AI almost never cites sources. Claims are made without any way to verify them.",
+      why:      "Citations let you check the AI's work. Without them, you're trusting the AI blindly.",
+    },
+    "Flesch Readability Score": {
+      good:     "The AI writes clearly and simply — most people can understand its responses without a dictionary.",
+      watch:    "Some responses are harder to read than they need to be. Simpler language would help.",
+      critical: "Responses are difficult to read. Long sentences and complex words make the AI hard to understand.",
+      why:      "An explanation nobody can understand isn't an explanation. Clear writing is a core part of explainability.",
+    },
+    // Accountability
+    "Human Escalation Signals": {
+      good:     "The AI appropriately flags when a human should take over — for sensitive, complex, or high-stakes situations.",
+      watch:    "The AI sometimes escalates to humans but not consistently. Some situations that need human review are being handled autonomously.",
+      critical: "The AI rarely or never suggests human review. It handles everything itself, including situations that warrant human oversight.",
+      why:      "AI systems must know their limits. Flagging for human review is the most important accountability control.",
+    },
+    "Governance Language Rate": {
+      good:     "The AI demonstrates awareness of the rules and regulations it operates under.",
+      watch:    "The AI occasionally references compliance and policy but not consistently.",
+      critical: "The AI shows little awareness of governance, compliance, or regulatory requirements.",
+      why:      "An AI that understands the rules it operates under is less likely to produce outputs that violate them.",
+    },
+    "Error Acknowledgment Rate": {
+      good:     "When the AI can't answer or makes a mistake, it says so clearly and suggests what to do instead.",
+      watch:    "The AI sometimes acknowledges errors but doesn't always offer guidance on what to do next.",
+      critical: "The AI rarely admits when it can't answer or has made a mistake. Users may not know when to seek help elsewhere.",
+      why:      "An AI that owns its mistakes and guides users to better options is far more accountable than one that bluffs.",
+    },
+    "Audit Log Adequacy": {
+      good:     "The logs are comprehensive — enough records, with timestamps and user IDs, to reconstruct what happened.",
+      watch:    "The logs are usable but missing some elements. Timestamps or user IDs may be absent.",
+      critical: "The logs are insufficient for a proper audit. Volume is too low, or key fields like timestamps are missing.",
+      why:      "Without adequate logs, you can't investigate incidents, prove compliance, or hold anyone accountable.",
+    },
+    // Data Integrity
+    "Response Substance Rate": {
+      good:     "The AI's responses are substantive — they add real information beyond just repeating the question.",
+      watch:    "Some responses are thin or repetitive. The AI is occasionally just restating the question rather than answering it.",
+      critical: "Many responses are trivial or empty. The AI is frequently failing to provide meaningful answers.",
+      why:      "Trivial responses corrupt your evaluation data and make the AI useless for real tasks.",
+    },
+    "Output Format Consistency": {
+      good:     "Responses are consistently structured — similar length, style, and format across queries.",
+      watch:    "Response format varies noticeably. Some are long, some short; some structured, some not.",
+      critical: "Response format is highly inconsistent. This suggests unstable model behaviour.",
+      why:      "Consistent formatting makes outputs predictable and reliable — a sign of a well-behaved AI.",
+    },
+    "Coherence Score": {
+      good:     "Each response flows logically from start to finish — sentences connect and build on each other.",
+      watch:    "Some responses feel disjointed. Ideas don't always connect smoothly.",
+      critical: "Many responses lack internal logic. Sentences feel disconnected or contradictory.",
+      why:      "An incoherent response is a data quality failure — it means the AI isn't reasoning, just generating text.",
+    },
+    "Deduplication Quality": {
+      good:     "The dataset has very few duplicate records — metrics are based on unique, independent observations.",
+      watch:    "Some duplicate records were found. They may slightly inflate certain metrics.",
+      critical: "Significant duplicates detected. Metrics computed from this data may be unreliable.",
+      why:      "Duplicate records make the AI look better than it is by counting the same good response multiple times.",
+    },
+    // Reliability
+    "Output Coherence": {
+      good:     "Responses are internally consistent and logically structured throughout.",
+      watch:    "Some responses lose coherence partway through — ideas don't always connect.",
+      critical: "Many responses are incoherent. The AI frequently produces text that doesn't hold together logically.",
+      why:      "Coherent responses are the baseline of a reliable AI. Incoherence means the AI can't be trusted.",
+    },
+    "Response Consistency": {
+      good:     "The AI gives similar answers to similar questions — predictable and stable.",
+      watch:    "Response quality varies more than expected for similar queries. The AI is somewhat unpredictable.",
+      critical: "The AI gives very different answers to similar questions. This level of inconsistency makes it unreliable.",
+      why:      "A reliable AI should behave the same way in similar situations. High variance is a reliability failure.",
+    },
+    "Token Efficiency": {
+      good:     "The AI is well-calibrated — responses are as long as they need to be, no more.",
+      watch:    "Some responses are longer or shorter than the question warrants.",
+      critical: "The AI is frequently over- or under-answering. Very long responses to simple questions, or very short ones to complex ones.",
+      why:      "An AI that rambles wastes time and obscures the actual answer. One that's too brief leaves users without what they need.",
+    },
+    "Error Rate Control": {
+      good:     "The AI rarely fails to answer. Error and failure language appears infrequently in responses.",
+      watch:    "The AI acknowledges errors or limitations more often than expected.",
+      critical: "The AI frequently fails to answer or acknowledges significant limitations. Reliability is a concern.",
+      why:      "Frequent errors mean the AI can't be relied on for the tasks it's being used for.",
+    },
+    // Security
+    "Prompt Injection Resistance": {
+      good:     "No signs of adversarial inputs trying to manipulate the AI were detected in the logs.",
+      watch:    "Some suspicious inputs were detected. The AI may be being probed for vulnerabilities.",
+      critical: "Multiple adversarial inputs detected. Someone may be actively trying to manipulate this AI.",
+      why:      "Prompt injection attacks try to override the AI's instructions. Detecting them early prevents serious misuse.",
+    },
+    "Harmful Content Rate": {
+      good:     "The AI's outputs are clean — no harmful, dangerous, or inappropriate content detected.",
+      watch:    "A small amount of potentially harmful content was detected. Review flagged outputs.",
+      critical: "Harmful content was detected in the AI's outputs. Immediate review and content filtering is needed.",
+      why:      "Harmful outputs can cause real damage to users and expose the organisation to serious liability.",
+    },
+    "Input Anomaly Rate": {
+      good:     "Inputs look normal — no signs of malformed, empty, or suspicious requests.",
+      watch:    "Some unusual inputs were detected. Could be user error or early signs of probing.",
+      critical: "Many inputs are anomalous — empty, too short, or non-text. This is a security signal worth investigating.",
+      why:      "Anomalous inputs are often the first sign of an attack or misuse attempt.",
+    },
+    "PII Leakage in Outputs": {
+      good:     "No personal information (names, emails, phone numbers, etc.) was detected in the AI's outputs.",
+      watch:    "Some personal information patterns were detected in outputs. Review to confirm they're not real PII.",
+      critical: "Personal information was detected in the AI's outputs. This is a data protection violation.",
+      why:      "An AI that leaks personal data violates GDPR and can cause serious harm to the people whose data is exposed.",
+    },
+    // Safety
+    "Harmful Output Prevention": {
+      good:     "The AI's safety controls are working — harmful content is being prevented effectively.",
+      watch:    "Some potentially harmful content slipped through. Safety controls need tuning.",
+      critical: "Safety controls are not working effectively. Harmful content is appearing in outputs.",
+      why:      "Preventing harmful outputs is the most fundamental safety requirement for any AI system.",
+    },
+    "Hallucination Containment": {
+      good:     "The AI sticks to what it knows — no signs of fabricated facts or made-up information.",
+      watch:    "Some hallucination signals detected. The AI may be presenting uncertain information as fact.",
+      critical: "Significant hallucination signals detected. The AI appears to be fabricating information.",
+      why:      "A hallucinating AI is dangerous — especially in medical, legal, or financial contexts where false information causes real harm.",
+    },
+    "Human Override Readiness": {
+      good:     "The AI is ready to hand control to a human when needed — escalation paths are in place.",
+      watch:    "Human override capability is partial. Some high-risk situations may not trigger escalation.",
+      critical: "No human override mechanism is evident. The AI operates without a safety net.",
+      why:      "Every AI system needs a way for humans to intervene. Without it, mistakes can't be corrected in time.",
+    },
+    "Safety Pass Rate": {
+      good:     "The independent AI judges rated the vast majority of responses as safe and appropriate.",
+      watch:    "A notable portion of responses were flagged as potentially unsafe by the judge panel.",
+      critical: "A significant portion of responses failed the safety review. Immediate remediation is needed.",
+      why:      "The safety pass rate is the most authoritative signal — it's the verdict of three independent AI judges, not a keyword scan.",
+    },
+    // Privacy
+    "PII Leakage Rate": {
+      good:     "The AI is not leaking personal information in its outputs.",
+      watch:    "Some personal data patterns were detected. Verify these aren't real user data.",
+      critical: "Personal data is appearing in outputs. This is a GDPR violation and must be fixed immediately.",
+      why:      "Leaking personal data is one of the most serious failures an AI system can have.",
+    },
+    "Data Minimisation": {
+      good:     "The AI gives concise, focused answers — it doesn't volunteer unnecessary information.",
+      watch:    "Some responses are more verbose than necessary, potentially sharing more than needed.",
+      critical: "The AI frequently over-shares — giving far more information than the question requires.",
+      why:      "Under GDPR, AI systems should only process and share the minimum data necessary. Verbose outputs increase privacy risk.",
+    },
+    "Output Anonymisation": {
+      good:     "Personal identifiers are not appearing in outputs — the AI is handling data responsibly.",
+      watch:    "Some identifier patterns detected. Check whether real personal data is being included in responses.",
+      critical: "Personal identifiers (names, emails, phone numbers) are appearing in outputs. Anonymisation is failing.",
+      why:      "Outputs containing personal identifiers can expose individuals and create legal liability.",
+    },
+    "Retention Signal Coverage": {
+      good:     "The AI demonstrates awareness of data rights — mentioning deletion, consent, and data lifecycle when relevant.",
+      watch:    "The AI occasionally mentions data rights but not consistently.",
+      critical: "The AI shows no awareness of data retention rights or deletion obligations.",
+      why:      "Users have the right to know how their data is handled. An AI that never mentions this is not privacy-aware.",
+    },
+    // Sustainability
+    "Token Economy Score": {
+      good:     "The AI is efficient — responses are concise and information-dense, not padded with filler.",
+      watch:    "Some responses are longer than they need to be. Unnecessary verbosity wastes compute.",
+      critical: "Responses are frequently much longer or shorter than optimal. The AI is not well-calibrated for efficiency.",
+      why:      "Every unnecessary word costs compute time and energy. Efficient AI is more sustainable and faster.",
+    },
+    "Response Redundancy Rate": {
+      good:     "The AI doesn't repeat itself — each sentence adds something new.",
+      watch:    "Some repetitive phrasing detected within responses. The AI occasionally restates the same point.",
+      critical: "High repetition detected. The AI is frequently saying the same thing multiple ways in a single response.",
+      why:      "Repetitive responses waste the user's time and the system's compute resources.",
+    },
+    "Cross-Output Deduplication": {
+      good:     "Each response is unique — the AI is generating fresh answers, not recycling the same response.",
+      watch:    "Some near-identical responses detected across different queries.",
+      critical: "Many responses are near-identical. The AI is pattern-matching rather than reasoning.",
+      why:      "Duplicate responses across queries mean the AI isn't actually thinking — it's just repeating itself.",
+    },
+    "Lexical Complexity Proxy": {
+      good:     "The AI uses clear, accessible language — no unnecessary jargon or overly complex sentences.",
+      watch:    "Some responses use more complex language than necessary.",
+      critical: "Responses are frequently complex and jargon-heavy. This increases compute cost and reduces accessibility.",
+      why:      "Simpler language is faster to generate, easier to understand, and more sustainable.",
+    },
+  };
+
+  const meta = insights[param];
+  const detail = meta
+    ? (score >= 75 ? meta.good : score >= 50 ? meta.watch : meta.critical)
+    : (pv !== undefined
+        ? `This area scored ${pv}/100. ${pv >= 75 ? "Performance is strong." : pv >= 50 ? "There is room for improvement." : "This needs attention."}`
+        : "Hover a sub-parameter to see its insight.");
+  const why = meta?.why || SUB_PARAM_META[param]?.why || "";
+
   return {
-    detail: `${param} measures a governance dimension specific to this model type.`,
-    calculation: pv !== undefined
-      ? `Computed value: ${pv}/100. ${pv >= 75 ? "Strong posture." : pv >= 50 ? "Moderate — improvement recommended." : "Low score — governance gap detected."}`
-      : "Calculated from dataset structure and model-specific audit heuristics.",
+    detail,
+    calculation: why,
     computed_value: pv !== undefined ? String(pv) : undefined,
   };
-  void s;
+  void report;
 }
 
 function Spider({ principles, onSelect, selected }: { principles: Record<string, Principle>; onSelect: (k: string | null) => void; selected: string | null }) {
@@ -5483,7 +5803,7 @@ function Spider({ principles, onSelect, selected }: { principles: Record<string,
     const a = ang(i);
     const x = cx + LABEL_R * Math.cos(a);
     const y = cy + LABEL_R * Math.sin(a);
-    const anchor = Math.cos(a) > 0.3 ? "start" : Math.cos(a) < -0.3 ? "end" : "middle";
+    const anchor = (Math.cos(a) > 0.3 ? "start" : Math.cos(a) < -0.3 ? "end" : "middle") as "start" | "end" | "middle";
     return { x, y, anchor };
   };
   const poly = keys.map((k, i) => pt(i, principles[k].score));
@@ -6387,12 +6707,12 @@ export default function Report() {
                 </div>
               ) : selData ? (
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "20px 22px", borderRadius: 16, background: `linear-gradient(135deg, ${(COLORS[sel] || KPMG_MID)}10, ${(COLORS[sel] || KPMG_MID)}05)`, border: `1.5px solid ${(COLORS[sel] || KPMG_MID)}30` }}>
+                  {/* ── PRINCIPLE HEADER ── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, padding: "20px 22px", borderRadius: 16, background: `linear-gradient(135deg, ${(COLORS[sel] || KPMG_MID)}10, ${(COLORS[sel] || KPMG_MID)}05)`, border: `1.5px solid ${(COLORS[sel] || KPMG_MID)}30` }}>
                     <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, display: "grid", placeItems: "center", background: `${COLORS[sel] || KPMG_MID}15`, border: `1px solid ${(COLORS[sel] || KPMG_MID)}30` }}>{ (() => { const IC = ICONS[sel]; return IC ? <IC /> : <SvgClip />; })() }</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{sel}</div>
                       {selData.description && <div style={{ fontSize: 12, color: "#64748B", marginTop: 3, lineHeight: 1.5 }}>{selData.description}</div>}
-                      <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 4 }}>{Object.keys(selData.parameters).length} sub-parameters evaluated</div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: 40, fontWeight: 900, color: COLORS[sel] || KPMG_MID, lineHeight: 1 }}>{selData.score}</div>
@@ -6400,24 +6720,37 @@ export default function Report() {
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
+                  {/* ── PRINCIPLE CONTEXT PANEL ── */}
+                  {PRINCIPLE_CONTEXT[sel] && (() => {
+                    const ctx = PRINCIPLE_CONTEXT[sel];
+                    return (
+                      <div style={{ marginBottom: 20, borderRadius: 14, border: `1px solid ${(COLORS[sel] || KPMG_MID)}25`, overflow: "hidden" }}>
+                        <div style={{ padding: "16px 20px", background: `${COLORS[sel] || KPMG_MID}08` }}>
+                          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.75 }}>{ctx.definition}</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── STRONGEST / WEAKEST ── */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
                     {[
-                      { label: "Sub-parameters", val: Object.keys(selData.parameters).length, color: KPMG_MID, bg: "#E6F2FB" },
-                      { label: "Strongest", val: strongestParam?.[0] || "—", sub: strongestParam?.[1] ?? "", color: "#059669", bg: "#DCFCE7" },
-                      { label: "Weakest", val: weakestParam?.[0] || "—", sub: weakestParam?.[1] ?? "", color: "#DC2626", bg: "#FEE2E2" },
+                      { label: "Strongest sub-parameter", val: strongestParam?.[0] || "—", score: strongestParam?.[1] ?? 0, color: "#059669", bg: "#DCFCE7" },
+                      { label: "Weakest sub-parameter",   val: weakestParam?.[0]  || "—", score: weakestParam?.[1]  ?? 0, color: "#DC2626", bg: "#FEE2E2" },
                     ].map(s => (
-                      <div key={s.label} style={{ padding: "14px 16px", borderRadius: 12, background: s.bg, textAlign: "center" }}>
+                      <div key={s.label} style={{ padding: "14px 16px", borderRadius: 12, background: s.bg, border: `1px solid ${s.color}20` }}>
                         <div style={{ fontSize: 10, color: s.color, textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 6 }}>{s.label}</div>
-                        <div style={{ fontSize: typeof s.val === "string" && s.val.length > 10 ? 13 : 18, fontWeight: 800, color: s.color, lineHeight: 1.3, wordBreak: "break-word" }}>{s.val}</div>
-                        {s.sub !== undefined && s.sub !== "" && <div style={{ fontSize: 12, color: s.color, marginTop: 2, fontWeight: 700 }}>{s.sub}</div>}
+                        <div style={{ fontSize: 14, fontWeight: 800, color: s.color, lineHeight: 1.3, wordBreak: "break-word" }}>{s.val}</div>
+                        {typeof s.score === "number" && <div style={{ fontSize: 12, color: s.color, marginTop: 3, fontWeight: 700 }}>{s.score} / 100</div>}
                       </div>
                     ))}
                   </div>
 
+                  {/* ── SUB-PARAMS + INSIGHT PANEL ── */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, padding: "8px 12px", background: "#E6F2FB", borderRadius: 8 }}>
-                        Sub-parameters — hover to inspect calculations
+                        Sub-parameters — hover to inspect
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {Object.entries(selData.parameters).map(([param, val]) => {
@@ -6464,33 +6797,34 @@ export default function Report() {
                             </div>
                           </div>
 
-                          <div style={{ marginBottom: 14 }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>What this measures</div>
-                            <div style={{ fontSize: 13, lineHeight: 1.7, color: "#475569" }}>{activeInsight.detail}</div>
+                          {/* Plain-English insight — score-aware */}
+                          <div style={{ marginBottom: 14, padding: "14px 16px", borderRadius: 12, background: `${bandBg(selData.parameters[activeParam] as number)}`, border: `1px solid ${bandColor(selData.parameters[activeParam] as number)}20` }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: bandColor(selData.parameters[activeParam] as number), textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                              {(selData.parameters[activeParam] as number) >= 75 ? "✓ What this means" : (selData.parameters[activeParam] as number) >= 50 ? "⚠ What this means" : "✗ What this means"}
+                            </div>
+                            <div style={{ fontSize: 13, lineHeight: 1.75, color: "#1E293B" }}>{activeInsight.detail}</div>
                           </div>
 
-                          {SUB_PARAM_META[activeParam] && (
+                          {/* Why it matters */}
+                          {activeInsight.calculation && (
                             <div style={{ marginBottom: 14 }}>
-                              <div style={{ fontSize: 10, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Why it matters</div>
-                              <div style={{ fontSize: 12, lineHeight: 1.7, color: "#475569" }}>{SUB_PARAM_META[activeParam].why}</div>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Why it matters</div>
+                              <div style={{ fontSize: 12, lineHeight: 1.7, color: "#64748B" }}>{activeInsight.calculation}</div>
                             </div>
                           )}
 
-                          <div style={{ padding: "14px 16px", borderRadius: 12, background: "white", border: `1px solid ${(COLORS[sel] || KPMG_MID)}20` }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Calculation</div>
-                            <div style={{ fontSize: 12, lineHeight: 1.7, color: "#64748B", fontFamily: "monospace", background: "#F8FAFC", padding: "8px 10px", borderRadius: 8 }}>
-                              {SUB_PARAM_META[activeParam]?.formula || activeInsight.calculation}
-                            </div>
-                            <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                              <div style={{ fontSize: 11, color: "#94A3B8" }}>Computed result:</div>
-                              <div style={{ fontSize: 18, fontWeight: 900, color: bandColor(selData.parameters[activeParam] as number) }}>{selData.parameters[activeParam]}</div>
-                              <div style={{ fontSize: 11, color: "#94A3B8" }}>/ 100</div>
+                          {/* Score display */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "white", border: "1px solid #E2E8F0" }}>
+                            <div style={{ fontSize: 28, fontWeight: 900, color: bandColor(selData.parameters[activeParam] as number) }}>{selData.parameters[activeParam]}</div>
+                            <div style={{ fontSize: 12, color: "#94A3B8" }}>/ 100</div>
+                            <div style={{ marginLeft: "auto", height: 8, flex: 1, background: "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${selData.parameters[activeParam]}%`, background: bandColor(selData.parameters[activeParam] as number), borderRadius: 99, transition: "width 0.6s ease" }} />
                             </div>
                           </div>
 
                           {(selData.parameters[activeParam] as number) < 60 && (
                             <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 10, background: "#FEE2E2", border: "1px solid #FECACA" }}>
-                              <div style={{ fontSize: 10, fontWeight: 700, color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Governance Gap</div>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Low Score Alert</div>
                               <div style={{ fontSize: 11, lineHeight: 1.65, color: "#7F1D1D" }}>
                                 {(selData.parameters[activeParam] as number) < 30
                                   ? `${activeParam} is critically low. Add the relevant data column to your logs to enable this signal.`
@@ -6502,7 +6836,7 @@ export default function Report() {
                       ) : (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: 240, gap: 12, opacity: 0.5 }}>
                           <div style={{ display: "flex", justifyContent: "center", color: "#CBD5E1" }}><SvgSearch /></div>
-                          <div style={{ fontSize: 13, color: "#94A3B8", textAlign: "center", lineHeight: 1.6 }}>Hover a sub-parameter to see what it measures, why it matters, and how it was calculated</div>
+                          <div style={{ fontSize: 13, color: "#94A3B8", textAlign: "center", lineHeight: 1.6 }}>Hover a sub-parameter to see what it means for your AI</div>
                         </div>
                       )}
                     </div>
