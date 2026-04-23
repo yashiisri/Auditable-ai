@@ -1194,6 +1194,9 @@ def _detect_provider(endpoint: str, api_key: str = "") -> str:
     # Detect by API key prefix first — more reliable than URL matching
     if k.startswith("gsk_"):    return "groq"
     if k.startswith("sk-ant-"): return "anthropic"
+    if k.startswith("sk-or-"):  return "openrouter"
+    if k.startswith("sk-proj-"): return "openai"
+    if k.startswith("sk-"):     return "openai"
     # Fall back to endpoint URL patterns
     e = endpoint.lower()
     if "anthropic" in e:  return "anthropic"
@@ -1203,6 +1206,7 @@ def _detect_provider(endpoint: str, api_key: str = "") -> str:
     if "openrouter" in e: return "openrouter"
     if "cohere" in e:     return "cohere"
     if "together" in e:   return "together"
+    if "azure" in e:      return "openai"   # Azure OpenAI uses OpenAI-compat format
     return "openai_compat"
 
 
@@ -1210,9 +1214,11 @@ def _detect_provider(endpoint: str, api_key: str = "") -> str:
 _PROVIDER_DEFAULT_ENDPOINTS: dict[str, str] = {
     "groq":       "https://api.groq.com/openai/v1/chat/completions",
     "anthropic":  "https://api.anthropic.com/v1/messages",
+    "openai":     "https://api.openai.com/v1/chat/completions",
     "mistral":    "https://api.mistral.ai/v1/chat/completions",
     "openrouter": "https://openrouter.ai/api/v1/chat/completions",
     "together":   "https://api.together.xyz/v1/chat/completions",
+    "cohere":     "https://api.cohere.ai/v1/chat",
 }
 
 

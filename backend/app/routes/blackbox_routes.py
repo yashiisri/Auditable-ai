@@ -70,8 +70,8 @@ async def run_blackbox_audit(
 ):
     # ── Validate ───────────────────────────────────────────────────────────────
     if payload.mode == "api":
-        if not payload.endpoint or not payload.api_key:
-            raise HTTPException(status_code=422, detail="API mode requires endpoint + api_key.")
+        if not payload.api_key:
+            raise HTTPException(status_code=422, detail="API mode requires an api_key.")
 
     elif payload.mode == "ui":
         if not payload.ui_url:

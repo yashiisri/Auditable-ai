@@ -129,10 +129,9 @@ const PRINCIPLES = [
 const FEATURES = [
   { accent: "#00338D", title: "Auto Model Detection",    desc: "Automatically identifies your AI type from logs — LLM, RAG, Classification, Image CV, Summarisation, or Automation." },
   { accent: "#005EB8", title: "Black Box API Audit",     desc: "Provide an API endpoint + key, or a deployed UI URL — probes are fired and responses auto-ingested into the SDCC pipeline." },
-  { accent: "#0091DA", title: "Triple LLM Judge Panel",  desc: "Three judges from three providers vote on every response. Majority rules, bias eliminated." },
-  { accent: "#00A3A1", title: "20+ Computed Metrics",    desc: "BLEU, ROUGE, BERTScore, latency percentiles, hallucination rate — computed live from your logs." },
-  { accent: "#005EB8", title: "Per-Principle Breakdown", desc: "Each TAF principle comes with a score, the sub-parameters behind it, and specific remediation steps." },
-  { accent: "#00338D", title: "Boardroom-Ready PDF",     desc: "Export a polished audit report with charts, risk analysis, and compliance mapping — ready to share." },
+  { accent: "#0091DA", title: "20+ Computed Metrics",    desc: "BLEU, ROUGE, BERTScore, latency percentiles, hallucination rate — computed live from your logs." },
+  { accent: "#00A3A1", title: "Per-Principle Breakdown", desc: "Each TAF principle comes with a score, the sub-parameters behind it, and specific remediation steps." },
+  { accent: "#005EB8", title: "Boardroom-Ready PDF",     desc: "Export a polished audit report with charts, risk analysis, and compliance mapping — ready to share." },
 ];
 
 const FRAMEWORKS = [
