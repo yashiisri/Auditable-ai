@@ -3007,7 +3007,7 @@ def _parameter_explanation(param: str, report: dict) -> tuple[str, str]:
             "Determines whether the deployed system has active mechanisms for continuous bias monitoring post-deployment. "
             "Point-in-time fairness assessments are insufficient — regulatory frameworks now require ongoing monitoring "
             "with automated alerting when fairness drift exceeds defined thresholds. Absence of monitoring signals is "
-            "treated as a critical governance gap by KPMG Trusted AI auditors.",
+            "flagged as a priority improvement area by KPMG Trusted AI auditors.",
             "100 if fairness monitoring fields (feedback, demographic_group, protected_attribute) are present; else 0."
         ),
         "Bias Indicator Fields": (
@@ -3705,11 +3705,16 @@ class KPMGPageTemplate:
         canvas_obj.setFillColor(KPMG_TEAL)
         canvas_obj.rect(0, H - 21.5 * mm, W, 1.5 * mm, fill=1, stroke=0)
 
-        # Left: clickable "Auditable AI" logo — links to home/dashboard
-        canvas_obj.setFillColor(KPMG_WHITE)
-        canvas_obj.setFont("Helvetica-Bold", 12)
-        canvas_obj.drawString(14 * mm, H - 10 * mm, "Auditable AI")
-        canvas_obj.setFont("Helvetica", 7.5)
+        # Light blue secondary stripe
+        canvas_obj.setFillColor(KPMG_LIGHT_BLUE)
+        canvas_obj.rect(0, H - 22.5 * mm, W, 1 * mm, fill=1, stroke=0)
+
+        # Left: "Auditable AI" brand
+        canvas_obj.setFillColor(KPMG_TEAL)
+        canvas_obj.setFont("Helvetica-Bold", 13)
+        canvas_obj.drawString(14 * mm, H - 10 * mm, "Auditable AI\u2122")
+        canvas_obj.setFillColor(colors.HexColor("#9DBFE0"))
+        canvas_obj.setFont("Helvetica", 7)
         canvas_obj.drawString(14 * mm, H - 15 * mm, "KPMG Trusted AI Framework")
 
         # Make the logo area a clickable link to home
@@ -3728,6 +3733,8 @@ class KPMGPageTemplate:
         canvas_obj.setFillColor(colors.HexColor("#9DBFE0"))
         canvas_obj.setFont("Helvetica", 7.5)
         canvas_obj.drawRightString(W - 14 * mm, H - 10 * mm, f"AI System: {self.ai_name}")
+        canvas_obj.setFillColor(colors.HexColor("#6B9EC8"))
+        canvas_obj.setFont("Helvetica-Bold", 6.5)
         canvas_obj.drawRightString(W - 14 * mm, H - 15 * mm, "CONFIDENTIAL")
 
         # ── Footer bar ──────────────────────────────────────────────────────
@@ -3735,7 +3742,10 @@ class KPMGPageTemplate:
         canvas_obj.rect(0, 0, W, 11 * mm, fill=1, stroke=0)
 
         canvas_obj.setFillColor(KPMG_TEAL)
-        canvas_obj.rect(0, 11 * mm, W, 0.8 * mm, fill=1, stroke=0)
+        canvas_obj.rect(0, 11 * mm, W, 1 * mm, fill=1, stroke=0)
+
+        canvas_obj.setFillColor(KPMG_LIGHT_BLUE)
+        canvas_obj.rect(0, 12 * mm, W, 0.5 * mm, fill=1, stroke=0)
 
         canvas_obj.setFillColor(KPMG_WHITE)
         canvas_obj.setFont("Helvetica", 6.5)
@@ -3752,8 +3762,8 @@ def _finding_why_it_matters(category: str, severity: str) -> str:
     """Return a contextual 'why this matters' sentence for a finding category."""
     cat = category.lower()
     severity_phrase = {
-        "High":   "This is a critical governance gap that directly undermines stakeholder trust and regulatory standing.",
-        "Medium": "Left unaddressed, this gap will compound over time and may escalate into a higher-severity risk.",
+        "High":   "This is a critical area that directly undermines stakeholder trust and regulatory standing.",
+        "Medium": "Left unaddressed, this area will compound over time and may escalate into a higher-severity risk.",
         "Low":    "While lower priority, resolving this finding improves overall governance maturity.",
     }.get(severity, "This finding affects the overall governance posture of the AI system.")
 
@@ -3772,7 +3782,7 @@ def _finding_why_it_matters(category: str, severity: str) -> str:
     for key, ctx in category_context.items():
         if key in cat:
             return f"{ctx} {severity_phrase}"
-    return f"This governance gap affects the AI system's alignment with the KPMG Trusted AI Framework. {severity_phrase}"
+    return f"This finding affects the AI system's alignment with the KPMG Trusted AI Framework. {severity_phrase}"
 
 
 def _principle_score_narrative(pname: str, score: int, params: dict) -> str:
@@ -3935,7 +3945,7 @@ def build_pdf(report: dict) -> BytesIO:
     cover_sub_s   = S("CoverSub", fontSize=12, leading=17, textColor=colors.HexColor("#9DBFE0"),
                       fontName="Helvetica", alignment=TA_LEFT)
 
-    sec_title_s   = S("SecTitle", fontSize=14, leading=19, textColor=KPMG_BLUE,
+    sec_title_s   = S("SecTitle", fontSize=13, leading=18, textColor=KPMG_WHITE,
                       fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=4)
     sec_sub_s     = S("SecSub", fontSize=8.5, leading=13, textColor=KPMG_GREY,
                       fontName="Helvetica", spaceAfter=8, alignment=TA_JUSTIFY)
@@ -3956,6 +3966,12 @@ def build_pdf(report: dict) -> BytesIO:
     calc_txt_s    = S("CalcTxt", fontSize=6.5, leading=10, textColor=KPMG_GREY,
                       fontName="Helvetica-Oblique", spaceAfter=4)
 
+    # Accent colours matching the web app
+    ACCENT_TEAL   = KPMG_TEAL          # #00C896
+    ACCENT_LIGHT  = KPMG_LIGHT_BLUE    # #0091DA
+    CARD_BG       = colors.HexColor("#F8FAFC")
+    BORDER_LIGHT  = colors.HexColor("#E2E8F0")
+
     elements = []
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -3964,41 +3980,58 @@ def build_pdf(report: dict) -> BytesIO:
     def build_cover():
         cover = []
 
-        # ── Dark hero banner ────────────────────────────────────────────────
+        # ── Full-width dark hero banner ──────────────────────────────────────
         hero_data = [[
-            Paragraph("Auditable AI\u2122", S("hero_brand", fontSize=28, leading=32,
-                textColor=KPMG_TEAL, fontName="Helvetica-Bold")),
+            Table([
+                [Paragraph("Auditable AI\u2122",
+                    S("hero_brand", fontSize=32, leading=38, textColor=KPMG_TEAL,
+                      fontName="Helvetica-Bold"))],
+                [Paragraph("Governance Audit Report",
+                    S("hero_sub", fontSize=14, leading=18, textColor=colors.HexColor("#9DBFE0"),
+                      fontName="Helvetica"))],
+                [Spacer(1, 3)],
+                [Paragraph("KPMG Trusted AI Framework — Comprehensive Assessment",
+                    S("hero_fw", fontSize=9, leading=13, textColor=colors.HexColor("#6B9EC8"),
+                      fontName="Helvetica"))],
+            ], colWidths=[usable_w - 60*mm]),
+            Table([
+                [Paragraph(f'<font color="#FFFFFF" size="42"><b>{overall_score}</b></font>',
+                    S("hero_score", fontSize=42, leading=48, fontName="Helvetica-Bold",
+                      textColor=KPMG_WHITE, alignment=TA_CENTER))],
+                [Paragraph('<font color="#9DBFE0" size="8">/ 100</font>',
+                    S("hero_score_sub", fontSize=8, leading=10, textColor=colors.HexColor("#9DBFE0"),
+                      fontName="Helvetica", alignment=TA_CENTER))],
+                [Spacer(1, 4)],
+                [Table([[Paragraph(f'<b>{risk_level} Risk</b>',
+                    S("hero_risk", fontSize=9, leading=12,
+                      textColor=risk_color(risk_level),
+                      fontName="Helvetica-Bold", alignment=TA_CENTER))]],
+                    colWidths=[52*mm],
+                    style=[
+                        ("BACKGROUND", (0,0),(-1,-1), colors.HexColor("#FFFFFF")),
+                        ("TOPPADDING", (0,0),(-1,-1), 4),
+                        ("BOTTOMPADDING", (0,0),(-1,-1), 4),
+                        ("LEFTPADDING", (0,0),(-1,-1), 6),
+                        ("RIGHTPADDING", (0,0),(-1,-1), 6),
+                    ])],
+            ], colWidths=[58*mm]),
         ]]
-        hero = Table(hero_data, colWidths=[usable_w])
+        hero = Table(hero_data, colWidths=[usable_w - 60*mm, 60*mm])
         hero.setStyle(TableStyle([
             ("BACKGROUND",    (0, 0), (-1, -1), KPMG_BLUE),
-            ("LEFTPADDING",   (0, 0), (-1, -1), 16),
-            ("TOPPADDING",    (0, 0), (-1, -1), 14),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 18),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 14),
+            ("TOPPADDING",    (0, 0), (-1, -1), 18),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 18),
+            ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
         ]))
         cover.append(hero)
-        cover.append(Spacer(1, 1 * mm))
 
-        # Teal strip
-        cover.append(HRFlowable(width="100%", thickness=3, color=KPMG_TEAL, spaceAfter=0))
+        # Teal accent stripe
+        cover.append(HRFlowable(width="100%", thickness=4, color=KPMG_TEAL, spaceAfter=0, spaceBefore=0))
 
-        # ── Report title block ───────────────────────────────────────────────
-        title_data = [
-            [Paragraph("Governance Audit Report",
-                        S("gt", fontSize=20, leading=26, textColor=colors.HexColor("#111827"),
-                          fontName="Helvetica-Bold"))],
-            [Paragraph("KPMG Trusted AI Framework — Comprehensive Assessment",
-                        S("gs", fontSize=10, leading=14, textColor=KPMG_BLUE, fontName="Helvetica"))],
-        ]
-        title_tbl = Table(title_data, colWidths=[usable_w])
-        title_tbl.setStyle(TableStyle([
-            ("BACKGROUND",    (0, 0), (-1, -1), KPMG_LIGHT_GREY),
-            ("LEFTPADDING",   (0, 0), (-1, -1), 16),
-            ("TOPPADDING",    (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-        ]))
-        cover.append(title_tbl)
-        cover.append(Spacer(1, 6 * mm))
+        # Light blue secondary stripe
+        cover.append(HRFlowable(width="100%", thickness=2, color=KPMG_LIGHT_BLUE, spaceAfter=6, spaceBefore=0))
 
         # ── Metadata grid ────────────────────────────────────────────────────
         info_rows = [
@@ -4013,71 +4046,37 @@ def build_pdf(report: dict) -> BytesIO:
             ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
             ("LEFTPADDING",   (0, 0), (-1, -1), 0),
             ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
-            ("TOPPADDING",    (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("TOPPADDING",    (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
             ("LINEBELOW",     (0, 0), (-1, -2), 0.5, KPMG_MID_GREY),
         ]))
         cover.append(info_tbl)
-        cover.append(Spacer(1, 8 * mm))
-
-        # ── Score hero: full-width KPMG blue banner with score + risk ─────
-        rc = risk_color(risk_level)
-        rc_bg = colors.HexColor("#FEF2F2") if rc == KPMG_RED else colors.HexColor("#FFFBEB") if rc == KPMG_AMBER else colors.HexColor("#F0FDF4")
-
-        score_data = [[
-            Paragraph(
-                f'<font color="#FFFFFF" size="36"><b>{overall_score}</b></font>',
-                S("sc_num", fontSize=36, leading=42, fontName="Helvetica-Bold",
-                  textColor=KPMG_WHITE, alignment=TA_CENTER)),
-            Table([[
-                Paragraph("<font color=\"#9DBFE0\" size=\"9\">Overall Score / 100</font>",
-                    S("sc_lbl", fontSize=9, leading=12, textColor=colors.HexColor("#9DBFE0"),
-                      fontName="Helvetica", alignment=TA_LEFT)),
-            ],[
-                Paragraph(f'<b>{risk_level} Risk</b>',
-                    S("sc_risk", fontSize=13, leading=17, textColor=rc,
-                      fontName="Helvetica-Bold", alignment=TA_LEFT)),
-            ],[
-                Paragraph(f'KPMG Trusted AI Framework Assessment',
-                    S("sc_fw", fontSize=7.5, leading=11, textColor=colors.HexColor("#9DBFE0"),
-                      fontName="Helvetica", alignment=TA_LEFT)),
-            ]], colWidths=[usable_w - 50 * mm]),
-        ]]
-        score_banner = Table(score_data, colWidths=[50 * mm, usable_w - 50 * mm])
-        score_banner.setStyle(TableStyle([
-            ("BACKGROUND",    (0, 0), (-1, -1), KPMG_BLUE),
-            ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
-            ("LEFTPADDING",   (0, 0), (-1, -1), 16),
-            ("RIGHTPADDING",  (0, 0), (-1, -1), 16),
-            ("TOPPADDING",    (0, 0), (-1, -1), 12),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-            ("LINEBELOW",     (0, 0), (-1, -1), 3, colors.HexColor("#0091DA")),
-        ]))
-        cover.append(score_banner)
         cover.append(Spacer(1, 6 * mm))
 
-        # ── Stats strip ──────────────────────────────────────────────────────
+        # ── Stats strip — card-style matching the web app ─────────────────
         stats = [
-            ("Logs Evaluated", str(logs_evaluated)),
-            ("Data Quality",   f"{dq_score}%"),
-            ("Structural Risk", struct_risk),
-            ("Principles",     str(len(principles))),
-            ("Findings",       str(len(findings))),
+            ("Logs Evaluated", str(logs_evaluated), "#00338D"),
+            ("Data Quality",   f"{dq_score}%",       "#059669" if dq_score >= 75 else "#D97706" if dq_score >= 50 else "#DC2626"),
+            ("Structural Risk", struct_risk,          "#059669" if struct_risk == "Low" else "#D97706" if struct_risk == "Moderate" else "#DC2626"),
+            ("Principles",     str(len(principles)), "#005EB8"),
+            ("Findings",       str(len(findings)),   "#DC2626" if len(findings) > 0 else "#059669"),
         ]
-        stat_vals = [Paragraph(f"<b>{v}</b>", S(f"sv{i}", fontSize=15, leading=18,
-                        textColor=KPMG_BLUE, fontName="Helvetica-Bold", alignment=TA_CENTER))
-                     for i, (_, v) in enumerate(stats)]
+        stat_vals = [Paragraph(f'<font color="{c}"><b>{v}</b></font>',
+                        S(f"sv{i}", fontSize=16, leading=20, fontName="Helvetica-Bold",
+                          alignment=TA_CENTER))
+                     for i, (_, v, c) in enumerate(stats)]
         stat_keys = [Paragraph(k, S(f"sk{i}", fontSize=7, leading=10, textColor=KPMG_GREY,
                         fontName="Helvetica", alignment=TA_CENTER))
-                     for i, (k, _) in enumerate(stats)]
+                     for i, (k, _, _c) in enumerate(stats)]
         col_w = usable_w / len(stats)
         stat_tbl = Table([stat_vals, stat_keys], colWidths=[col_w] * len(stats))
         stat_tbl.setStyle(TableStyle([
-            ("BACKGROUND",    (0, 0), (-1, -1), colors.HexColor("#E8EEF7")),
+            ("BACKGROUND",    (0, 0), (-1, -1), colors.HexColor("#F1F5F9")),
             ("TOPPADDING",    (0, 0), (-1, -1), 10),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-            ("LINEAFTER",     (0, 0), (-2, -1), 0.5, colors.HexColor("#B8C9E4")),
-            ("LINEBEFORE",    (0, 0), (0, -1),  3, KPMG_BLUE),
+            ("LINEAFTER",     (0, 0), (-2, -1), 0.5, colors.HexColor("#CBD5E1")),
+            ("LINEBEFORE",    (0, 0), (0, -1),  4, KPMG_BLUE),
+            ("BOX",           (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
         ]))
         cover.append(stat_tbl)
         cover.append(Spacer(1, 8 * mm))
@@ -4118,16 +4117,38 @@ def build_pdf(report: dict) -> BytesIO:
     elements.extend(build_cover())
     elements.append(PageBreak())
 
+    # ── Section header helper ─────────────────────────────────────────────
+    def section_header(number: str, title: str, subtitle: str = ""):
+        """Render a polished section header matching the web app card style."""
+        hdr_rows = [[
+            Paragraph(
+                f'<font color="#0091DA"><b>{number}</b></font>  '
+                f'<font color="#FFFFFF"><b>{title}</b></font>',
+                S(f"sh_{number}", fontSize=13, leading=17, fontName="Helvetica-Bold",
+                  textColor=KPMG_WHITE)),
+        ]]
+        hdr_tbl = Table(hdr_rows, colWidths=[usable_w])
+        hdr_tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, -1), KPMG_BLUE),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 14),
+            ("TOPPADDING",    (0, 0), (-1, -1), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+            ("LINEBELOW",     (0, 0), (-1, -1), 3, KPMG_TEAL),
+        ]))
+        result = [hdr_tbl]
+        if subtitle:
+            result.append(Spacer(1, 3))
+            result.append(Paragraph(subtitle, sec_sub_s))
+        result.append(Spacer(1, 4))
+        return result
+
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 1 — REGULATORY COMPLIANCE
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("1. Regulatory &amp; Framework Alignment", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
-    elements.append(Paragraph(
+    elements.extend(section_header("1", "Regulatory &amp; Framework Alignment",
         "This AI system was assessed against four major international AI governance frameworks. "
         "Alignment status is derived from the overall Trusted AI score and individual principle "
-        "scores. Each framework defines specific governance expectations mapped to the principles evaluated.",
-        sec_sub_s))
+        "scores. Each framework defines specific governance expectations mapped to the principles evaluated."))
 
     FW_META = {
         "EU_AI_Act":   ("EU AI Act",         "European Union Artificial Intelligence Regulation (2024)"),
@@ -4181,8 +4202,7 @@ def build_pdf(report: dict) -> BytesIO:
 
     # ── Data Quality & Diagnostics summary (inline, no page break) ────────────
     if diagnostics:
-        elements.append(Paragraph("Dataset Quality &amp; Diagnostics", sec_title_s))
-        elements.append(HRFlowable(width="100%", thickness=1, color=KPMG_LIGHT_BLUE, spaceAfter=4))
+        elements.extend(section_header("", "Dataset Quality &amp; Diagnostics"))
         missing_pct  = round((diagnostics.get("missing_ratio", 0) or 0) * 100, 1)
         completeness = round((1 - (diagnostics.get("missing_ratio", 0) or 0)) * 100)
         schema_conf  = round((diagnostics.get("schema_confidence", 0) or 0) * 100)
@@ -4245,13 +4265,10 @@ def build_pdf(report: dict) -> BytesIO:
         judge_color    = "#059669" if accuracy_pct is not None and accuracy_pct >= 85 else \
                          "#D97706" if accuracy_pct is not None and accuracy_pct >= 55 else "#DC2626"
 
-        elements.append(Paragraph("AI Response Accuracy — LLM Judge Panel", sec_title_s))
-        elements.append(HRFlowable(width="100%", thickness=1, color=KPMG_LIGHT_BLUE, spaceAfter=4))
-        elements.append(Paragraph(
+        elements.extend(section_header("", "AI Response Accuracy — LLM Judge Panel",
             f"A panel of {panel_size} independent LLM judges evaluated each logged response using majority-vote "
             "consensus. Disputed rows (where judges disagree) are excluded from the accuracy calculation to "
-            "ensure only high-confidence verdicts are reported.",
-            sec_sub_s))
+            "ensure only high-confidence verdicts are reported."))
 
         judge_stats = [
             ("Majority Vote Accuracy", f"{accuracy_pct}%" if accuracy_pct is not None else "—", judge_label, judge_color),
@@ -4291,14 +4308,11 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 2 — PRINCIPLES OVERVIEW + CHARTS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("2. KPMG Trusted AI — 10 Principles Overview", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
-    elements.append(Paragraph(
+    elements.extend(section_header("2", "KPMG Trusted AI — 10 Principles Overview",
         "Each of the 10 KPMG Trusted AI principles was evaluated across multiple sub-parameters "
         "derived from the structure and content of the ingested dataset. The radar chart provides "
         "an executive overview; the bar chart shows each principle's individual score "
-        "(green \u2265 75: Strong Alignment, amber 55\u201374: Partial Alignment, red &lt; 55: Needs Improvement).",
-        sec_sub_s))
+        "(green \u2265 75: Strong Alignment, amber 55\u201374: Partial Alignment, red &lt; 55: Needs Improvement)."))
 
     # Full-width charts
     if principles:
@@ -4374,8 +4388,7 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 3 — AUDIT FINDINGS & RECOMMENDATIONS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("3. Audit Findings &amp; Recommendations", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
+    elements.extend(section_header("3", "Audit Findings &amp; Recommendations"))
 
     # Findings severity summary bar
     if findings:
@@ -4419,7 +4432,7 @@ def build_pdf(report: dict) -> BytesIO:
             body_s))
     else:
         elements.append(Paragraph(
-            f"{len(findings)} governance gap(s) were identified across the evaluated principles. "
+            f"{len(findings)} improvement area(s) were identified across the evaluated principles. "
             "Each finding is classified by severity — High, Medium, or Low — and includes a targeted, "
             "actionable recommendation. Findings are listed in order of priority, with High severity "
             "items requiring the most immediate attention.",
@@ -4438,7 +4451,7 @@ def build_pdf(report: dict) -> BytesIO:
                     principle_score = pdata.get("score")
                     break
 
-            sev_bg     = colors.HexColor("#FEF2F2") if severity == "High" else colors.HexColor("#E8EEF7") if severity == "Low" else colors.HexColor("#FFFBEB")
+            sev_bg     = colors.HexColor("#FEF2F2") if severity == "High" else colors.HexColor("#EFF6FF") if severity == "Low" else colors.HexColor("#FFFBEB")
             sev_border = KPMG_RED if severity == "High" else KPMG_BLUE if severity == "Low" else KPMG_AMBER
 
             score_context = f" (Principle Score: {principle_score}/100)" if principle_score is not None else ""
@@ -4494,19 +4507,18 @@ def build_pdf(report: dict) -> BytesIO:
     # Overall recommendation
     if recommendation:
         elements.append(Spacer(1, 4 * mm))
-        elements.append(Paragraph("Overall Assessment &amp; Recommendation", sec_title_s))
-        elements.append(HRFlowable(width="100%", thickness=1, color=KPMG_AMBER, spaceAfter=5))
+        elements.extend(section_header("", "Overall Assessment &amp; Recommendation"))
         rec_tbl = Table([[Paragraph(recommendation,
             S("ov_rec", fontSize=8.5, leading=13, textColor=colors.HexColor("#1F2937"),
               fontName="Helvetica", alignment=TA_JUSTIFY))]],
             colWidths=[usable_w])
         rec_tbl.setStyle(TableStyle([
-            ("BACKGROUND",   (0, 0), (-1, -1), colors.HexColor("#E8EEF7")),
+            ("BACKGROUND",   (0, 0), (-1, -1), colors.HexColor("#EFF6FF")),
             ("LEFTPADDING",  (0, 0), (-1, -1), 14),
-            ("TOPPADDING",   (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING",(0, 0), (-1, -1), 10),
+            ("TOPPADDING",   (0, 0), (-1, -1), 12),
+            ("BOTTOMPADDING",(0, 0), (-1, -1), 12),
             ("LINEBEFORE",   (0, 0), (0, -1), 4, KPMG_BLUE),
-            ("BOX",          (0, 0), (-1, -1), 0.5, colors.HexColor("#B8C9E4")),
+            ("BOX",          (0, 0), (-1, -1), 0.5, colors.HexColor("#BFDBFE")),
         ]))
         elements.append(rec_tbl)
 
@@ -4515,14 +4527,11 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 4 — DETAILED PRINCIPLE BREAKDOWN
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("4. Detailed Principle Assessment", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
-    elements.append(Paragraph(
+    elements.extend(section_header("4", "Detailed Principle Assessment",
         "Each principle is evaluated across multiple sub-parameters reflecting structural signals "
         "in the dataset. For each sub-parameter, this section explains: what it measures, "
         "what the score actually means for this AI system, and — where improvement is needed — "
-        "a specific, actionable recommendation. Scores below 75 indicate areas with governance gaps.",
-        sec_sub_s))
+        "a specific, actionable recommendation. Scores below 75 indicate areas with room for improvement."))
 
     for i, (pname, pdata) in enumerate(principles.items(), 1):
         sc = pdata.get("score", 0)
@@ -4537,10 +4546,8 @@ def build_pdf(report: dict) -> BytesIO:
         p_donut = _build_compliance_donut(sc, 60, 60)
         p_donut_img = _drawing_to_image(p_donut, 60, 60)
 
-        # Principle header — KPMG blue background, all text readable on dark
+        # Principle header — clean card style with left accent border
         sc_color_hex = "#059669" if sc >= 75 else "#D97706" if sc >= 55 else "#DC2626"
-        # Score pill background: lighter tint so coloured score is readable
-        score_pill_bg = colors.HexColor("#0D47A1")  # slightly lighter than KPMG_BLUE for contrast
         hdr_left = Paragraph(
             f'<b>{i}. {pname}</b>',
             S(f"ph{i}", fontSize=12, leading=16, textColor=KPMG_WHITE, fontName="Helvetica-Bold"))
@@ -4708,13 +4715,10 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 5 — DATASET DIAGNOSTICS
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("5. Dataset Diagnostics", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
-    elements.append(Paragraph(
+    elements.extend(section_header("5", "Dataset Diagnostics",
         "Structural analysis of the ingested dataset underpins every score in this report. "
         "The metrics below reflect data completeness, schema consistency, and volume adequacy. "
-        "Organisations are advised to address any gaps before the next audit cycle.",
-        sec_sub_s))
+        "Organisations are advised to address any gaps before the next audit cycle."))
 
     missing  = diagnostics.get("missing_ratio", 0)
     dupes    = diagnostics.get("duplicates", 0)
@@ -4798,16 +4802,13 @@ def build_pdf(report: dict) -> BytesIO:
     # SECTION 6 — AI ACCURACY EVALUATION: LLM JUDGE PANEL
     # ══════════════════════════════════════════════════════════════════════════
     llm_judge = report.get("llm_judge") or {}
-    elements.append(Paragraph("6. AI Response Accuracy Evaluation — LLM Judge Panel", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
-    elements.append(Paragraph(
+    elements.extend(section_header("6", "AI Response Accuracy Evaluation — LLM Judge Panel",
         "To evaluate the factual accuracy and correctness of the AI system's responses, Auditable AI "
         "employs a Triple-LLM Judge Panel — an ensemble of three independent large language models "
         "from different providers. Each judge independently evaluates whether the AI's output is "
-        "correct, and a majority vote (≥ 2 out of 3) determines the final verdict per row. "
+        "correct, and a majority vote (\u2265 2 out of 3) determines the final verdict per row. "
         "This approach substantially reduces single-model bias and delivers significantly higher "
-        "confidence in accuracy assessments than any single-judge system.",
-        sec_sub_s))
+        "confidence in accuracy assessments than any single-judge system."))
 
     # Why three judges box
     why_data = [[Paragraph(
@@ -5071,14 +5072,11 @@ def build_pdf(report: dict) -> BytesIO:
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 7 — FRAMEWORK REFERENCE
     # ══════════════════════════════════════════════════════════════════════════
-    elements.append(Paragraph("7. KPMG Trusted AI Framework — Reference Guide", sec_title_s))
-    elements.append(HRFlowable(width="100%", thickness=2, color=KPMG_TEAL, spaceAfter=5))
-    elements.append(Paragraph(
+    elements.extend(section_header("7", "KPMG Trusted AI Framework — Reference Guide",
         "The KPMG Trusted AI Framework defines 10 interconnected principles organised around "
         "three core values: Values-led, Trustworthy, and Human-centric. These principles cover "
         "the full AI lifecycle from strategy and development through to deployment and monitoring. "
-        "Each principle maps to specific governance requirements across the EU AI Act, ISO 42001, and NIST AI RMF.",
-        sec_sub_s))
+        "Each principle maps to specific governance requirements across the EU AI Act, ISO 42001, and NIST AI RMF."))
 
     core_values = {
         "Fairness":       "Values-led",
@@ -5136,8 +5134,8 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(Spacer(1, 3))
     legend_rows = [
         ("75 \u2013 100", "Strong Alignment",   KPMG_GREEN, "The AI system demonstrates strong governance practices aligned with this framework. Continue monitoring and document evidence for stakeholder reporting."),
-        ("55 \u2013 74",  "Partial Alignment",  KPMG_AMBER, "Moderate alignment detected with identifiable gaps. Targeted remediation is recommended within the next governance cycle."),
-        ("0 \u2013 54",   "Needs Improvement",  KPMG_RED,   "Significant governance gaps identified. Remediation actions should be prioritised before expanded deployment or regulatory review."),
+        ("55 \u2013 74",  "Partial Alignment",  KPMG_AMBER, "Moderate alignment detected with identifiable areas for improvement. Targeted remediation is recommended within the next governance cycle."),
+        ("0 \u2013 54",   "Needs Improvement",  KPMG_RED,   "Material improvement areas identified. Remediation actions should be prioritised before expanded deployment or regulatory review."),
     ]
     leg_data = []
     for rng, lbl, col, desc in legend_rows:
