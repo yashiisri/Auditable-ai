@@ -88,13 +88,13 @@ const STEPS = [
   },
   {
     num: "03", color: "#0091DA",
-    title: "Upload Inference Logs",
-    desc: "Upload a CSV of your AI's real production inference logs. We accept any schema — our parser automatically maps columns like input, output, latency, task_id, and more. No preprocessing required.",
+    title: "Black Box API Testing",
+    desc: "Connect your AI via API endpoint + key, or a deployed UI URL. Governance probes are fired automatically and responses are ingested into the SDCC pipeline. Optionally upload a Knowledge Base to ground the evaluation against your own reference material.",
   },
   {
     num: "04", color: "#00A3A1",
-    title: "Black Box API Testing",
-    desc: "Connect your AI via API endpoint + key, or a deployed UI URL. Governance probes are fired automatically and responses are ingested into the SDCC pipeline. Optionally upload a Knowledge Base to ground the evaluation against your own reference material.",
+    title: "Upload Inference Logs",
+    desc: "Upload a CSV of your AI's real production inference logs. We accept any schema — our parser automatically maps columns like input, output, latency, task_id, and more. No preprocessing required.",
   },
   {
     num: "05", color: "#005EB8",
@@ -104,12 +104,12 @@ const STEPS = [
   {
     num: "06", color: "#00338D",
     title: "Triple LLM Judge Panel",
-    desc: "Three independent LLM judges from different providers — Groq (Llama 3.3), OpenRouter (Mistral Large), and Together AI (Qwen 2.5) — each evaluate every AI response for factual accuracy. A majority vote determines the verdict. This cross-provider approach eliminates single-model bias.",
+    desc: "Three independent LLM judges from different providers each evaluate every AI response for factual accuracy. A majority vote determines the verdict. This cross-provider approach eliminates single-model bias.",
   },
   {
     num: "07", color: "#0091DA",
     title: "TAF Score & Full Report",
-    desc: "Receive a complete KPMG Trusted AI Framework report. 10 principles scored 0–100, an overall governance rating, risk level classification, per-principle breakdowns with remediation steps, and a boardroom-ready downloadable PDF.",
+    desc: "Receive a complete governance audit report. 10 principles scored 0–100, an overall governance rating, risk level classification, drill-down of principles with remediation steps, and a publication-ready downloadable PDF.",
   },
 ];
 
@@ -130,15 +130,15 @@ const FEATURES = [
   { accent: "#00338D", title: "Auto Model Detection",    desc: "Automatically identifies your AI type from logs — LLM, RAG, Classification, Image CV, Summarisation, or Automation." },
   { accent: "#005EB8", title: "Black Box API Audit",     desc: "Provide an API endpoint + key, or a deployed UI URL — probes are fired and responses auto-ingested into the SDCC pipeline." },
   { accent: "#0091DA", title: "20+ Computed Metrics",    desc: "BLEU, ROUGE, BERTScore, latency percentiles, hallucination rate — computed live from your logs." },
-  { accent: "#00A3A1", title: "Per-Principle Breakdown", desc: "Each TAF principle comes with a score, the sub-parameters behind it, and specific remediation steps." },
-  { accent: "#005EB8", title: "Boardroom-Ready PDF",     desc: "Export a polished audit report with charts, risk analysis, and compliance mapping — ready to share." },
+  { accent: "#00A3A1", title: "Drill-Down of Principles", desc: "Each TAF principle comes with a score, the sub-parameters behind it, and specific remediation steps." },
+  { accent: "#005EB8", title: "Publication-Ready PDF",    desc: "Export a polished audit report with charts, risk analysis, and compliance mapping — ready to share." },
 ];
 
 const FRAMEWORKS = [
   { name: "EU AI Act",   color: "#005EB8", desc: "The EU's binding regulation for high-risk AI systems — your TAF scores map directly to its technical requirements." },
   { name: "ISO 42001",   color: "#00A3A1", desc: "The international standard for AI management systems — your report shows readiness against ISO 42001 controls." },
   { name: "NIST AI RMF", color: "#0091DA", desc: "The US AI Risk Management Framework — your scores are aligned to its Govern, Map, Measure, and Manage functions." },
-  { name: "KPMG TAF",    color: "#00338D", desc: "KPMG's Trusted AI Framework — 10 principles, one score, the backbone of every Auditable AI report." },
+  { name: "KPMG TAF",    color: "#00338D", desc: "KPMG's Trusted AI Framework — 10 principles, one score, the backbone of every TrustShield AI report." },
 ];
 
 const GLOSSARY_TERMS = [
@@ -354,7 +354,7 @@ export default function Glossary() {
         <div className="gl-nav-brand" onClick={() => scrollTo("hero")}>
           <img src="/kpmg-logo.png" alt="KPMG" />
           <div className="gl-nav-brand-text">
-            <span className="gl-nav-brand-name">Auditable AI™</span>
+            <span className="gl-nav-brand-name">TrustShield AI</span>
             <span className="gl-nav-brand-sub">KPMG Trusted AI</span>
           </div>
         </div>
@@ -415,7 +415,7 @@ export default function Glossary() {
         <Reveal>
           <div className="gl-eyebrow">Walkthrough</div>
           <h2 className="gl-h2">From logs to audit report<br />in <em>seven steps.</em></h2>
-          <p className="gl-lead">No model access needed. No ML expertise required. Upload your inference logs — or connect an API — and Auditable AI handles the rest.</p>
+          <p className="gl-lead">No model access needed. No ML expertise required. Upload your inference logs — or connect an API — and TrustShield AI handles the rest.</p>
         </Reveal>
         <div className="gl-steps">
           {STEPS.map((s, i) => (
@@ -458,7 +458,7 @@ export default function Glossary() {
         <Reveal>
           <div className="gl-eyebrow">Features</div>
           <h2 className="gl-h2">Everything you need<br />to <em>audit AI.</em></h2>
-          <p className="gl-lead">A complete toolkit — from automatic model detection and black box testing to boardroom-ready PDF reports.</p>
+          <p className="gl-lead">A complete toolkit — from automatic model detection and black box testing to publication-ready PDF reports.</p>
         </Reveal>
         <div className="gl-features">
           {FEATURES.map((f, i) => (
@@ -498,7 +498,7 @@ export default function Glossary() {
         <Reveal>
           <div className="gl-eyebrow">Glossary</div>
           <h2 className="gl-h2">Key terms,<br /><em>explained in full.</em></h2>
-          <p className="gl-lead">Every term you'll encounter inside Auditable AI — defined clearly, with the context you need to understand your audit results.</p>
+          <p className="gl-lead">Every term you'll encounter inside TrustShield AI — defined clearly, with the context you need to understand your audit results.</p>
         </Reveal>
         <div className="gl-terms">
           {GLOSSARY_TERMS.map((g, i) => (
@@ -519,7 +519,7 @@ export default function Glossary() {
         <div className="gl-cta-orb" style={{ width:380, height:380, background:"rgba(0,163,161,0.14)", bottom:-120, left:-80 }} />
         <Reveal>
           <h2 className="gl-cta-h2">Ready to audit your AI?</h2>
-          <p className="gl-cta-sub">Join organisations using Auditable AI™ to achieve trusted, explainable, and well-governed AI — in minutes.</p>
+          <p className="gl-cta-sub">Join organisations using TrustShield AI to achieve trusted, explainable, and well-governed AI — in minutes.</p>
           <div className="gl-cta-btns">
             <button className="gl-cta-w" onClick={() => navigate("/register")}>Create Free Account</button>
             <button className="gl-cta-o" onClick={() => navigate("/login")}>Sign In</button>
@@ -531,7 +531,7 @@ export default function Glossary() {
       <footer className="gl-footer">
         <div className="gl-footer-left">
           <img src="/kpmg-logo.png" alt="KPMG" />
-          <span className="gl-footer-copy">© 2026 KPMG Auditable AI™. All rights reserved.</span>
+          <span className="gl-footer-copy">© 2026 TrustShield AI. All rights reserved.</span>
         </div>
         <div className="gl-footer-links">
           {([["how","How It Works"],["principles","TAF Principles"],["features","Features"],["frameworks","Frameworks"],["glossary","Glossary"]] as [string,string][]).map(([id,label]) => (

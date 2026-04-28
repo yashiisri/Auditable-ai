@@ -156,9 +156,11 @@ import RegisterAI from "./pages/RegisterAi";
 import Profile    from "./pages/Profile";
 import SelfReportPage from "./pages/SelfReportPage";
 import PdfReportDashboard from "./pages/PdfReportDashboard";
+import AdminPanel from "./pages/AdminPanel";
 import ChatWidget from "./components/ChatWidget";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 function App() {
   return (
@@ -172,11 +174,14 @@ function App() {
         <Route path="/self-report" element={<SelfReportPage />} />
         <Route path="/audit" element={<PdfReportDashboard />} />
 
-        {/* PROTECTED */}
+        {/* PROTECTED — regular users */}
         <Route path="/dashboard"   element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/report"      element={<ProtectedRoute><Report /></ProtectedRoute>} />
         <Route path="/register-ai" element={<ProtectedRoute><RegisterAI /></ProtectedRoute>} />
         <Route path="/profile"     element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+        {/* ADMIN ONLY */}
+        <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
       </Routes>
     </BrowserRouter>
   );

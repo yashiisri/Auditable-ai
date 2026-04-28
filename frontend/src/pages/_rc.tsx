@@ -119,7 +119,7 @@ export default function Report() {
       {/* NAV */}
       <div style={{ background:"white", borderBottom:"1px solid #E3EAF3", padding:"0 40px", display:"flex", alignItems:"center", justifyContent:"space-between", height:64, boxShadow:"0 1px 8px rgba(0,51,141,0.06)", position:"sticky", top:0, zIndex:200 }}>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          <span style={{ fontSize:17, fontWeight:900, letterSpacing:"-0.03em", background:`linear-gradient(135deg,${KPMG_BLUE},${KPMG_MID})`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>Auditable AI</span>
+          <span style={{ fontSize:17, fontWeight:900, letterSpacing:"-0.03em", background:`linear-gradient(135deg,${KPMG_BLUE},${KPMG_MID})`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>TrustShield AI</span>
           <div style={{ width:1, height:18, background:"#E3EAF3" }} />
           <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", background:"#E6F2FB", color:KPMG_MID, borderRadius:20, border:`1px solid ${KPMG_LIGHT}40`, letterSpacing:"0.05em", textTransform:"uppercase" }}>Governance Report</span>
         </div>

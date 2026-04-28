@@ -184,12 +184,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser, registerUser } from "../services/api";
+import axios from "axios";
 
 const Register = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -198,10 +200,18 @@ const Register = () => {
     setLoading(true);
     if (password.length < 8) { setError("Password must be at least 8 characters."); setLoading(false); return; }
     try {
-      await registerUser({ name, email, password });
-      const loginRes = await loginUser({ email, password });
-      localStorage.setItem("token", loginRes.data.access_token);
-      navigate("/register-ai");
+      if (isAdminMode) {
+        await axios.post("http://localhost:8000/api/auth/register-admin", { name, email, password });
+        const loginRes = await loginUser({ email, password });
+        const token = loginRes.data.access_token;
+        localStorage.setItem("token", token);
+        navigate("/admin");
+      } else {
+        await registerUser({ name, email, password });
+        const loginRes = await loginUser({ email, password });
+        localStorage.setItem("token", loginRes.data.access_token);
+        navigate("/register-ai");
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || "Registration failed.");
     } finally {
@@ -241,7 +251,7 @@ const Register = () => {
             Start auditing<br />your AI today.
           </h1>
           <p style={{ fontSize:15, color:"rgba(255,255,255,0.6)", lineHeight:1.75, maxWidth:360 }}>
-            Join organisations using Auditable AI™ to achieve trusted, explainable, and well-governed AI.
+            Join organisations using TrustShield AI to achieve trusted, explainable, and well-governed AI.
           </p>
         </div>
       </div>
@@ -261,6 +271,13 @@ const Register = () => {
             <input className="ri" type="password" placeholder="Password (min. 8 characters)" value={password} onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === "Enter" && !(!name || !email || !password || loading) && handleRegister()} />
           </div>
+          <div style={{ marginTop:14, display:"flex", alignItems:"center", gap:10 }}>
+            <button type="button" onClick={() => setIsAdminMode(!isAdminMode)}
+              style={{ width:36, height:20, borderRadius:10, border:"none", cursor:"pointer", padding:2, background:isAdminMode?"#00338D":"#E3EAF3", transition:"background 0.2s", position:"relative", flexShrink:0 }}>
+              <div style={{ width:16, height:16, borderRadius:"50%", background:"white", boxShadow:"0 1px 4px rgba(0,0,0,0.2)", transition:"transform 0.2s", transform:isAdminMode?"translateX(16px)":"translateX(0)" }} />
+            </button>
+            <span style={{ fontSize:13, color:"#6B7C93", fontWeight:500 }}>Register as Admin</span>
+          </div>
 
           {error && (
             <div style={{ marginTop:14, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:10, fontSize:13, color:"#C53030" }}>
@@ -269,7 +286,7 @@ const Register = () => {
           )}
 
           <button className="rs" style={{ marginTop:24 }} onClick={handleRegister} disabled={!name || !email || !password || loading}>
-            {loading ? "Creating account…" : "Create Account →"}
+            {loading ? "Creating account…" : isAdminMode ? "Create Admin Account →" : "Create Account →"}
           </button>
 
           <p style={{ fontSize:12, color:"#A0B4CC", textAlign:"center", marginTop:14, lineHeight:1.6 }}>

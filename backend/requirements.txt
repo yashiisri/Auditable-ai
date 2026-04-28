@@ -9,3 +9,4 @@ pandas
 python-multipart
 httpx
 reportlab
+rlPyCairo

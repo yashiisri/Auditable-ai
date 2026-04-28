@@ -974,7 +974,7 @@ export default function SelfReportPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.03em",
               background: `linear-gradient(135deg, ${C.blue}, ${C.mid})`,
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Auditable AI™</span>
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TrustShield AI</span>
             <div style={{ width: 1, height: 18, background: C.border }}/>
             <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", background: "#E6F2FB",
               color: C.mid, borderRadius: 20, border: `1px solid ${C.lt}40` }}>TAF Gap Analysis</span>
@@ -1303,7 +1303,7 @@ export default function SelfReportPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.03em",
             background: `linear-gradient(135deg, ${C.blue}, ${C.mid})`,
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Auditable AI™</span>
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TrustShield AI</span>
           <div style={{ width: 1, height: 18, background: C.border }}/>
           <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", background: "#E6F2FB",
             color: C.mid, borderRadius: 20, border: `1px solid ${C.lt}40` }}>Self-Assessment & Report Audit</span>

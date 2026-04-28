@@ -14,7 +14,13 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await axios.post("http://localhost:8000/api/auth/login", { email, password });
-      localStorage.setItem("token", response.data.access_token);
+      const token = response.data.access_token;
+      localStorage.setItem("token", token);
+      // Decode role from JWT and redirect accordingly
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
+        if (payload.role === "admin") { navigate("/admin"); return; }
+      } catch {}
       navigate("/register-ai");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed.");
