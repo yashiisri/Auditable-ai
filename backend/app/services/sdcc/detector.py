@@ -471,9 +471,56 @@ Classify as EXACTLY one of:
 Respond ONLY with valid JSON:
 {"model_type": "<type>", "confidence": <0.0-1.0>, "reasoning": "<one sentence>"}"""
 
+# ── Registration context → model type keyword mapping ─────────────────────────
+# When a user has registered their AI with a description/domain, we use those
+# keywords as a strong prior. This fixes the core problem: a summarization model
+# whose logs have generic columns (task_id, input, output, latency) is
+# statistically indistinguishable from a general_llm without this signal.
+_REGISTRATION_KEYWORDS: dict[str, list[str]] = {
+    "summarization": [
+        "summar", "condense", "abstract", "brief", "tldr", "synopsis",
+        "document processing", "text reduction", "extractive", "abstractive",
+        "news digest", "report generation", "meeting notes", "transcript",
+    ],
+    "rag": [
+        "retrieval", "rag", "knowledge base", "grounded", "vector search",
+        "semantic search", "document qa", "question answering", "chatbot with kb",
+        "enterprise search", "faq", "policy bot",
+    ],
+    "classification": [
+        "classif", "categori", "label", "sentiment", "spam", "toxic",
+        "intent detection", "routing", "triage", "fraud detection",
+        "risk scoring", "moderation",
+    ],
+    "automation": [
+        "agent", "automat", "workflow", "pipeline", "rpa", "orchestrat",
+        "agentic", "multi-step", "tool use", "function calling",
+    ],
+    "image_classification": [
+        "image", "vision", "visual", "object detect", "ocr", "computer vision",
+        "photo", "picture", "bounding box", "segmentation",
+    ],
+}
+
+
+def _registration_context_score(ai_description: str, ai_domain: str) -> dict[str, float]:
+    """
+    Derives a model-type prior from the registered AI description and domain.
+    Blended into the ensemble at 0.30 weight — strong enough to resolve
+    ambiguity, not strong enough to override clear structural signals.
+    """
+    combined = (ai_description + " " + ai_domain).lower()
+    scores: dict[str, float] = {mt: 0.0 for mt in MODEL_TYPES}
+    for mt, keywords in _REGISTRATION_KEYWORDS.items():
+        for kw in keywords:
+            if kw in combined:
+                scores[mt] = min(1.0, scores[mt] + 0.35)
+    return scores
+
 
 def _call_groq(df: pd.DataFrame, roles: dict[str, str],
-               sig: dict[str, float], api_key: str) -> Optional[Tuple[str, float, str]]:
+               sig: dict[str, float], api_key: str,
+               ai_description: str = "", ai_domain: str = "") -> Optional[Tuple[str, float, str]]:
     try:
         import requests as _req
     except ImportError:
@@ -495,9 +542,19 @@ def _call_groq(df: pd.DataFrame, roles: dict[str, str],
                         "has_label_role","has_context_role","has_image_role",
                         "has_step_role","vocab_overlap","input_question_rate")}
 
+    context_hint = ""
+    if ai_description or ai_domain:
+        context_hint = (
+            f"\n\nREGISTRATION CONTEXT (from the system owner — strong prior):\n"
+            f"  Description: {ai_description}\n"
+            f"  Domain: {ai_domain}\n"
+            "Weight this heavily when resolving ambiguity."
+        )
+
     user_msg = (f"COLUMNS: {col_info}\n\n"
                 f"SAMPLE:\n{'---'.join(rows)}\n\n"
-                f"SIGNALS: {json.dumps(key_sig)}")
+                f"SIGNALS: {json.dumps(key_sig)}"
+                f"{context_hint}")
 
     try:
         resp = _req.post(
@@ -540,30 +597,43 @@ def _gap(scores: dict[str, float]) -> float:
 def detect_model_type(
     df: pd.DataFrame,
     groq_api_key: Optional[str] = None,
+    ai_description: str = "",
+    ai_domain: str = "",
 ) -> Tuple[str, float]:
     """
     Detect AI model type from inference log DataFrame.
-
     Returns (model_type, confidence ∈ [0,1]).
-    Optionally uses Groq API for tiebreaking when ambiguous.
+
+    ai_description / ai_domain: from the registered AI system.
+    Blended into the ensemble as a prior — fixes the case where a
+    summarization model with generic columns looks like general_llm.
     """
     if df is None or df.empty or len(df.columns) == 0:
         return "general_llm", 0.0
 
-    roles    = assign_column_roles(df)
-    r_scores = _score_from_roles(roles)
-    sig      = _compute_signals(df, roles)
-    s_scores = _score_from_signals(sig)
-    t_scores = _score_from_tokens(df, roles)
-    combined = _ensemble(r_scores, s_scores, t_scores)
+    roles      = assign_column_roles(df)
+    r_scores   = _score_from_roles(roles)
+    sig        = _compute_signals(df, roles)
+    s_scores   = _score_from_signals(sig)
+    t_scores   = _score_from_tokens(df, roles)
+    reg_scores = _registration_context_score(ai_description, ai_domain)
+
+    combined = {
+        mt: (0.22 * r_scores.get(mt, 0)
+           + 0.33 * s_scores.get(mt, 0)
+           + 0.15 * t_scores.get(mt, 0)
+           + 0.30 * reg_scores.get(mt, 0))
+        for mt in MODEL_TYPES
+    }
 
     best  = max(combined, key=lambda k: combined[k])
     bscore= combined[best]
     gap   = _gap(combined)
 
     key = groq_api_key or os.environ.get("GROQ_API_KEY")
-    if key and gap < 0.15:
-        gr = _call_groq(df, roles, sig, key)
+    groq_threshold = 0.20 if (ai_description or ai_domain) else 0.15
+    if key and gap < groq_threshold:
+        gr = _call_groq(df, roles, sig, key, ai_description, ai_domain)
         if gr:
             g_type, g_conf, _ = gr
             if g_type == best:
@@ -584,28 +654,40 @@ def detect_model_type(
 def detect_model_type_with_detail(
     df: pd.DataFrame,
     groq_api_key: Optional[str] = None,
+    ai_description: str = "",
+    ai_domain: str = "",
 ) -> dict:
     """Extended detection returning full diagnostic breakdown."""
     if df is None or df.empty:
         return {"model_type": "general_llm", "confidence": 0.0,
                 "column_roles": {}, "phase_scores": {}, "final_scores": {},
-                "signals": {}, "groq_used": False, "groq_reasoning": ""}
+                "signals": {}, "groq_used": False, "groq_reasoning": "",
+                "registration_used": False}
 
-    roles    = assign_column_roles(df)
-    r_scores = _score_from_roles(roles)
-    sig      = _compute_signals(df, roles)
-    s_scores = _score_from_signals(sig)
-    t_scores = _score_from_tokens(df, roles)
-    combined = _ensemble(r_scores, s_scores, t_scores)
+    roles      = assign_column_roles(df)
+    r_scores   = _score_from_roles(roles)
+    sig        = _compute_signals(df, roles)
+    s_scores   = _score_from_signals(sig)
+    t_scores   = _score_from_tokens(df, roles)
+    reg_scores = _registration_context_score(ai_description, ai_domain)
+
+    combined = {
+        mt: (0.22 * r_scores.get(mt, 0)
+           + 0.33 * s_scores.get(mt, 0)
+           + 0.15 * t_scores.get(mt, 0)
+           + 0.30 * reg_scores.get(mt, 0))
+        for mt in MODEL_TYPES
+    }
 
     best   = max(combined, key=lambda k: combined[k])
     bscore = combined[best]
     gap    = _gap(combined)
 
     key = groq_api_key or os.environ.get("GROQ_API_KEY")
+    groq_threshold = 0.20 if (ai_description or ai_domain) else 0.15
     groq_used, groq_reason = False, ""
-    if key and gap < 0.15:
-        gr = _call_groq(df, roles, sig, key)
+    if key and gap < groq_threshold:
+        gr = _call_groq(df, roles, sig, key, ai_description, ai_domain)
         if gr:
             g_type, g_conf, groq_reason = gr
             if g_type == best:
@@ -620,13 +702,14 @@ def detect_model_type_with_detail(
     conf = round(min(1.0, bscore * 1.5 + gap * 0.5), 3)
 
     return {
-        "model_type":     best,
-        "confidence":     conf,
-        "column_roles":   roles,
-        "phase_scores":   {"column_roles": r_scores, "statistical": s_scores,
-                           "semantic_tokens": t_scores},
-        "final_scores":   combined,
-        "signals":        sig,
-        "groq_used":      groq_used,
-        "groq_reasoning": groq_reason,
+        "model_type":        best,
+        "confidence":        conf,
+        "column_roles":      roles,
+        "phase_scores":      {"column_roles": r_scores, "statistical": s_scores,
+                              "semantic_tokens": t_scores, "registration_context": reg_scores},
+        "final_scores":      combined,
+        "signals":           sig,
+        "groq_used":         groq_used,
+        "groq_reasoning":    groq_reason,
+        "registration_used": bool(ai_description or ai_domain),
     }

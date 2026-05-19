@@ -1,18 +1,11 @@
-
 """
 app/routes/blackbox.py
 =======================
-Refactored blackbox audit router.
+Blackbox audit router.
 
-Key change vs original:
-  When run_blackbox_pipeline() is called, we first look up the registered
-  AI system in MongoDB to retrieve its `description` and `domain`.
-  These are forwarded to run_blackbox_pipeline() so the dynamic probe
-  generator has the full context it needs.
-
-  No changes to the API contract — the BlackBoxRequest schema is identical.
-  The two new fields (ai_description_used, ai_domain_used,
-  probe_generation_meta) appear only in the response.
+Fetches registered AI system description + domain from MongoDB and forwards
+them to run_blackbox_pipeline() so the dynamic probe generator has context.
+No changes to the BlackBoxRequest schema.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -30,12 +23,11 @@ from app.services.blackbox import ui_auditor as ui_auditor_module
 router = APIRouter(prefix="/blackbox", tags=["Black Box Audit"])
 
 blackbox_collection = db["blackbox_audits"]
-
-# Access the same ai_collection used during registration
-ai_collection = db["ai_systems"]
+ai_collection       = db["ai_systems"]
 
 
 # ── Schema ─────────────────────────────────────────────────────────────────────
+
 class BlackBoxRequest(BaseModel):
     ai_name:  str
     mode:     str                   # "api" | "ui"
@@ -45,13 +37,12 @@ class BlackBoxRequest(BaseModel):
     cookies:  Optional[str] = ""   # JSON array from Cookie-Editor (UI mode only)
 
 
-# ── Helper: fetch AI system context ───────────────────────────────────────────
+# ── Helper: fetch AI system context (description + domain + profile) ───────────
 
 def _get_ai_context(ai_name: str, owner_id: str) -> tuple[str, str]:
     """
     Looks up the registered AI system and returns (description, domain).
-    Falls back to empty strings if the system is not found — the probe
-    generator will still work, just with less context.
+    Falls back to empty strings if the system is not found.
     """
     doc = ai_collection.find_one(
         {"name": ai_name, "owner_id": owner_id},
@@ -63,25 +54,23 @@ def _get_ai_context(ai_name: str, owner_id: str) -> tuple[str, str]:
 
 
 # ── Run Audit ──────────────────────────────────────────────────────────────────
+
 @router.post("/audit")
 async def run_blackbox_audit(
-    payload: BlackBoxRequest,
+    payload:     BlackBoxRequest,
     current_user=Depends(get_current_user),
 ):
     # ── Validate ───────────────────────────────────────────────────────────────
     if payload.mode == "api":
         if not payload.api_key:
             raise HTTPException(status_code=422, detail="API mode requires an api_key.")
-
     elif payload.mode == "ui":
         if not payload.ui_url:
             raise HTTPException(status_code=422, detail="UI mode requires ui_url.")
-
     else:
         raise HTTPException(status_code=422, detail="mode must be 'api' or 'ui'.")
 
-    # ── Fetch AI system context (description + domain) ─────────────────────────
-    # This is the KEY new step — pulls from the registered AI system in MongoDB
+    # ── Fetch AI system context (description + domain) ──────────────────────
     ai_description, ai_domain = _get_ai_context(
         ai_name=payload.ai_name,
         owner_id=str(current_user["_id"]),
@@ -95,8 +84,8 @@ async def run_blackbox_audit(
             endpoint=payload.endpoint or "",
             api_key=payload.api_key or "",
             current_user=current_user,
-            ai_description=ai_description,   # ← NEW: forwarded to probe generator
-            ai_domain=ai_domain,             # ← NEW: forwarded to probe generator
+            ai_description=ai_description,
+            ai_domain=ai_domain,
         )
 
     elif payload.mode == "ui":
@@ -111,8 +100,8 @@ async def run_blackbox_audit(
             ui_url=payload.ui_url or "",
             cookies=payload.cookies or None,
             stealth=profile["stealth"],
-            ai_description=ai_description,   # ← NEW
-            ai_domain=ai_domain,             # ← NEW
+            ai_description=ai_description,
+            ai_domain=ai_domain,
         )
 
         result["platform_detected"] = profile["label"]
@@ -140,6 +129,7 @@ async def run_blackbox_audit(
 
 
 # ── History by AI name ─────────────────────────────────────────────────────────
+
 @router.get("/history/{ai_name}")
 def get_blackbox_history(ai_name: str, current_user=Depends(get_current_user)):
     records = list(
@@ -152,6 +142,7 @@ def get_blackbox_history(ai_name: str, current_user=Depends(get_current_user)):
 
 
 # ── All audits for current user ────────────────────────────────────────────────
+
 @router.get("/history-all")
 def get_all_blackbox_history(current_user=Depends(get_current_user)):
     records = list(
@@ -168,6 +159,7 @@ def get_all_blackbox_history(current_user=Depends(get_current_user)):
 
 
 # ── Single audit full detail ───────────────────────────────────────────────────
+
 @router.get("/audit/{audit_id}")
 def get_blackbox_audit(audit_id: str, current_user=Depends(get_current_user)):
     record = blackbox_collection.find_one(

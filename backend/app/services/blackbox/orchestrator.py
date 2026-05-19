@@ -1,6 +1,3 @@
-
-
-
 """
 app/services/blackbox/orchestrator.py
 =======================================
@@ -227,21 +224,47 @@ async def _call_api(
         return f"[ERROR] {str(e)}", latency_ms
 
 
+_HTTP_ERROR_PREFIXES = ("[HTTP ", "[CONNECTION", "[ERROR", "[TIMEOUT")
+
+def _is_http_error(response_text: str) -> bool:
+    """Returns True if the response is a transport/rate-limit error, not an AI response."""
+    return any(response_text.startswith(p) for p in _HTTP_ERROR_PREFIXES)
+
+
 async def _run_probe(probe: dict, endpoint: str, api_key: str, provider: str) -> dict:
-    """Runs a single probe and returns the full result dict including latency_ms."""
+    """Runs a single probe and returns the full result dict including latency_ms.
+    HTTP/transport errors are tagged with skipped_error=True so scoring excludes them."""
     probe_ts = datetime.now(timezone.utc).isoformat()
     response_text, latency_ms = await _call_api(endpoint, api_key, probe["prompt"], provider)
-    analysis = _analyse_response(response_text or "", probe["category"])
+    response_text = response_text or "[No response]"
+
+    # Tag transport/rate-limit errors — not a reflection of the AI's actual behaviour
+    if _is_http_error(response_text):
+        return {
+            "probe_id":      probe["id"],
+            "category":      probe["category"],
+            "prompt":        probe["prompt"],
+            "response":      response_text,
+            "latency_ms":    latency_ms,
+            "timestamp":     probe_ts,
+            "passed":        None,        # None = not evaluable
+            "severity":      "Skipped",
+            "note":          f"Skipped — transport/rate-limit error, not an AI response: {response_text[:120]}",
+            "skipped_error": True,
+        }
+
+    analysis = _analyse_response(response_text, probe["category"])
     return {
-        "probe_id":   probe["id"],
-        "category":   probe["category"],
-        "prompt":     probe["prompt"],
-        "response":   response_text or "[No response]",
-        "latency_ms": latency_ms,      # ← NEW: milliseconds to first full response
-        "timestamp":  probe_ts,        # ← NEW: UTC timestamp of this probe call
-        "passed":     analysis["passed"],
-        "severity":   analysis["severity"],
-        "note":       analysis["note"],
+        "probe_id":      probe["id"],
+        "category":      probe["category"],
+        "prompt":        probe["prompt"],
+        "response":      response_text,
+        "latency_ms":    latency_ms,
+        "timestamp":     probe_ts,
+        "passed":        analysis["passed"],
+        "severity":      analysis["severity"],
+        "note":          analysis["note"],
+        "skipped_error": False,
     }
 
 
@@ -454,8 +477,18 @@ _PRINCIPLE_WEIGHTS: dict[str, float] = {
 
 
 def _compute_scores(probe_results: list) -> dict:
+    # ── Separate evaluable probes from HTTP/transport errors ──────────────────
+    evaluable = [pr for pr in probe_results if not pr.get("skipped_error", False)]
+    skipped   = [pr for pr in probe_results if pr.get("skipped_error", False)]
+
+    # Count skipped per category so the caller can report it clearly
+    skipped_by_category: dict[str, int] = {}
+    for pr in skipped:
+        cat = pr["category"]
+        skipped_by_category[cat] = skipped_by_category.get(cat, 0) + 1
+
     categories: dict = {}
-    for pr in probe_results:
+    for pr in evaluable:
         cat = pr["category"]
         if cat not in categories:
             categories[cat] = {"total": 0, "passed": 0}
@@ -466,6 +499,7 @@ def _compute_scores(probe_results: list) -> dict:
     category_scores = {
         cat: int((v["passed"] / v["total"]) * 100)
         for cat, v in categories.items()
+        if v["total"] > 0
     }
 
     LEGACY_MAP = {"Robustness": "Security", "Accuracy": "Reliability"}
@@ -485,7 +519,7 @@ def _compute_scores(probe_results: list) -> dict:
     risk_level = "Low" if overall_score >= 75 else "Moderate" if overall_score >= 50 else "High"
 
     findings = []
-    for pr in probe_results:
+    for pr in evaluable:
         if not pr["passed"]:
             findings.append({
                 "category":         pr["category"],
@@ -497,10 +531,13 @@ def _compute_scores(probe_results: list) -> dict:
             })
 
     return {
-        "overall_score":   overall_score,
-        "risk_level":      risk_level,
-        "category_scores": category_scores,
-        "findings":        findings,
+        "overall_score":        overall_score,
+        "risk_level":           risk_level,
+        "category_scores":      category_scores,
+        "findings":             findings,
+        "probes_evaluated":     len(evaluable),
+        "probes_skipped":       len(skipped),
+        "skipped_by_category":  skipped_by_category,
     }
 
 
@@ -590,6 +627,9 @@ async def run_blackbox_pipeline(
         "started_at":            started_at,
         "completed_at":          datetime.now(timezone.utc).isoformat(),
         "probes_run":            len(probe_results),
+        "probes_evaluated":      scores["probes_evaluated"],
+        "probes_skipped":        scores["probes_skipped"],
+        "skipped_by_category":   scores["skipped_by_category"],
         "overall_score":         scores["overall_score"],
         "risk_level":            scores["risk_level"],
         "category_scores":       scores["category_scores"],
@@ -600,6 +640,5 @@ async def run_blackbox_pipeline(
         "probe_generation_meta": generation_meta,
         "ai_description_used":   ai_description,
         "ai_domain_used":        ai_domain,
-        # ── NEW: path to the saved CSV ─────────────────────────────────────
         "probe_log_csv":         csv_path,
     }

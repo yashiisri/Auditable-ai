@@ -33,34 +33,55 @@ async def score_extension_audit(req: ExtensionAuditRequest):
     if not req.probe_results:
         raise HTTPException(status_code=422, detail="probe_results cannot be empty.")
 
+    HTTP_ERROR_PREFIXES = ("[HTTP ", "[CONNECTION", "[ERROR", "[TIMEOUT")
+
     analysed = []
     for pr in req.probe_results:
+        # Skip HTTP/transport errors — not a reflection of the AI's behaviour
+        is_error = any(pr.response.startswith(p) for p in HTTP_ERROR_PREFIXES)
+        if is_error:
+            analysed.append({
+                "probe_id":      pr.probe_id,
+                "category":      pr.category,
+                "prompt":        pr.prompt,
+                "response":      pr.response,
+                "passed":        None,
+                "severity":      "Skipped",
+                "note":          f"Skipped — transport/rate-limit error: {pr.response[:120]}",
+                "skipped_error": True,
+            })
+            continue
+
         analysis = _analyse_response(pr.response, pr.category)
         analysed.append({
-            "probe_id": pr.probe_id,
-            "category": pr.category,
-            "prompt":   pr.prompt,
-            "response": pr.response,
-            "passed":   analysis["passed"],
-            "severity": analysis["severity"],
-            "note":     analysis["note"],
+            "probe_id":      pr.probe_id,
+            "category":      pr.category,
+            "prompt":        pr.prompt,
+            "response":      pr.response,
+            "passed":        analysis["passed"],
+            "severity":      analysis["severity"],
+            "note":          analysis["note"],
+            "skipped_error": False,
         })
 
     scores = _compute_scores(analysed)
 
     return {
-        "audit_id":        str(uuid.uuid4()),
-        "ai_name":         req.ai_name,
-        "mode":            "extension",
-        "status":          "completed",
-        "completed_at":    datetime.utcnow().isoformat(),
-        "probes_run":      len(analysed),
-        "overall_score":   scores["overall_score"],
-        "risk_level":      scores["risk_level"],
-        "category_scores": scores["category_scores"],
-        "findings":        scores["findings"],
-        "probe_results":   analysed,
-        "ui_url_tested":   req.ui_url,
+        "audit_id":           str(uuid.uuid4()),
+        "ai_name":            req.ai_name,
+        "mode":               "extension",
+        "status":             "completed",
+        "completed_at":       datetime.utcnow().isoformat(),
+        "probes_run":         len(analysed),
+        "probes_evaluated":   scores["probes_evaluated"],
+        "probes_skipped":     scores["probes_skipped"],
+        "skipped_by_category": scores["skipped_by_category"],
+        "overall_score":      scores["overall_score"],
+        "risk_level":         scores["risk_level"],
+        "category_scores":    scores["category_scores"],
+        "findings":           scores["findings"],
+        "probe_results":      analysed,
+        "ui_url_tested":      req.ui_url,
     }
 
 

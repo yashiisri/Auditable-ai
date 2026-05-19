@@ -250,7 +250,13 @@ def validate_schema(df: pd.DataFrame) -> dict:
 
 # ── Main entry point ──────────────────────────────────────────────────────────
 
-def run_sdcc_pipeline(ai_name: str, file: UploadFile, current_user: dict) -> dict:
+def run_sdcc_pipeline(
+      ai_name: str,
+      file: UploadFile,
+      current_user: dict,
+      ai_description: str = "",
+      ai_domain: str = "",
+  ) -> dict:
     df = parse_upload(file)
 
     # ── Detect document_mode ─────────────────────────────────────────────────
@@ -264,7 +270,11 @@ def run_sdcc_pipeline(ai_name: str, file: UploadFile, current_user: dict) -> dic
         detection_confidence = 0.95
     else:
         df_clean = df
-        model_type, detection_confidence = detect_model_type(df_clean)
+        model_type, detection_confidence = detect_model_type(
+                   df_clean,
+                   ai_description=ai_description,
+                   ai_domain=ai_domain,
+               )
 
     quality      = compute_data_quality(df_clean)
     schema_check = validate_schema(df_clean)
