@@ -575,20 +575,9 @@ export default function Dashboard() {
     <div className="db">
       <style>{CSS}</style>
 
-      <div className="db-nav">
-        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <span className="db-brand">TrustShield AI</span>
-          {aiName && <span className="db-ai-chip">Auditing: {aiName}</span>}
-        </div>
-        <div className="db-nav-r">
-          <button className="db-nbtn" onClick={() => navigate("/profile")}>Profile</button>
-          <button className="db-nbtn red" onClick={handleLogout}>Sign Out</button>
-        </div>
-      </div>
-
       <div className="db-body">
-        <div className="db-page-title">Audit Pipeline</div>
-        <div className="db-page-sub">Complete each step to run a full KPMG Trusted AI Framework governance evaluation on your AI system.</div>
+        <div className="db-page-title">Audit Pipeline{aiName ? ` — ${aiName}` : ""}</div>
+        <div className="db-page-sub">Complete each step to run a full governance evaluation on your AI agent.</div>
 
         <div className="db-steps">
 

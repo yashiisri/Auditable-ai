@@ -62,18 +62,7 @@ export default function AdminPanel() {
         code{font-family:'Fira Mono','Courier New',monospace;font-size:11.5px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:6px;padding:3px 8px;color:#1E293B;word-break:break-all;}
       `}</style>
 
-      {/* NAV */}
-      <div style={{ background:"white", borderBottom:"1px solid #E3EAF3", padding:"0 40px", height:60, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100, boxShadow:"0 1px 8px rgba(0,51,141,0.06)" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          <span style={{ fontSize:16, fontWeight:900, letterSpacing:"-0.03em", background:`linear-gradient(135deg,${B},${M})`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>TrustShield AI</span>
-          <div style={{ width:1, height:18, background:"#E3EAF3" }} />
-          <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", background:"#EDE9FE", color:"#7C3AED", borderRadius:20, letterSpacing:"0.06em", textTransform:"uppercase" }}>Admin Panel</span>
-        </div>
-        <div style={{ display:"flex", gap:10 }}>
-          <button onClick={() => navigate("/dashboard")} style={{ padding:"7px 16px", background:"white", border:"1px solid #E3EAF3", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600, color:"#6B7C93" }}>Dashboard</button>
-          <button onClick={() => { localStorage.removeItem("token"); navigate("/login"); }} style={{ padding:"7px 16px", background:"#FEF2F2", border:"1px solid #FECACA", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600, color:"#DC2626" }}>Sign Out</button>
-        </div>
-      </div>
+      {/* NAV removed — sidebar handles navigation */}
 
       <div style={{ maxWidth:1300, margin:"0 auto", padding:"32px 40px 80px" }}>
 
