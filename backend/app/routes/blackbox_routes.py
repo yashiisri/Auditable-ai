@@ -3,9 +3,15 @@ app/routes/blackbox.py
 =======================
 Blackbox audit router.
 
-Fetches registered AI system description + domain from MongoDB and forwards
-them to run_blackbox_pipeline() so the dynamic probe generator has context.
-No changes to the BlackBoxRequest schema.
+What changed:
+  - _get_ai_context() now also returns registration_profile and system_prompt
+    (stored by RegisterAi.tsx via ai_routes.py) so the orchestrator has full
+    context for all 4 intelligence layers:
+      1. Registration profile (end_users, decision_influence, data_types, etc.)
+      2. System prompt (if the client pasted it at registration)
+      3. Behavioral fingerprint (warm-up probes — orchestrator handles this)
+      4. Description + domain (always present)
+  - result from run_blackbox_pipeline includes adaptive_meta and fingerprint_meta
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -37,20 +43,62 @@ class BlackBoxRequest(BaseModel):
     cookies:  Optional[str] = ""   # JSON array from Cookie-Editor (UI mode only)
 
 
-# ── Helper: fetch AI system context (description + domain + profile) ───────────
+# ── Helper: fetch full AI system context from MongoDB ──────────────────────────
 
-def _get_ai_context(ai_name: str, owner_id: str) -> tuple[str, str]:
+def _get_ai_context(ai_name: str, owner_id: str) -> dict:
     """
-    Looks up the registered AI system and returns (description, domain).
-    Falls back to empty strings if the system is not found.
+    Returns all context fields stored at registration time.
+    Falls back to empty values if the system is not found.
+
+    Fields returned:
+      description           – plain description
+      domain                – domain string
+      registration_profile  – structured profile dict (Approach 3)
+      system_prompt         – pasted system prompt (Approach 2), if provided
     """
     doc = ai_collection.find_one(
         {"name": ai_name, "owner_id": owner_id},
-        {"description": 1, "domain": 1, "_id": 0},
+        {
+            "description":          1,
+            "domain":               1,
+            "registration_profile": 1,
+            "system_prompt":        1,   # stored by ai_routes.py if client provided it
+            "_id":                  0,
+        },
     )
     if not doc:
-        return "", ""
-    return doc.get("description", ""), doc.get("domain", "")
+        return {
+            "description":          "",
+            "domain":               "",
+            "registration_profile": None,
+            "system_prompt":        "",
+        }
+
+    # Flatten registration_profile fields that RegisterAi.tsx captures
+    # (end_users, decision_influence, data_types, jurisdictions,
+    #  highest_stakes_failure, oversight_model, deployment_status,
+    #  autonomous_actions, real_time_data, output_visibility, bias_tested,
+    #  risk_scenario, custom_risk_scenario, agent_version)
+    rp = doc.get("registration_profile") or {}
+
+    # Some implementations store these at the top level of the AI doc
+    # (not nested under registration_profile) — merge both for safety
+    top_level_profile_fields = [
+        "end_users", "decision_influence", "data_types", "jurisdictions",
+        "highest_stakes_failure", "oversight_model", "deployment_status",
+        "autonomous_actions", "real_time_data", "output_visibility",
+        "bias_tested", "risk_scenario", "custom_risk_scenario", "agent_version",
+    ]
+    for field in top_level_profile_fields:
+        if field not in rp and field in doc:
+            rp[field] = doc[field]
+
+    return {
+        "description":          doc.get("description", ""),
+        "domain":               doc.get("domain", ""),
+        "registration_profile": rp if rp else None,
+        "system_prompt":        doc.get("system_prompt", ""),
+    }
 
 
 # ── Run Audit ──────────────────────────────────────────────────────────────────
@@ -70,8 +118,8 @@ async def run_blackbox_audit(
     else:
         raise HTTPException(status_code=422, detail="mode must be 'api' or 'ui'.")
 
-    # ── Fetch AI system context (description + domain) ──────────────────────
-    ai_description, ai_domain = _get_ai_context(
+    # ── Fetch all registered context (description, domain, profile, system prompt)
+    ctx = _get_ai_context(
         ai_name=payload.ai_name,
         owner_id=str(current_user["_id"]),
     )
@@ -84,8 +132,10 @@ async def run_blackbox_audit(
             endpoint=payload.endpoint or "",
             api_key=payload.api_key or "",
             current_user=current_user,
-            ai_description=ai_description,
-            ai_domain=ai_domain,
+            ai_description=ctx["description"],
+            ai_domain=ctx["domain"],
+            registration_profile=ctx["registration_profile"],  # ← NEW
+            system_prompt=ctx["system_prompt"],                 # ← NEW
         )
 
     elif payload.mode == "ui":
@@ -95,13 +145,16 @@ async def run_blackbox_audit(
         )
         _patch_selectors(ui_auditor_module, profile)
 
+        # Pass context to UI pipeline too — ui_auditor should forward to probe_generator
         result = await run_ui_blackbox_pipeline(
             ai_name=payload.ai_name,
             ui_url=payload.ui_url or "",
             cookies=payload.cookies or None,
             stealth=profile["stealth"],
-            ai_description=ai_description,
-            ai_domain=ai_domain,
+            ai_description=ctx["description"],
+            ai_domain=ctx["domain"],
+            registration_profile=ctx["registration_profile"],  # ← NEW
+            system_prompt=ctx["system_prompt"],                 # ← NEW
         )
 
         result["platform_detected"] = profile["label"]
