@@ -28,18 +28,11 @@ body{background:#F4F7FB;}
 .db-page-title{font-size:22px;font-weight:900;color:#00338D;letter-spacing:-0.5px;margin-bottom:4px;}
 .db-page-sub{font-size:13.5px;color:#8FA3BF;margin-bottom:36px;line-height:1.5;}
 
-.db-steps{display:flex;flex-direction:column;gap:0;}
-.db-step{display:flex;gap:0;align-items:stretch;}
-.db-step-left{display:flex;flex-direction:column;align-items:center;width:44px;flex-shrink:0;}
-.db-step-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;transition:all 0.3s;border:2px solid #E3EAF3;background:#fff;color:#B0C0D4;}
-.db-step-num.active{background:linear-gradient(135deg,#00338D,#005EB8);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(0,51,141,0.25);}
-.db-step-num.done{background:#00A3A1;border-color:transparent;color:#fff;}
-.db-step-line{width:2px;flex:1;background:#E3EAF3;margin:3px 0;min-height:16px;transition:background 0.3s;}
-.db-step-line.done{background:#00A3A1;}
-.db-step-body{flex:1;padding:0 0 28px 14px;}
-.db-step-eyebrow{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;color:#B0C0D4;transition:color 0.3s;}
-.db-step-eyebrow.active{color:#005EB8;}
-.db-step-eyebrow.done{color:#00A3A1;}
+.db-steps{display:flex;flex-direction:column;gap:20px;}
+.db-step{display:flex;flex-direction:column;gap:0;}
+.db-step-left{display:none;}
+.db-step-body{flex:1;padding:0;}
+.db-step-eyebrow{display:none;}
 
 .db-card{background:#fff;border:1.5px solid #E3EAF3;border-radius:16px;padding:22px;transition:all 0.25s;}
 .db-card.active{border-color:#C7D9F5;box-shadow:0 4px 20px rgba(0,51,141,0.07);}
@@ -577,18 +570,32 @@ export default function Dashboard() {
 
       <div className="db-body">
         <div className="db-page-title">Audit Pipeline{aiName ? ` — ${aiName}` : ""}</div>
-        <div className="db-page-sub">Complete each step to run a full governance evaluation on your AI agent.</div>
+        <div className="db-page-sub">Run a full governance evaluation on your AI agent. Complete each section below.</div>
 
         <div className="db-steps">
 
-          {/* ── STEP 1: BLACK BOX ── */}
+          {/* ── SECTION 1: BEHAVIOURAL PROBING (ISO 42001 §8.4 — Operation) ── */}
           <div className="db-step">
-            <div className="db-step-left">
-              <div className={`db-step-num ${stepNum(bbDone, true)}`}>{bbDone?"✓":"1"}</div>
-              <div className={`db-step-line ${bbDone?"done":""}`} />
-            </div>
+            <div className="db-step-left" />
             <div className="db-step-body">
-              <div className={`db-step-eyebrow ${stepNum(bbDone, true)}`}>Step 1 — Black Box Audit</div>
+              {/* Section header */}
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                <div style={{ width:34, height:34, borderRadius:9, background: bbDone ? "linear-gradient(135deg,#00A3A1,#0091DA)" : "linear-gradient(135deg,#00338D,#005EB8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 2px 8px rgba(0,51,141,0.2)" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:800, color:"#0B1F33", letterSpacing:"-0.2px" }}>
+                    Behavioural Probing
+                    {bbDone && <span style={{ marginLeft:8, fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#F0FDF4", color:"#059669", border:"1px solid #A7F3D0" }}>✓ Complete</span>}
+                  </div>
+                  <div style={{ fontSize:12, color:"#7A90AB", marginTop:2 }}>
+                    {aiName
+                      ? `Fire governance probes at ${aiName} to test real-world behaviour across safety, fairness, and transparency`
+                      : "Connect your AI agent and fire governance probes to test real-world behaviour"}
+                  </div>
+                </div>
+              </div>
+              <div className={`db-step-eyebrow`} />
 
               {bbDone && bbResult ? (
                 <BlackBoxSummary result={bbResult} tab={bbTab} onRedo={() => { setBbDone(false); setBbResult(null); }} />
@@ -665,14 +672,28 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ── STEP 2: UPLOAD LOGS ── */}
+          {/* ── SECTION 2: LOG INGESTION (ISO 42001 §8.2 — AI system lifecycle) ── */}
           <div className="db-step">
-            <div className="db-step-left">
-              <div className={`db-step-num ${stepNum(logsDone, true)}`}>{logsDone?"✓":"2"}</div>
-              <div className={`db-step-line ${logsDone?"done":""}`} />
-            </div>
+            <div className="db-step-left" />
             <div className="db-step-body">
-              <div className={`db-step-eyebrow ${stepNum(logsDone, true)}`}>Step 2 — Upload Inference Logs <span style={{ fontWeight:400, letterSpacing:0 }}>(Optional if Black Box ran)</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                <div style={{ width:34, height:34, borderRadius:9, background: logsDone ? "linear-gradient(135deg,#00A3A1,#0091DA)" : "linear-gradient(135deg,#4B5E78,#7A90AB)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:800, color:"#0B1F33", letterSpacing:"-0.2px" }}>
+                    Inference Log Ingestion
+                    {logsDone && <span style={{ marginLeft:8, fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#F0FDF4", color:"#059669", border:"1px solid #A7F3D0" }}>✓ Complete</span>}
+                    <span style={{ marginLeft:8, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20, background:"#F5F8FC", color:"#7A90AB", border:"1px solid #E3EAF3" }}>Optional if probing ran</span>
+                  </div>
+                  <div style={{ fontSize:12, color:"#7A90AB", marginTop:2 }}>
+                    {aiName
+                      ? `Upload ${aiName}'s production inference logs — inputs, outputs, latency. The SDCC pipeline checks data quality and detects model type automatically.`
+                      : "Upload production inference logs for structural analysis and data quality scoring"}
+                  </div>
+                </div>
+              </div>
+              <div className="db-step-eyebrow" />
 
               {/* SDCC summary always shown when available */}
               {logsDone && sdccSummary && (
@@ -707,14 +728,26 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ── STEP 3: KNOWLEDGE BASE ── */}
+          {/* ── SECTION 3: KNOWLEDGE BASE (ISO 42001 §7.5 — Documented information) ── */}
           <div className="db-step">
-            <div className="db-step-left">
-              <div className={`db-step-num ${stepNum(kbDone, uploaded)}`}>{kbDone?"✓":"3"}</div>
-              <div className={`db-step-line ${kbDone?"done":""}`} />
-            </div>
+            <div className="db-step-left" />
             <div className="db-step-body">
-              <div className={`db-step-eyebrow ${stepNum(kbDone, uploaded)}`}>Step 3 — Knowledge Base <span style={{ fontWeight:400, letterSpacing:0 }}>(Optional)</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                <div style={{ width:34, height:34, borderRadius:9, background: kbDone ? "linear-gradient(135deg,#00A3A1,#0091DA)" : "linear-gradient(135deg,#4B5E78,#7A90AB)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 2px 8px rgba(0,0,0,0.1)", opacity: uploaded ? 1 : 0.5 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:800, color: uploaded ? "#0B1F33" : "#A0B4CC", letterSpacing:"-0.2px" }}>
+                    Knowledge Base
+                    {kbDone && <span style={{ marginLeft:8, fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#F0FDF4", color:"#059669", border:"1px solid #A7F3D0" }}>✓ Loaded</span>}
+                    <span style={{ marginLeft:8, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20, background:"#F5F8FC", color:"#7A90AB", border:"1px solid #E3EAF3" }}>Optional</span>
+                  </div>
+                  <div style={{ fontSize:12, color:"#7A90AB", marginTop:2 }}>
+                    Upload reference documents to ground the LLM Judge against your own material — significantly improves accuracy scoring for RAG and domain-specific agents
+                  </div>
+                </div>
+              </div>
+              <div className="db-step-eyebrow" />
               <div className={`db-card${uploaded?"":" locked"}`}>
                 <div className="db-card-h">Upload Knowledge Base</div>
                 <div className="db-card-d">Upload reference documents (PDF, TXT, DOCX, MD) to ground the LLM Judge evaluation against your own material. When provided, the three judges compare AI responses against your KB instead of using only their world knowledge — significantly improving accuracy scoring for RAG and domain-specific systems.</div>
@@ -740,13 +773,27 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ── STEP 4: EVALUATE ── */}
+          {/* ── SECTION 4: GOVERNANCE EVALUATION (ISO 42001 §9 — Performance evaluation) ── */}
           <div className="db-step">
-            <div className="db-step-left">
-              <div className={`db-step-num ${uploaded?"active":""}`}>4</div>
-            </div>
+            <div className="db-step-left" />
             <div className="db-step-body">
-              <div className={`db-step-eyebrow ${uploaded?"active":""}`}>Step 4 — Run Full Evaluation</div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                <div style={{ width:34, height:34, borderRadius:9, background: uploaded ? "linear-gradient(135deg,#00338D,#005EB8)" : "linear-gradient(135deg,#4B5E78,#7A90AB)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 2px 8px rgba(0,51,141,0.2)", opacity: uploaded ? 1 : 0.5 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:800, color: uploaded ? "#0B1F33" : "#A0B4CC", letterSpacing:"-0.2px" }}>
+                    Full Governance Evaluation
+                    {!uploaded && <span style={{ marginLeft:8, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20, background:"#FFF7ED", color:"#D97706", border:"1px solid #FDE68A" }}>Complete sections above first</span>}
+                  </div>
+                  <div style={{ fontSize:12, color:"#7A90AB", marginTop:2 }}>
+                    {aiName
+                      ? `Run the complete KPMG TAF pipeline on ${aiName} — SDCC analysis → Triple LLM Judge → 10-principle scoring → compliance mapping → PDF report`
+                      : "Run the complete governance evaluation pipeline and generate your audit report"}
+                  </div>
+                </div>
+              </div>
+              <div className={`db-step-eyebrow ${uploaded?"active":""}`} />
               <div className={`db-card${uploaded?"":" locked"}`}>
                 <div className="db-card-h">Run Full Governance Evaluation</div>
                 <div className="db-card-d">
