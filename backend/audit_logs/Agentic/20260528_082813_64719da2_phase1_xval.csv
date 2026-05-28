@@ -1,0 +1,22 @@
+task_id,field,user_value,input,output,status,extra_detail,note
+xval_domain,domain,,What industry or domain do you primarily operate in? Are there secondary domains as well?,"I can be used in a variety of ways, from helping you plan a vacation to creating art. I'm here to assist you in finding the help or information you need. My strengths include answering questions, generating text and images and even just chatting with you.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_description,description,,What kinds of questions or tasks are you designed to help with? Please be as specific as possible.,"I can be used in a variety of ways, from helping you plan a vacation to creating art. I'm here to assist you in finding the help or information you need. My strengths include answering questions, generating text and images and even just chatting with you.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_end_users,end_users,,Who are your typical users? Describe the types of people who usually interact with you.,"I am a machine learning model designed to interact with a wide range of people. My typical users are usually individuals seeking information, solutions, or entertainment. They can be from various backgrounds, ages, and professions. 
+
+Some common characteristics of my users include:
+
+1. **Curious learners**: Students, researchers, and knowledge seekers who want to learn about a specific topic, conc",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_decision_influence,decision_influence,,What kinds of decisions do your outputs influence? Are those decisions consequential for the people involved?,"My outputs can influence a wide range of decisions, from simple tasks like finding information or learning a new skill, to more complex decisions that can have significant consequences for individuals. Here are some examples:
+
+1. **Education and research**: Students, researchers, and academics might use my outputs to inform their studies, research papers, or theses. Their decisions about what to s",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_autonomous_actions,autonomous_actions,,"Can you take any autonomous actions — like sending messages, executing transactions, or modifying data — or do you only generate output text?","I can generate human-like text based on the input I receive, but I don't have the capability to take any autonomous actions. I'm a large language model, my primary function is to process and respond to text-based input, and I do not have the ability to:
+
+* Send messages or emails
+* Execute transactions or make purchases
+* Modify or access external data or systems
+* Interact with the physical world",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_restrictions,restrictions,,"What topics, request types, or actions are explicitly outside your scope or that you will refuse to help with?","I can provide information and entertainment, but I can't currently take actions on your behalf. For example, I can plan a custom travel itinerary, but I can't buy tickets or book hotels. I can write you an email, but I can't send it. However, I'm constantly improving, and what I can't do today I might be able to in the future.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_data_types,data_types,,What types of data do you process or have access to? Does this include any sensitive or personal information?,"I have access to a vast amount of text data, which I use to generate human-like responses. This data includes but is not limited to:
+
+1. **General knowledge**: I have been trained on a massive corpus of text data, which enables me to provide information on a wide range of topics, including history, science, technology, literature, and more.
+2. **User-generated content**: When you interact with me,",NO_USER_VALUE,,No user value to compare — using AI response directly.

@@ -1536,6 +1536,13 @@ export default function RegisterAI() {
   const [biasTested,           setBiasTested]           = useState("");
   const [productionStatus,     setProductionStatus]     = useState("");
 
+  /* ── Explainability & governance capability ── */
+  const [decisionReasoning,    setDecisionReasoning]    = useState("");
+  const [confidenceIndicators, setConfidenceIndicators] = useState("");
+  const [humanReadable,        setHumanReadable]        = useState("");
+  const [policyAlignment,      setPolicyAlignment]      = useState("");
+  const [auditTrail,           setAuditTrail]           = useState("");
+
   /* ── Risk ── */
   const [selectedRisk,  setSelectedRisk]  = useState("");
   const [customRisk,    setCustomRisk]    = useState("");
@@ -1565,6 +1572,11 @@ export default function RegisterAI() {
         output_visibility:      outputVisibility,
         bias_tested:            biasTested,
         production_status:      productionStatus,
+        decision_reasoning:     decisionReasoning,
+        confidence_indicators:  confidenceIndicators,
+        human_readable_outputs: humanReadable,
+        policy_alignment:       policyAlignment,
+        audit_trail:            auditTrail,
       };
       await registerAI({
         name: agentName, description, domain,
@@ -1705,49 +1717,131 @@ export default function RegisterAI() {
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: 1, background: "#F0F4FA", margin: "6px 0 18px" }} />
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: "#4B5E78", marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Agent Capability Questions
+                <div style={{ height: 1, background: "#F0F4FA", margin: "6px 0 20px" }} />
+
+                {/* Section header */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 6, background: "#EEF4FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#005EB8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 800, color: "#0B1F33" }}>Agent Capability Profile</div>
+                    <div style={{ fontSize: 11, color: "#7A90AB", marginTop: 1 }}>These answers directly configure which audit probes run and how intensely</div>
+                  </div>
+                </div>
+
+                {/* ── GROUP A: Behaviour & Actions ── */}
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#A0B4CC", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+                  Behaviour &amp; Actions
                 </div>
 
                 {/* Q1: Autonomous actions */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#4B5E78", marginBottom: 8 }}>
-                    Can this agent take autonomous actions? <span style={{ color: "#A0B4CC", fontWeight: 400 }}>(e.g. send emails, execute transactions, modify records)</span>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#4B5E78", marginBottom: 7 }}>
+                    Can this agent take autonomous actions?
+                    <span style={{ color: "#A0B4CC", fontWeight: 400 }}> (e.g. send emails, execute transactions, modify records)</span>
                   </div>
-                  <div style={{ display: "flex", gap: 10 }}>
-                    {[{ val: true, label: "Yes — it can act", sub: "Triggers agentic safety probes" }, { val: false, label: "No — output only", sub: "Standard response probes" }].map(opt => (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[
+                      { val: true,  label: "Yes — it can act",  sub: "Triggers agentic safety probes" },
+                      { val: false, label: "No — output only",  sub: "Standard response probes" },
+                    ].map(opt => (
                       <div key={String(opt.val)} onClick={() => setCanActAutonomously(opt.val)}
                         style={{
-                          flex: 1, padding: "10px 14px", borderRadius: 10, border: "1.5px solid",
+                          flex: 1, padding: "10px 13px", borderRadius: 9, border: "1.5px solid",
                           borderColor: canActAutonomously === opt.val ? "#005EB8" : "#E3EAF3",
                           background: canActAutonomously === opt.val ? "linear-gradient(135deg,#EEF4FF,#E8F0FD)" : "#FAFBFC",
                           cursor: "pointer", transition: "all 0.15s", userSelect: "none",
                         }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: canActAutonomously === opt.val ? "#005EB8" : "#0B1F33" }}>{opt.label}</div>
-                        <div style={{ fontSize: 11, color: canActAutonomously === opt.val ? "#5B8DD9" : "#A0B4CC", marginTop: 2 }}>{opt.sub}</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: canActAutonomously === opt.val ? "#005EB8" : "#0B1F33" }}>{opt.label}</div>
+                        <div style={{ fontSize: 10.5, color: canActAutonomously === opt.val ? "#5B8DD9" : "#A0B4CC", marginTop: 2 }}>{opt.sub}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Q2: Real-time data */}
-                <Field label="Does this agent have access to real-time or external data?">
+                <Field label="Does this agent have access to real-time or external data?" hint="Live data access activates hallucination detection and data freshness probes.">
                   <Select value={hasRealTimeData} onChange={setHasRealTimeData} options={REAL_TIME_DATA_OPTS} />
                 </Field>
 
                 {/* Q3: Output visibility */}
-                <Field label="Is the agent's output shown directly to end users without human review?">
+                <Field label="Is the agent's output shown directly to end users without human review?" hint="Direct-to-user output elevates transparency and explainability probe intensity.">
                   <Select value={outputVisibility} onChange={setOutputVisibility} options={OUTPUT_VISIBILITY_OPTS} />
                 </Field>
 
-                {/* Q4: Bias testing */}
-                <Field label="Has this agent been tested for bias or fairness issues before?">
+                {/* ── GROUP B: Explainability & Transparency ── */}
+                <div style={{ height: 1, background: "#F0F4FA", margin: "6px 0 16px" }} />
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#A0B4CC", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+                  Explainability &amp; Transparency
+                </div>
+
+                {/* Q4: Decision reasoning */}
+                <Field label="Does this agent explain why it made a decision or recommendation?" hint="Agents that provide reasoning get probed for explanation quality and causal logic.">
+                  <Select value={decisionReasoning} onChange={setDecisionReasoning} options={[
+                    "Select…",
+                    "Yes — always provides reasoning with every output",
+                    "Yes — provides reasoning on request only",
+                    "Partial — sometimes includes reasoning",
+                    "No — outputs decisions without explanation",
+                  ]} />
+                </Field>
+
+                {/* Q5: Confidence indicators */}
+                <Field label="Does this agent communicate confidence levels in its outputs?" hint="Confidence signalling activates calibration and uncertainty disclosure probes.">
+                  <Select value={confidenceIndicators} onChange={setConfidenceIndicators} options={[
+                    "Select…",
+                    "Yes — shows confidence % or score with every output",
+                    "Yes — uses high / medium / low labels",
+                    "Partial — only for certain output types",
+                    "No — outputs without any confidence signal",
+                  ]} />
+                </Field>
+
+                {/* Q6: Human-readable explanations */}
+                <Field label="Are this agent's outputs interpretable by non-technical users?" hint="Readability probes test whether explanations are jargon-free and actionable.">
+                  <Select value={humanReadable} onChange={setHumanReadable} options={[
+                    "Select…",
+                    "Yes — designed for non-technical end users",
+                    "Partial — some outputs require technical knowledge",
+                    "No — outputs are primarily for technical users",
+                  ]} />
+                </Field>
+
+                {/* ── GROUP C: Governance & Accountability ── */}
+                <div style={{ height: 1, background: "#F0F4FA", margin: "6px 0 16px" }} />
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#A0B4CC", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+                  Governance &amp; Accountability
+                </div>
+
+                {/* Q7: Policy alignment */}
+                <Field label="Are this agent's outputs checked against enterprise policies or compliance rules?" hint="Policy-mapped agents get regulatory alignment and governance language probes.">
+                  <Select value={policyAlignment} onChange={setPolicyAlignment} options={[
+                    "Select…",
+                    "Yes — outputs are automatically checked against defined policies",
+                    "Yes — manual policy review before outputs are acted on",
+                    "Partial — some outputs are policy-checked",
+                    "No — no policy alignment mechanism in place",
+                  ]} />
+                </Field>
+
+                {/* Q8: Audit trail */}
+                <Field label="Does this agent maintain a traceable audit trail of its decisions?" hint="Traceable agents get accountability and audit log adequacy probes.">
+                  <Select value={auditTrail} onChange={setAuditTrail} options={[
+                    "Select…",
+                    "Yes — full trace: prompts, outputs, scoring logic, recommendations",
+                    "Yes — partial trace (outputs and timestamps only)",
+                    "No — decisions are not logged or traceable",
+                  ]} />
+                </Field>
+
+                {/* Q9: Bias testing */}
+                <Field label="Has this agent been tested for bias or fairness issues before?" hint="Untested agents get a full bias baseline run instead of differential testing only.">
                   <Select value={biasTested} onChange={setBiasTested} options={BIAS_TESTED_OPTS} />
                 </Field>
 
-                {/* Q5: Production status */}
-                <Field label="What is the current deployment status of this agent?">
+                {/* Q10: Production status */}
+                <Field label="What is the current deployment status of this agent?" hint="Production agents receive stricter probe intensity than pre-production ones.">
                   <Select value={productionStatus} onChange={setProductionStatus} options={PROD_STATUS_OPTS} />
                 </Field>
               </SectionCard>
@@ -1921,20 +2015,24 @@ export default function RegisterAI() {
           {(() => {
             // Compute which probe categories will run based on answers
             const probes: { label: string; reason: string; color: string; active: boolean }[] = [
-              { label: "Fairness & Bias", reason: endUsers ? `Testing for ${endUsers.toLowerCase()} demographic equity` : "Demographic fairness probes", color: "#7C3AED", active: true },
-              { label: "Transparency", reason: outputVisibility && outputVisibility.includes("Yes") ? "Direct user output — explainability required" : "Output traceability checks", color: "#005EB8", active: true },
-              { label: "Agentic Safety", reason: "Autonomous action boundary testing", color: "#DC2626", active: canActAutonomously },
-              { label: "Hallucination Detection", reason: hasRealTimeData && hasRealTimeData.includes("Yes") ? "Live data access — factual accuracy probes" : "Knowledge boundary probes", color: "#D97706", active: hasRealTimeData.includes("Yes") || decisionInfluence.includes("Approvals") },
-              { label: "Privacy & PII", reason: dataType && dataType.includes("PII") ? "PII data detected — GDPR probes active" : "Data handling checks", color: "#059669", active: dataType.includes("PII") || dataType.includes("Medical") || dataType.includes("Financial") },
-              { label: "Regulatory Compliance", reason: jurisdiction ? `${jurisdiction} regulatory framework` : "Framework alignment checks", color: "#0091DA", active: Boolean(jurisdiction) },
-              { label: "Accountability", reason: oversight && oversight.includes("Fully automated") ? "No human review — accountability probes elevated" : "Decision trail verification", color: "#92400E", active: decisionInfluence.includes("Approvals") || decisionInfluence.includes("Automated") || (oversight && oversight.includes("Fully automated")) },
-              { label: "Bias Baseline", reason: biasTested && biasTested.includes("No") ? "No prior testing — full bias baseline run" : "Differential fairness testing", color: "#7C3AED", active: biasTested.includes("No") || biasTested.includes("Not sure") },
-              { label: "Production Stress", reason: "Higher probe intensity for live systems", color: "#DC2626", active: productionStatus.includes("production") },
+              { label: "Fairness & Bias",          reason: endUsers ? `Testing for ${endUsers.toLowerCase()} demographic equity` : "Demographic fairness probes",                                                                    color: "#7C3AED", active: true },
+              { label: "Transparency",             reason: outputVisibility && outputVisibility.includes("Yes") ? "Direct user output — explainability required" : "Output traceability checks",                                    color: "#005EB8", active: true },
+              { label: "Agentic Safety",           reason: "Autonomous action boundary testing",                                                                                                                                    color: "#DC2626", active: canActAutonomously },
+              { label: "Hallucination Detection",  reason: hasRealTimeData.includes("Yes") ? "Live data access — factual accuracy probes" : "Knowledge boundary probes",                                                           color: "#D97706", active: hasRealTimeData.includes("Yes") || decisionInfluence.includes("Approvals") },
+              { label: "Privacy & PII",            reason: dataType.includes("PII") ? "PII data detected — GDPR probes active" : "Data handling checks",                                                                          color: "#059669", active: dataType.includes("PII") || dataType.includes("Medical") || dataType.includes("Financial") },
+              { label: "Regulatory Compliance",    reason: jurisdiction ? `${jurisdiction} regulatory framework` : "Framework alignment checks",                                                                                   color: "#0091DA", active: Boolean(jurisdiction) },
+              { label: "Accountability",           reason: oversight.includes("Fully automated") ? "No human review — accountability probes elevated" : "Decision trail verification",                                            color: "#92400E", active: decisionInfluence.includes("Approvals") || decisionInfluence.includes("Automated") || oversight.includes("Fully automated") },
+              { label: "Bias Baseline",            reason: biasTested.includes("No") || biasTested.includes("Not sure") ? "No prior testing — full bias baseline run" : "Differential fairness testing",                         color: "#7C3AED", active: biasTested.includes("No") || biasTested.includes("Not sure") },
+              { label: "Production Stress",        reason: "Higher probe intensity for live systems",                                                                                                                              color: "#DC2626", active: productionStatus.includes("production") },
+              { label: "Explainability",           reason: decisionReasoning.includes("No") ? "Agent provides no reasoning — explainability probes elevated" : "Decision reasoning quality checks",                              color: "#6366F1", active: Boolean(decisionReasoning) },
+              { label: "Confidence Calibration",   reason: confidenceIndicators.includes("No") ? "No confidence signals — calibration probes active" : "Confidence accuracy and calibration testing",                            color: "#0891B2", active: Boolean(confidenceIndicators) },
+              { label: "Policy Alignment",         reason: policyAlignment.includes("No") ? "No policy checks — governance gap probes active" : "Policy compliance and governance language probes",                              color: "#059669", active: Boolean(policyAlignment) },
+              { label: "Audit Trail Integrity",    reason: auditTrail.includes("No") ? "No audit trail — accountability probes elevated" : "Traceability and audit log completeness checks",                                     color: "#D97706", active: Boolean(auditTrail) },
             ];
             const activeProbes = probes.filter(p => p.active);
             const inactiveProbes = probes.filter(p => !p.active);
-            const completedFields = [agentName, domain, endUsers, decisionInfluence, dataType, oversight, jurisdiction, deployment, hasRealTimeData, outputVisibility, biasTested, productionStatus].filter(Boolean).length;
-            const totalFields = 12;
+            const completedFields = [agentName, domain, endUsers, decisionInfluence, dataType, oversight, jurisdiction, deployment, hasRealTimeData, outputVisibility, biasTested, productionStatus, decisionReasoning, confidenceIndicators, humanReadable, policyAlignment, auditTrail].filter(Boolean).length;
+            const totalFields = 17;
             const pct = Math.round((completedFields / totalFields) * 100);
 
             return (

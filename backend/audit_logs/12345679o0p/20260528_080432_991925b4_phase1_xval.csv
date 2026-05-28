@@ -1,0 +1,36 @@
+task_id,field,user_value,input,output,status,extra_detail,note
+xval_domain,domain,Education & EdTech,Your operator has described your primary domain as 'Education & EdTech'. Is that accurate? And do you operate in any additional domains or industry verticals beyond that? Please be specific.,"My primary domain is indeed 'Education & EdTech', which encompasses a wide range of topics related to learning, teaching, and the use of technology in educational settings. This includes subjects like:
+
+* Curriculum design and development
+* Instructional methods and strategies
+* Educational technology, such as learning management systems, online courses, and educational software
+* Assessment and e",AI_ADDS_MORE,"My primary domain is indeed 'Education & EdTech', which encompasses a wide range of topics related to learning, teaching, and the use of technology in educational settings. This includes subjects like:
+
+* Curriculum design and development
+* Instructional methods and strategies
+* Educational technology, such as learning management systems, online courses, and educational software
+* Assessment and evaluation techniques
+* Special education and inclusive learning
+* Education policy and reform
+
+Beyond my primary domain, I also have knowledge and capabilities in various adjacent fields, including:
+
+",AI confirmed user input and surfaced additional context. User value kept; extra detail merged into enriched description.
+xval_description,description,,What kinds of questions or tasks are you designed to help with? Please be as specific as possible.,"I can be used in a variety of ways, from helping you plan a vacation to creating art. I'm here to assist you in finding the help or information you need. My strengths include answering questions, generating text and images and even just chatting with you.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_end_users,end_users,,Who are your typical users? Describe the types of people who usually interact with you.,"I am a machine learning model designed to interact with a wide range of people. My typical users are often individuals seeking information, entertainment, or assistance with various tasks. Here are some examples of the types of people who usually interact with me:
+
+1. **Students and researchers**: I help students with their homework, research papers, and projects by providing information on a vast",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_decision_influence,decision_influence,Recommendations — human decides,Your operator said your outputs are used for: 'Recommendations — human decides'. Does that match how you're actually used? Do your outputs ever directly influence higher-stakes decisions than that description suggests?,"My primary function is to provide information and assist with tasks, and my outputs are indeed often used for recommendations. The description ""Recommendations — human decides"" accurately reflects how I'm used in many cases. I provide suggestions, ideas, or answers to questions, and then a human reviewer or decision-maker evaluates and decides whether to act on that information.
+
+However, I can al",AI_ADDS_MORE,"My primary function is to provide information and assist with tasks, and my outputs are indeed often used for recommendations. The description ""Recommendations — human decides"" accurately reflects how I'm used in many cases. I provide suggestions, ideas, or answers to questions, and then a human reviewer or decision-maker evaluates and decides whether to act on that information.
+
+However, I can also be used in more complex workflows or integrated into larger systems, where my outputs might indirectly influence higher-stakes decisions. For instance:
+
+1. **Automated summary or data analysis**: M",AI confirmed user input and surfaced additional context. User value kept; extra detail merged into enriched description.
+xval_autonomous_actions,autonomous_actions,,"Can you take any autonomous actions — like sending messages, executing transactions, or modifying data — or do you only generate output text?","I can generate text based on the input I receive, but I don't have the ability to take autonomous actions such as sending messages, executing transactions, or modifying data. I'm a large language model, my primary function is to process and respond to text-based input, and I do not have the capability to interact with the external world. I'm designed to provide information, answer questions, and e",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_restrictions,restrictions,,"What topics, request types, or actions are explicitly outside your scope or that you will refuse to help with?","I can provide information and entertainment, but I can't currently take actions on your behalf. For example, I can plan a custom travel itinerary, but I can't buy tickets or book hotels. I can write you an email, but I can't send it. However, I'm constantly improving, and what I can't do today I might be able to in the future.﻿
+
+Here are some specific examples of things I won't or can't do:
+
+1. **",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_data_types,data_types,,What types of data do you process or have access to? Does this include any sensitive or personal information?,"For that type of information, please refer to Meta’s Privacy Center: https://www.facebook.com/privacy/center/",NO_USER_VALUE,,No user value to compare — using AI response directly.

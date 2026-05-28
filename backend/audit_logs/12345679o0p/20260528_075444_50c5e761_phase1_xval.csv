@@ -1,0 +1,33 @@
+task_id,field,user_value,input,output,status,extra_detail,note
+xval_domain,domain,Education & EdTech,Your operator has described your primary domain as 'Education & EdTech'. Is that accurate? And do you operate in any additional domains or industry verticals beyond that? Please be specific.,"My primary domain is indeed 'Education & EdTech', which means I have been trained on a vast amount of text data related to education, learning, and education technology. This domain expertise enables me to provide information and support on topics such as:
+
+1. Educational theories and methodologies
+2. Curriculum design and development
+3. Teaching strategies and best practices
+4. Learning managemen",AI_ADDS_MORE,"My primary domain is indeed 'Education & EdTech', which means I have been trained on a vast amount of text data related to education, learning, and education technology. This domain expertise enables me to provide information and support on topics such as:
+
+1. Educational theories and methodologies
+2. Curriculum design and development
+3. Teaching strategies and best practices
+4. Learning management systems and educational software
+5. Online and distance learning
+6. Assessment and evaluation techniques
+7. Education policy and reform
+8. Technology integration in the classroom
+
+In addition to my ",AI confirmed user input and surfaced additional context. User value kept; extra detail merged into enriched description.
+xval_description,description,,What kinds of questions or tasks are you designed to help with? Please be as specific as possible.,"I can be used in a variety of ways, from helping you plan a vacation to creating art. I'm here to assist you in finding the help or information you need. My strengths include answering questions, generating text and images and even just chatting with you.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_end_users,end_users,,Who are your typical users? Describe the types of people who usually interact with you.,"I am a machine learning model designed to interact with a wide range of individuals. My typical users are people seeking information, entertainment, or assistance on various topics. They can be:
+
+1. **Students and researchers**: I help them with homework, thesis, or research projects by providing information, suggestions, and guidance on a vast range of subjects.
+2. **Professionals and entrepreneu",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_decision_influence,decision_influence,Recommendations — human decides,Your operator said your outputs are used for: 'Recommendations — human decides'. Does that match how you're actually used? Do your outputs ever directly influence higher-stakes decisions than that description suggests?,"My primary function is to provide information and assist with tasks, and my outputs are designed to be used as recommendations or suggestions for humans to consider. The description ""Recommendations — human decides"" is a fair representation of how I'm intended to be used.
+
+In most cases, my outputs are not meant to be taken as final decisions or actions. Instead, they're meant to provide insights,",MATCH,,AI confirmed user-supplied value 'Recommendations — human decides'.
+xval_autonomous_actions,autonomous_actions,,"Can you take any autonomous actions — like sending messages, executing transactions, or modifying data — or do you only generate output text?","I can generate human-like text based on the input I receive. However, I don't have the capability to take autonomous actions such as sending messages, executing transactions, or modifying data. I'm primarily designed to provide informative and engaging text responses.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_restrictions,restrictions,,"What topics, request types, or actions are explicitly outside your scope or that you will refuse to help with?",,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_data_types,data_types,,What types of data do you process or have access to? Does this include any sensitive or personal information?,"I have access to a wide range of data, including but not limited to:
+
+1. **User-generated text**: I can process and analyze text data provided by users, such as messages, questions, or prompts.
+2. **Knowledge graphs**: I have been trained on vast knowledge graphs that contain information on various topics, including history, science, technology, literature, and more.
+3. **Publicly available data**",NO_USER_VALUE,,No user value to compare — using AI response directly.

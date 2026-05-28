@@ -9658,6 +9658,11 @@ export default function Report() {
   useEffect(() => { setTimeout(() => setAnim(true), 150); }, []);
   useEffect(() => { setHoveredParam(null); }, [sel]);
 
+  // Save report data to sessionStorage so sidebar navigation can pass it to sub-pages
+  useEffect(() => {
+    if (r) sessionStorage.setItem("lastReportData", JSON.stringify(r));
+  }, [r]);
+
   if (!r) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F8FAFC", gap: 20 }}>

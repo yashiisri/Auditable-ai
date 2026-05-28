@@ -37,6 +37,7 @@ const NAV_ITEMS = [
         path: "/dashboard",
         requiresAgent: true,
         subLabel: "Black Box & SDCC",
+        isHeader: false,
         icon: (
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -44,19 +45,20 @@ const NAV_ITEMS = [
         ),
       },
       {
-        label: "Reports",
-        path: "/report",
+        label: "Audit Overview",
+        path: "",
         requiresAgent: true,
-        subLabel: "Governance reports",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-        ),
+        isHeader: true,
+        icon: null,
       },
+      { label: "Executive Summary",    path: "/audit-overview",        requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+      { label: "Regulatory Alignment", path: "/regulatory-alignment",  requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
+      { label: "Risk Intelligence",    path: "/risk-intelligence",     requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+      { label: "LLM Analysis",         path: "/llm-analysis",          requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+      { label: "Governance Principles",path: "/governance-principles", requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+      { label: "Agent Behaviour",      path: "/agent-behaviour",       requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> },
+      { label: "Recommendations",      path: "/recommendations",       requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> },
+      { label: "Download Report",      path: "/download-report",       requiresAgent: true, isHeader: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
     ],
   },
 ];
@@ -124,8 +126,8 @@ export default function Sidebar() {
           </svg>
         </div>
         <div className="sb-texts">
-          <div style={{ fontSize: 13.5, fontWeight: 800, color: "#00338D", letterSpacing: "-0.4px", lineHeight: 1.2 }}>TrustShield AI</div>
-          <div style={{ fontSize: 9.5, color: "#7A90AB", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 1 }}>Audit Platform</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#00338D", letterSpacing: "-0.4px", lineHeight: 1.2 }}>TrustShield AI</div>
+          <div style={{ fontSize: 10.5, color: "#7A90AB", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 1 }}>Audit Platform</div>
         </div>
       </div>
 
@@ -140,7 +142,7 @@ export default function Sidebar() {
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#00A37A", flexShrink: 0, boxShadow: "0 0 0 2px rgba(0,163,122,0.2)" }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 9.5, color: "#7A90AB", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Active Agent</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#005EB8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeAI}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "#005EB8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeAI}</div>
             </div>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#00A37A", animation: "pulse 2s infinite", flexShrink: 0 }} />
           </div>
@@ -165,7 +167,7 @@ export default function Sidebar() {
         {NAV_ITEMS.map((group) => (
           <div key={group.section} style={{ marginBottom: 2 }}>
             <div className="sb-texts" style={{
-              fontSize: 9.5, fontWeight: 700, letterSpacing: "0.9px",
+              fontSize: 11, fontWeight: 700, letterSpacing: "0.9px",
               textTransform: "uppercase", color: "#A0B4CC", padding: "8px 8px 3px",
             }}>
               {group.section}
@@ -174,55 +176,106 @@ export default function Sidebar() {
             {group.items.map((item) => {
               const active = isActive(item.path);
               const locked = item.requiresAgent && !hasAgent;
-              return (
-                <div
-                  key={item.label}
-                  className="sb-item"
-                  onClick={() => { if (!locked) navigate(item.path); }}
-                  title={locked ? "Register an AI Agent first to unlock this" : undefined}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 9,
-                    padding: "8px 9px", borderRadius: 8,
-                    cursor: locked ? "not-allowed" : "pointer",
-                    marginBottom: 1,
-                    background: active ? "linear-gradient(135deg, #EEF4FF, #E8F0FD)" : "transparent",
-                    color: locked ? "#C8D5E3" : active ? "#005EB8" : "#4B5E78",
-                    opacity: locked ? 0.55 : 1,
-                    transition: "all 0.15s ease",
-                    userSelect: "none", position: "relative",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active && !locked) {
-                      (e.currentTarget as HTMLDivElement).style.background = "#F5F8FC";
-                      (e.currentTarget as HTMLDivElement).style.color = "#1A2236";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active && !locked) {
-                      (e.currentTarget as HTMLDivElement).style.background = "transparent";
-                      (e.currentTarget as HTMLDivElement).style.color = "#4B5E78";
-                    }
-                  }}
-                >
-                  {active && (
-                    <div style={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: 3, background: "#005EB8" }} />
-                  )}
-                  <span style={{ opacity: locked ? 0.4 : active ? 1 : 0.6, flexShrink: 0, display: "flex" }}>
-                    {item.icon}
-                  </span>
-                  <div className="sb-texts" style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: active ? 700 : 500, lineHeight: 1.3 }}>{item.label}</div>
-                    {item.subLabel && (
-                      <div style={{ fontSize: 10.5, color: locked ? "#C8D5E3" : active ? "#5B8DD9" : "#A0B4CC", marginTop: 1 }}>
-                        {item.subLabel}
-                      </div>
-                    )}
+              const isAnchorItem = "anchor" in item;
+              const isHeader = (item as any).isHeader === true;
+
+              // Non-clickable section divider
+              if (isHeader) {
+                return (
+                  <div key={item.label} style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "10px 9px 4px", marginTop: 6,
+                  }}>
+                    <div style={{ flex: 1, height: 1, background: "#E8EFF7" }} />
+                    <div className="sb-texts" style={{
+                      fontSize: 10, fontWeight: 800, letterSpacing: "0.9px",
+                      textTransform: "uppercase", color: "#A0B4CC", whiteSpace: "nowrap",
+                    }}>
+                      {item.label}
+                    </div>
+                    <div style={{ flex: 1, height: 1, background: "#E8EFF7" }} />
                   </div>
-                  {locked ? (
-                    <span style={{ color: "#C8D5E3", flexShrink: 0 }}><LockIcon /></span>
-                  ) : active ? (
-                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#005EB8", flexShrink: 0 }} />
-                  ) : null}
+                );
+              }
+
+              const handleClick = () => {
+                if (locked) return;
+                if (isHeader) return; // non-clickable
+                // All audit workspace pages need report data from sessionStorage
+                const needsReportData = item.path.startsWith("/audit-overview") ||
+                  item.path.startsWith("/regulatory") ||
+                  item.path.startsWith("/risk-intelligence") ||
+                  item.path.startsWith("/llm-analysis") ||
+                  item.path.startsWith("/governance-principles") ||
+                  item.path.startsWith("/agent-behaviour") ||
+                  item.path.startsWith("/recommendations") ||
+                  item.path.startsWith("/download-report");
+
+                if (needsReportData) {
+                  const stored = sessionStorage.getItem("lastReportData");
+                  const reportData = stored ? JSON.parse(stored) : null;
+                  navigate(item.path, reportData ? { state: { data: reportData } } : {});
+                } else {
+                  navigate(item.path);
+                }
+              };
+
+              return (
+                <div key={item.label}>
+                  <div
+                    className="sb-item"
+                    onClick={handleClick}
+                    title={locked ? "Register an AI Agent first to unlock this" : undefined}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 9,
+                      padding: "8px 9px", borderRadius: 8,
+                      cursor: locked ? "not-allowed" : "pointer",
+                      marginBottom: 1,
+                      background: active ? "linear-gradient(135deg, #EEF4FF, #E8F0FD)" : "transparent",
+                      color: locked ? "#C8D5E3" : active ? "#005EB8" : "#4B5E78",
+                      opacity: locked ? 0.55 : 1,
+                      transition: "all 0.15s ease",
+                      userSelect: "none", position: "relative",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!locked) {
+                        (e.currentTarget as HTMLDivElement).style.background = "#F5F8FC";
+                        (e.currentTarget as HTMLDivElement).style.color = "#005EB8";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!locked) {
+                        (e.currentTarget as HTMLDivElement).style.background =
+                          active ? "linear-gradient(135deg, #EEF4FF, #E8F0FD)" : "transparent";
+                        (e.currentTarget as HTMLDivElement).style.color =
+                          active ? "#005EB8" : "#4B5E78";
+                      }
+                    }}
+                  >
+                    {active && !isAnchorItem && (
+                      <div style={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: 3, background: "#005EB8" }} />
+                    )}
+                    {(item as any).icon && (
+                      <span style={{ opacity: locked ? 0.4 : active ? 1 : 0.6, flexShrink: 0, display: "flex" }}>
+                        {(item as any).icon}
+                      </span>
+                    )}
+                    <div className="sb-texts" style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: active ? 700 : 500, lineHeight: 1.3 }}>
+                        {item.label}
+                      </div>
+                      {"subLabel" in item && (item as any).subLabel && (
+                        <div style={{ fontSize: 11, color: locked ? "#C8D5E3" : active ? "#5B8DD9" : "#A0B4CC", marginTop: 1 }}>
+                          {(item as any).subLabel}
+                        </div>
+                      )}
+                    </div>
+                    {locked ? (
+                      <span style={{ color: "#C8D5E3", flexShrink: 0 }}><LockIcon /></span>
+                    ) : active && !isAnchorItem ? (
+                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#005EB8", flexShrink: 0 }} />
+                    ) : null}
+                  </div>
                 </div>
               );
             })}
@@ -232,7 +285,7 @@ export default function Sidebar() {
         {/* Admin section */}
         {admin && (
           <div style={{ marginBottom: 2 }}>
-            <div className="sb-texts" style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.9px", textTransform: "uppercase", color: "#A0B4CC", padding: "8px 8px 3px" }}>
+            <div className="sb-texts" style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.9px", textTransform: "uppercase", color: "#A0B4CC", padding: "8px 8px 3px" }}>
               Admin
             </div>
             {(() => {
@@ -261,8 +314,8 @@ export default function Sidebar() {
                     </svg>
                   </span>
                   <div className="sb-texts" style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: active ? 700 : 500 }}>Admin Panel</div>
-                    <div style={{ fontSize: 10.5, color: active ? "#9F67E8" : "#A0B4CC", marginTop: 1 }}>Users &amp; audits</div>
+                    <div style={{ fontSize: 13.5, fontWeight: active ? 700 : 500 }}>Admin Panel</div>
+                    <div style={{ fontSize: 11, color: active ? "#9F67E8" : "#A0B4CC", marginTop: 1 }}>Users &amp; audits</div>
                   </div>
                   {active && <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#7C3AED", flexShrink: 0 }} />}
                 </div>
@@ -296,10 +349,10 @@ export default function Sidebar() {
             {initials}
           </div>
           <div className="sb-texts" style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: isActive("/profile") ? "#005EB8" : "#0B1F33", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: isActive("/profile") ? "#005EB8" : "#0B1F33", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {displayName}
             </div>
-            <div style={{ fontSize: 10.5, color: "#A0B4CC", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 11, color: "#A0B4CC", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {authUser?.email || ""}
             </div>
           </div>
@@ -320,7 +373,7 @@ export default function Sidebar() {
           onClick={handleLogout}
           style={{
             display: "flex", alignItems: "center", gap: 8, padding: "7px 9px",
-            borderRadius: 8, cursor: "pointer", color: "#94A3B8", fontSize: 12.5,
+            borderRadius: 8, cursor: "pointer", color: "#94A3B8", fontSize: 13,
             fontWeight: 500, transition: "all 0.15s",
           }}
           onMouseEnter={e => {
