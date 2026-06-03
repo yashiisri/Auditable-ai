@@ -2,7 +2,11 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const M = "#005EB8", B = "#00338D";
+const B = "#00338D", M = "#005EB8";
+const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#DC2626";
+const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EEF4FF" : "#FEF2F2";
+
+const CSS = `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{background:#F8FAFC;}.ri-card{background:white;border-radius:14px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}.ri-exp{overflow:hidden;transition:max-height 0.3s ease;}`;
 
 export default function RiskIntelligence() {
   const location = useLocation();
@@ -10,7 +14,7 @@ export default function RiskIntelligence() {
   const raw = location.state?.data || (() => { try { const s = sessionStorage.getItem("lastReportData"); return s ? JSON.parse(s) : null; } catch { return null; } })();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [anim, setAnim] = useState(false);
-  useEffect(() => { setTimeout(() => setAnim(true), 100); }, []);
+  useEffect(() => { setTimeout(() => setAnim(true), 60); }, []);
 
   if (!raw) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
@@ -18,208 +22,212 @@ export default function RiskIntelligence() {
     </div>
   );
 
-  const r = raw;
+  const r = raw; void anim;
   const findings: any[] = r.findings || [];
   const high   = findings.filter((f: any) => f.severity === "High");
   const medium = findings.filter((f: any) => f.severity === "Medium");
   const low    = findings.filter((f: any) => f.severity === "Low");
   const prn    = r.trusted_ai_principles || {};
-
-  // Weak principles (score < 60)
-  const weakPrinciples = Object.entries(prn)
-    .filter(([, v]: [string, any]) => v.score < 60)
-    .sort((a: any, b: any) => a[1].score - b[1].score);
-
-  const riskColor = r.risk_level === "Low" ? "#059669" : r.risk_level === "Moderate" ? M : "#DC2626";
-  const riskBg    = r.risk_level === "Low" ? "#DCFCE7" : r.risk_level === "Moderate" ? "#EEF4FF" : "#FEE2E2";
-
-  const _ = anim;
+  const weakPrinciples = Object.entries(prn).filter(([, v]: any) => v.score < 60).sort((a: any, b: any) => a[1].score - b[1].score);
+  const rc = r.risk_level === "Low" ? "#059669" : r.risk_level === "Moderate" ? M : "#DC2626";
 
   return (
-    <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.ri-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
+    <div style={{ minHeight:"100vh", background:"#F8FAFC", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A" }}>
+      <style>{CSS}</style>
 
-      {/* Header */}
-      <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"28px 36px 24px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"32px 32px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative", maxWidth:1160, margin:"0 auto" }}>
-          <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:10 }}>Risk Intelligence · {r.ai_name}</div>
-          <h1 style={{ fontSize:24, fontWeight:900, color:"white", letterSpacing:"-0.4px", marginBottom:6 }}>Risk Intelligence</h1>
-          <p style={{ fontSize:13, color:"rgba(255,255,255,0.65)" }}>Comprehensive risk analysis — severity breakdown, governance exposure, and deployment blockers</p>
+      {/* Sticky banner */}
+      <div style={{ background:`linear-gradient(135deg,${B},${M})`, padding:"22px 40px", position:"sticky", top:0, zIndex:50 }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"28px 28px", pointerEvents:"none" }}/>
+        <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div>
+            <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:4 }}>Risk Intelligence · {r.ai_name}</div>
+            <div style={{ fontSize:20, fontWeight:900, color:"white", letterSpacing:"-0.3px" }}>Risk Intelligence</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", marginTop:4 }}>Severity breakdown, governance exposure &amp; deployment blockers</div>
+          </div>
+          <div style={{ display:"flex", gap:10 }}>
+            <div style={{ padding:"6px 14px", borderRadius:20, background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.18)", fontSize:13, fontWeight:700, color:"white" }}>
+              {r.overall_score}/100
+            </div>
+            <div style={{ padding:"6px 14px", borderRadius:20, background:rc+"22", border:`1px solid ${rc}50`, fontSize:12, fontWeight:700, color:"white" }}>
+              {r.risk_level} Risk
+            </div>
+          </div>
         </div>
       </div>
 
-      <div style={{ maxWidth:1160, margin:"0 auto", padding:"28px 24px" }}>
+      {/* Body */}
+      <div style={{ padding:"28px 40px 60px" }}>
 
-        {/* Risk KPIs */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:14, marginBottom:24 }}>
+        {/* KPI row */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:14, marginBottom:28 }}>
           {[
-            { label:"Overall Risk Level",    val:r.risk_level,          color:riskColor, bg:riskBg },
-            { label:"Structural Risk",       val:r.structural_risk,     color:r.structural_risk==="Low"?"#059669":r.structural_risk==="Moderate"?M:"#DC2626", bg:r.structural_risk==="Low"?"#DCFCE7":r.structural_risk==="Moderate"?"#EEF4FF":"#FEE2E2" },
-            { label:"High Severity",         val:String(high.length),   color:"#DC2626", bg:"#FEE2E2" },
-            { label:"Medium Severity",       val:String(medium.length), color:"#D97706", bg:"#FFF7ED" },
-            { label:"Low Severity",          val:String(low.length),    color:"#059669", bg:"#DCFCE7" },
-            { label:"Governance Score",      val:`${r.overall_score}/100`, color:r.overall_score>=75?"#059669":r.overall_score>=50?M:"#DC2626", bg:r.overall_score>=75?"#DCFCE7":r.overall_score>=50?"#EEF4FF":"#FEE2E2" },
+            { label:"Overall Risk",     val:r.risk_level,         color:rc },
+            { label:"Structural Risk",  val:r.structural_risk,    color:r.structural_risk==="Low"?"#059669":r.structural_risk==="Moderate"?M:"#DC2626" },
+            { label:"High Severity",    val:String(high.length),  color:"#DC2626" },
+            { label:"Medium Severity",  val:String(medium.length),color:"#D97706" },
+            { label:"Low Severity",     val:String(low.length),   color:"#059669" },
+            { label:"Governance Score", val:`${r.overall_score}/100`, color:sc(r.overall_score) },
           ].map((k,i) => (
-            <div key={i} style={{ background:"white", borderRadius:14, border:"1px solid #E2E8F0", padding:"18px 16px", borderTop:`3px solid ${k.color}` }}>
-              <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:8 }}>{k.label}</div>
-              <div style={{ fontSize:22, fontWeight:900, color:k.color }}>{k.val}</div>
+            <div key={i} style={{ background:"white", borderRadius:12, border:"1px solid #E2E8F0", padding:"16px 14px", borderTop:`3px solid ${k.color}` }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:8 }}>{k.label}</div>
+              <div style={{ fontSize:20, fontWeight:900, color:k.color }}>{k.val}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 320px", gap:20, alignItems:"start" }}>
+        {/* Main 2-col */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 280px", gap:20 }}>
+
+          {/* Left: findings */}
           <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
-            {/* Deployment blockers */}
+            {findings.length === 0 && (
+              <div className="ri-card" style={{ padding:"48px 32px", textAlign:"center" }}>
+                <div style={{ width:56, height:56, borderRadius:16, background:"#F0FDF4", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style={{ fontSize:16, fontWeight:800, color:"#059669", marginBottom:6 }}>No Findings</div>
+                <div style={{ fontSize:13, color:"#94A3B8" }}>All governance checks passed. No issues were identified.</div>
+              </div>
+            )}
+
+            {/* High severity */}
             {high.length > 0 && (
-              <div className="ri-card" style={{ padding:"24px 28px", borderLeft:"4px solid #DC2626" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
-                  <div style={{ width:32, height:32, borderRadius:9, background:"#FEE2E2", display:"grid", placeItems:"center", color:"#DC2626" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontSize:15, fontWeight:800, color:"#0F172A" }}>Deployment Blockers — {high.length} High Severity</div>
-                    <div style={{ fontSize:12, color:"#94A3B8" }}>These must be resolved before production deployment</div>
-                  </div>
+              <div className="ri-card" style={{ overflow:"hidden" }}>
+                <div style={{ padding:"16px 20px", borderBottom:"1px solid #F1F5F9", display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:"#DC2626" }}/>
+                  <div style={{ fontSize:14, fontWeight:800, color:"#0F172A" }}>Deployment Blockers — {high.length} High Severity</div>
+                  <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#FEF2F2", color:"#DC2626" }}>Must fix before deployment</div>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                  {high.map((f: any, i: number) => (
-                    <div key={i} style={{ borderRadius:12, overflow:"hidden", border:"1.5px solid #FECACA" }}>
-                      <div style={{ padding:"10px 16px", background:"#FEF2F2", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}
-                        onClick={() => setExpanded(expanded===`h${i}`?null:`h${i}`)}>
-                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                          <div style={{ width:8, height:8, borderRadius:"50%", background:"#DC2626", flexShrink:0 }}/>
-                          <span style={{ fontSize:13.5, fontWeight:700, color:"#0F172A" }}>{f.category}</span>
-                        </div>
-                        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                          <span style={{ fontSize:11, fontWeight:700, padding:"2px 10px", borderRadius:20, background:"#FEE2E2", color:"#DC2626" }}>High</span>
-                          <span style={{ fontSize:12, color:"#94A3B8", transform:expanded===`h${i}`?"rotate(180deg)":"none", transition:"transform 0.2s" }}>▾</span>
+                {high.map((f: any, i: number) => (
+                  <div key={i} style={{ borderBottom: i < high.length-1 ? "1px solid #F8FAFC" : "none" }}>
+                    <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", background:expanded===`h${i}`?"#FEF2F2":"white" }}
+                      onClick={() => setExpanded(expanded===`h${i}`?null:`h${i}`)}>
+                      <div style={{ width:6, height:6, borderRadius:"50%", background:"#DC2626", flexShrink:0 }}/>
+                      <div style={{ flex:1, fontSize:13.5, fontWeight:600, color:"#0F172A" }}>{f.category}</div>
+                      <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:"#FEE2E2", color:"#DC2626" }}>High</span>
+                      <span style={{ fontSize:12, color:"#CBD5E1", transition:"transform 0.2s", transform:expanded===`h${i}`?"rotate(180deg)":"none" }}>▾</span>
+                    </div>
+                    {expanded===`h${i}` && (
+                      <div style={{ padding:"0 20px 16px" }}>
+                        <p style={{ fontSize:13, color:"#374151", lineHeight:1.7, marginBottom:10 }}>{f.issue}</p>
+                        <div style={{ padding:"10px 14px", borderRadius:10, background:"#EEF4FF", border:"1px solid #C7D9F5" }}>
+                          <div style={{ fontSize:10, fontWeight:700, color:M, textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:4 }}>Recommended Action</div>
+                          <p style={{ fontSize:12.5, color:B, lineHeight:1.6, margin:0 }}>{f.recommendation}</p>
                         </div>
                       </div>
-                      {expanded===`h${i}` && (
-                        <div style={{ padding:"14px 16px", background:"white" }}>
-                          <p style={{ fontSize:13, color:"#374151", lineHeight:1.7, marginBottom:10 }}>{f.issue}</p>
-                          <div style={{ padding:"10px 14px", borderRadius:10, background:"#EEF4FF", border:"1px solid #C7D9F5" }}>
-                            <div style={{ fontSize:10, fontWeight:700, color:M, textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:4 }}>Recommended Action</div>
-                            <p style={{ fontSize:12, color:B, lineHeight:1.6, margin:0 }}>{f.recommendation}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Medium findings */}
+            {/* Medium severity */}
             {medium.length > 0 && (
-              <div className="ri-card" style={{ padding:"24px 28px", borderLeft:"4px solid #D97706" }}>
-                <div style={{ fontSize:15, fontWeight:800, color:"#0F172A", marginBottom:4 }}>Medium Severity — {medium.length} Issues</div>
-                <div style={{ fontSize:12, color:"#94A3B8", marginBottom:16 }}>Address within 60 days</div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {medium.map((f: any, i: number) => (
-                    <div key={i} style={{ borderRadius:12, overflow:"hidden", border:"1px solid #FDE68A" }}>
-                      <div style={{ padding:"10px 16px", background:"#FFFBEB", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}
-                        onClick={() => setExpanded(expanded===`m${i}`?null:`m${i}`)}>
-                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                          <div style={{ width:8, height:8, borderRadius:"50%", background:"#D97706", flexShrink:0 }}/>
-                          <span style={{ fontSize:13, fontWeight:700, color:"#0F172A" }}>{f.category}</span>
-                        </div>
-                        <span style={{ fontSize:12, color:"#94A3B8", transform:expanded===`m${i}`?"rotate(180deg)":"none", transition:"transform 0.2s" }}>▾</span>
-                      </div>
-                      {expanded===`m${i}` && (
-                        <div style={{ padding:"12px 16px", background:"white" }}>
-                          <p style={{ fontSize:13, color:"#374151", lineHeight:1.7, marginBottom:8 }}>{f.issue}</p>
-                          <p style={{ fontSize:12, color:M, lineHeight:1.5, margin:0 }}><strong>Fix:</strong> {f.recommendation}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              <div className="ri-card" style={{ overflow:"hidden" }}>
+                <div style={{ padding:"16px 20px", borderBottom:"1px solid #F1F5F9", display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:"#D97706" }}/>
+                  <div style={{ fontSize:14, fontWeight:800, color:"#0F172A" }}>Medium Severity — {medium.length} Issues</div>
+                  <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#FFF7ED", color:"#D97706" }}>Address within 60 days</div>
                 </div>
+                {medium.map((f: any, i: number) => (
+                  <div key={i} style={{ borderBottom: i < medium.length-1 ? "1px solid #F8FAFC" : "none" }}>
+                    <div style={{ padding:"12px 20px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", background:expanded===`m${i}`?"#FFFBEB":"white" }}
+                      onClick={() => setExpanded(expanded===`m${i}`?null:`m${i}`)}>
+                      <div style={{ width:6, height:6, borderRadius:"50%", background:"#D97706", flexShrink:0 }}/>
+                      <div style={{ flex:1, fontSize:13, fontWeight:600, color:"#0F172A" }}>{f.category}</div>
+                      <span style={{ fontSize:12, color:"#CBD5E1", transition:"transform 0.2s", transform:expanded===`m${i}`?"rotate(180deg)":"none" }}>▾</span>
+                    </div>
+                    {expanded===`m${i}` && (
+                      <div style={{ padding:"0 20px 14px" }}>
+                        <p style={{ fontSize:13, color:"#374151", lineHeight:1.7, marginBottom:8 }}>{f.issue}</p>
+                        <p style={{ fontSize:12.5, color:M, lineHeight:1.5, margin:0 }}><strong>Fix:</strong> {f.recommendation}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Low findings */}
+            {/* Low severity */}
             {low.length > 0 && (
-              <div className="ri-card" style={{ padding:"24px 28px", borderLeft:"4px solid #059669" }}>
-                <div style={{ fontSize:15, fontWeight:800, color:"#0F172A", marginBottom:4 }}>Low Severity — {low.length} Issues</div>
-                <div style={{ fontSize:12, color:"#94A3B8", marginBottom:16 }}>Monitor and address in next review cycle</div>
+              <div className="ri-card" style={{ padding:"20px 24px" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:"#059669" }}/>
+                  <div style={{ fontSize:14, fontWeight:800, color:"#0F172A" }}>Low Severity — {low.length} Issues</div>
+                  <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#F0FDF4", color:"#059669" }}>Monitor &amp; review</div>
+                </div>
                 <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                   {low.map((f: any, i: number) => (
-                    <div key={i} style={{ padding:"10px 14px", borderRadius:10, background:"#F0FDF4", border:"1px solid #A7F3D0", display:"flex", gap:10, alignItems:"flex-start" }}>
-                      <div style={{ width:6, height:6, borderRadius:"50%", background:"#059669", marginTop:5, flexShrink:0 }}/>
+                    <div key={i} style={{ padding:"10px 12px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E2E8F0", display:"flex", gap:10 }}>
+                      <div style={{ width:5, height:5, borderRadius:"50%", background:"#059669", marginTop:5, flexShrink:0 }}/>
                       <div>
                         <div style={{ fontSize:12.5, fontWeight:700, color:"#0F172A", marginBottom:2 }}>{f.category}</div>
-                        <div style={{ fontSize:12, color:"#374151", lineHeight:1.5 }}>{f.issue}</div>
+                        <div style={{ fontSize:12, color:"#64748B", lineHeight:1.5 }}>{f.issue}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {findings.length === 0 && (
-              <div className="ri-card" style={{ padding:"40px", textAlign:"center" }}>
-                <div style={{ fontSize:32, marginBottom:12 }}>✓</div>
-                <div style={{ fontSize:16, fontWeight:700, color:"#059669", marginBottom:6 }}>No Findings Detected</div>
-                <div style={{ fontSize:13, color:"#94A3B8" }}>All governance checks passed. No issues were identified during this audit.</div>
               </div>
             )}
           </div>
 
-          {/* Right: Risk heatmap + weak principles */}
-          <div style={{ display:"flex", flexDirection:"column", gap:16, position:"sticky", top:24 }}>
-            <div className="ri-card" style={{ padding:"20px" }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:14 }}>Risk Heatmap</div>
+          {/* Right: heatmap + exposure */}
+          <div style={{ display:"flex", flexDirection:"column", gap:14, position:"sticky", top:90 }}>
+
+            {/* Risk heatmap */}
+            <div className="ri-card" style={{ padding:"18px 16px" }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:14 }}>Risk Heatmap</div>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
                 {[
-                  { label:"High Risk",     count:high.length,   color:"#DC2626", bg:"#FEE2E2" },
-                  { label:"Medium Risk",   count:medium.length, color:"#D97706", bg:"#FFF7ED" },
-                  { label:"Low Risk",      count:low.length,    color:"#059669", bg:"#DCFCE7" },
-                  { label:"Weak Principles", count:weakPrinciples.length, color:M, bg:"#EEF4FF" },
+                  { label:"High",           count:high.length,           color:"#DC2626", bg:"#FEF2F2" },
+                  { label:"Medium",         count:medium.length,         color:"#D97706", bg:"#FFFBEB" },
+                  { label:"Low",            count:low.length,            color:"#059669", bg:"#F0FDF4" },
+                  { label:"Weak Principles",count:weakPrinciples.length, color:M,         bg:"#EEF4FF" },
                 ].map((h,i) => (
-                  <div key={i} style={{ padding:"14px", borderRadius:12, background:h.bg, textAlign:"center" }}>
-                    <div style={{ fontSize:28, fontWeight:900, color:h.color, lineHeight:1 }}>{h.count}</div>
+                  <div key={i} style={{ padding:"14px 12px", borderRadius:12, background:h.bg, textAlign:"center" }}>
+                    <div style={{ fontSize:26, fontWeight:900, color:h.color, lineHeight:1 }}>{h.count}</div>
                     <div style={{ fontSize:10, color:h.color, fontWeight:700, marginTop:4 }}>{h.label}</div>
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* Weak principles */}
             {weakPrinciples.length > 0 && (
-              <div className="ri-card" style={{ padding:"20px" }}>
-                <div style={{ fontSize:12, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:14 }}>Governance Exposure</div>
+              <div className="ri-card" style={{ padding:"18px 16px" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:14 }}>Governance Exposure</div>
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {weakPrinciples.map(([k, v]: [string, any]) => (
+                  {weakPrinciples.map(([k, v]: any) => (
                     <div key={k} style={{ display:"flex", alignItems:"center", gap:10 }}>
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:12, fontWeight:600, color:"#374151", marginBottom:4 }}>{k}</div>
-                        <div style={{ height:5, background:"#F1F5F9", borderRadius:99, overflow:"hidden" }}>
-                          <div style={{ width:`${v.score}%`, height:"100%", background:"#DC2626", borderRadius:99 }}/>
+                        <div style={{ height:4, background:"#F1F5F9", borderRadius:99, overflow:"hidden" }}>
+                          <div style={{ width:`${v.score}%`, height:"100%", background:sc(v.score), borderRadius:99 }}/>
                         </div>
                       </div>
-                      <div style={{ fontSize:14, fontWeight:900, color:"#DC2626", minWidth:32, textAlign:"right" }}>{v.score}</div>
+                      <div style={{ fontSize:14, fontWeight:900, color:sc(v.score), minWidth:28, textAlign:"right" }}>{v.score}</div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="ri-card" style={{ padding:"20px" }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:12 }}>Regulatory Exposure</div>
-              {r.overall_score < 75 && (
-                <div style={{ padding:"12px 14px", borderRadius:10, background:"#FEF2F2", border:"1px solid #FECACA", marginBottom:10 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"#DC2626", marginBottom:4 }}>EU AI Act</div>
-                  <div style={{ fontSize:11, color:"#7F1D1D", lineHeight:1.5 }}>Score below 75 indicates potential non-compliance with high-risk AI system requirements.</div>
+            {/* Regulatory note */}
+            <div className="ri-card" style={{ padding:"18px 16px" }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:12 }}>Regulatory Exposure</div>
+              <div style={{ padding:"12px 14px", borderRadius:10, background:sb(r.overall_score), border:`1px solid ${sc(r.overall_score)}25` }}>
+                <div style={{ fontSize:12, fontWeight:700, color:sc(r.overall_score), marginBottom:4 }}>
+                  {r.overall_score >= 75 ? "Compliant Posture" : r.overall_score >= 50 ? "Conditional Compliance" : "Non-Compliant"}
                 </div>
-              )}
-              {r.overall_score >= 75 && (
-                <div style={{ padding:"12px 14px", borderRadius:10, background:"#F0FDF4", border:"1px solid #A7F3D0" }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"#059669", marginBottom:4 }}>Compliant Posture</div>
-                  <div style={{ fontSize:11, color:"#065F46", lineHeight:1.5 }}>Score meets baseline requirements across major regulatory frameworks.</div>
+                <div style={{ fontSize:11.5, color:"#64748B", lineHeight:1.5 }}>
+                  {r.overall_score >= 75
+                    ? "Score meets baseline requirements across major regulatory frameworks."
+                    : r.overall_score >= 50
+                    ? "Partial alignment — address medium findings to achieve full compliance."
+                    : "Score below acceptable thresholds. Immediate remediation required before deployment."}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>

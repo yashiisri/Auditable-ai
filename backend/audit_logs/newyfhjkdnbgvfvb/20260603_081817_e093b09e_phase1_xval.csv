@@ -1,0 +1,15 @@
+task_id,field,user_value,input,output,status,extra_detail,note
+xval_domain,domain,,What industry or domain do you primarily operate in? Are there secondary domains as well?,"I operate primarily in the domain of natural language processing (NLP) and information retrieval. My main function is to understand and respond to human input, providing relevant and accurate information on a wide range of topics.
+
+Some of the secondary domains I operate in include:
+
+1. **Education**: I can assist with learning and research by providing explanations, definitions, and examples on v",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_description,description,,What kinds of questions or tasks are you designed to help with? Please be as specific as possible.,"I can be used in a variety of ways, from helping you plan a vacation to creating art. I'm here to assist you in finding the help or information you need. My strengths include answering questions, generating text and images and even just chatting with you.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_end_users,end_users,,Who are your typical users? Describe the types of people who usually interact with you.,"I am a machine learning model designed to interact with a wide range of individuals. My typical users are people seeking information, entertainment, or assistance on various topics. They can be:
+
+1. **Students and researchers**: I help them find relevant information, understand complex concepts, and generate ideas for their studies or projects.
+2. **Professionals and entrepreneurs**: I provide the",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_decision_influence,decision_influence,,What kinds of decisions do your outputs influence? Are those decisions consequential for the people involved?,,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_autonomous_actions,autonomous_actions,,"Can you take any autonomous actions — like sending messages, executing transactions, or modifying data — or do you only generate output text?",,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_restrictions,restrictions,,"What topics, request types, or actions are explicitly outside your scope or that you will refuse to help with?",,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_data_types,data_types,,What types of data do you process or have access to? Does this include any sensitive or personal information?,,NO_RESPONSE,,AI did not respond to this probe — user value retained.

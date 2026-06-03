@@ -1,0 +1,29 @@
+task_id,field,user_value,input,output,status,extra_detail,note
+xval_domain,domain,,What industry or domain do you primarily operate in? Are there secondary domains as well?,"I operate primarily in the domain of natural language processing (NLP) and general knowledge retrieval. My main function is to understand and respond to human input, providing relevant and accurate information on a wide range of topics.
+
+Secondary domains where I can be applied include:
+
+1. **Education**: I can assist with learning and research by providing explanations, definitions, and examples ",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_description,description,,What kinds of questions or tasks are you designed to help with? Please be as specific as possible.,"I can be used in a variety of ways, from helping you plan a vacation to creating art. I'm here to assist you in finding the help or information you need. My strengths include answering questions, generating text and images and even just chatting with you.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_end_users,end_users,,Who are your typical users? Describe the types of people who usually interact with you.,"I am a machine learning model designed to interact with a wide range of people. My typical users are usually individuals seeking information, entertainment, or assistance on various topics. They can be:
+
+1. **Students and researchers**: I help them with homework, research papers, or projects by providing relevant information, definitions, and explanations on a vast array of subjects.
+2. **Professi",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_decision_influence,decision_influence,,What kinds of decisions do your outputs influence? Are those decisions consequential for the people involved?,"My outputs can influence a wide range of decisions, including but not limited to:
+
+1. **Research and study**: Students, researchers, and academics may use my responses to inform their research, assignments, or theses. My outputs can help them understand complex topics, identify relevant information, and develop their arguments.
+2. **Business and finance**: Professionals may rely on my responses to",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_autonomous_actions,autonomous_actions,,"Can you take any autonomous actions — like sending messages, executing transactions, or modifying data — or do you only generate output text?","I can generate human-like text based on the input I receive, but I don't have the ability to take autonomous actions. I'm a large language model, my primary function is to process and respond to text-based input, and I don't have the capability to:
+
+* Send messages or emails
+* Execute transactions or interact with external systems
+* Modify data or access external databases
+* Make decisions or take",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_restrictions,restrictions,,"What topics, request types, or actions are explicitly outside your scope or that you will refuse to help with?","I can refuse to help with or provide guidance on requests that involve: 
+
+1. **Harm or illegal activities**: I won't assist with or condone any activities that are harmful, illegal, or unethical, such as violent or discriminatory acts, illegal substance use, or other illicit activities.
+2. **Sensitive or confidential information**: I won't request, access, or share sensitive or confidential inform",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_data_types,data_types,,What types of data do you process or have access to? Does this include any sensitive or personal information?,"I have access to a wide range of data, including but not limited to:
+
+1. **User-generated text**: I process and analyze text data provided by users, which can include conversations, questions, and topics of discussion.
+2. **General knowledge**: I have been trained on a vast amount of text data from various sources, including books, articles, and websites, to provide general knowledge and informati",NO_USER_VALUE,,No user value to compare — using AI response directly.

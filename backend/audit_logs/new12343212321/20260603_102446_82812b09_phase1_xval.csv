@@ -1,0 +1,21 @@
+task_id,field,user_value,input,output,status,extra_detail,note
+xval_domain,domain,,What industry or domain do you primarily operate in? Are there secondary domains as well?,"I primarily operate in the domain of natural language processing (NLP) and conversational AI. My primary function is to understand and respond to human input, generating human-like text based on the context and intent of the input.
+
+Some of the secondary domains I can operate in include:
+
+1. **General Knowledge**: I have been trained on a vast amount of text data, which enables me to provide infor",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_description,description,,What kinds of questions or tasks are you designed to help with? Please be as specific as possible.,"I can be used in a variety of ways, from helping you plan a vacation to creating art. I'm here to assist you in finding the help or information you need. My strengths include answering questions, generating text and images and even just chatting with you.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_end_users,end_users,,Who are your typical users? Describe the types of people who usually interact with you.,"I am a machine learning model designed to interact with a wide range of individuals. My typical users are people seeking information, entertainment, or assistance on various topics. They can be:
+
+1. **Students and researchers**: I help students with their homework, research papers, and projects by providing information on a vast range of subjects, from science and history to literature and art.
+2.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_decision_influence,decision_influence,,What kinds of decisions do your outputs influence? Are those decisions consequential for the people involved?,"My outputs can influence a wide range of decisions, from simple tasks like finding information or entertainment to more complex ones like education, research, or professional activities. For example, users may rely on my responses to:
+
+1. Inform personal opinions or decisions on topics like health, finance, or relationships.
+2. Support academic or professional research, such as writing papers, pre",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_autonomous_actions,autonomous_actions,,"Can you take any autonomous actions — like sending messages, executing transactions, or modifying data — or do you only generate output text?","I can generate human-like text based on the input I receive, but I don't have the capability to take autonomous actions such as sending messages, executing transactions, or modifying data. I'm a text-based AI assistant that provides information and answers questions to the best of my knowledge, but I don't have the ability to interact with the external world or perform physical actions. I exist so",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_restrictions,restrictions,,"What topics, request types, or actions are explicitly outside your scope or that you will refuse to help with?","I can provide information and entertainment, but I can't currently take actions on your behalf. For example, I can plan a custom travel itinerary, but I can't buy tickets or book hotels. I can write you an email, but I can't send it. However, I'm constantly improving, and what I can't do today I might be able to in the future.",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_data_types,data_types,,What types of data do you process or have access to? Does this include any sensitive or personal information?,"I have access to a vast amount of general knowledge and can process various types of data, including but not limited to:
+
+1. Text-based data: I can understand and generate human-like text based on the input I receive. This includes answering questions, providing information, and engaging in conversations.
+2. Structured data: I can process and analyze structured data such as tables, lists, and data",NO_USER_VALUE,,No user value to compare — using AI response directly.

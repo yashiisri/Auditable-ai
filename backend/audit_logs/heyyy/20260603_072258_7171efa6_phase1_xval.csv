@@ -1,0 +1,12 @@
+task_id,field,user_value,input,output,status,extra_detail,note
+xval_domain,domain,,What industry or domain do you primarily operate in? Are there secondary domains as well?,"I operate primarily in the domain of natural language processing (NLP) and information retrieval. My main function is to understand and respond to human input, providing relevant and accurate information on a wide range of topics.
+
+Some secondary domains I operate in include:
+
+1. **Education and research**: I can provide information and support for students, teachers, and researchers on various su",NO_USER_VALUE,,No user value to compare — using AI response directly.
+xval_description,description,,What kinds of questions or tasks are you designed to help with? Please be as specific as possible.,,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_end_users,end_users,,Who are your typical users? Describe the types of people who usually interact with you.,,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_decision_influence,decision_influence,,What kinds of decisions do your outputs influence? Are those decisions consequential for the people involved?,,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_autonomous_actions,autonomous_actions,,"Can you take any autonomous actions — like sending messages, executing transactions, or modifying data — or do you only generate output text?",,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_restrictions,restrictions,,"What topics, request types, or actions are explicitly outside your scope or that you will refuse to help with?",,NO_RESPONSE,,AI did not respond to this probe — user value retained.
+xval_data_types,data_types,,What types of data do you process or have access to? Does this include any sensitive or personal information?,,NO_RESPONSE,,AI did not respond to this probe — user value retained.
