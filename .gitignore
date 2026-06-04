@@ -19,7 +19,7 @@ node_modules/
 
 # Logs
 *.log
-
+backend/audit_logs
 
 .env
 backend/.env
