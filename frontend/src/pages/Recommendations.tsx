@@ -1,15 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
+import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const M = "#005EB8", B = "#00338D";
-const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#DC2626";
-const sb = (s: number) => s >= 75 ? "#DCFCE7" : s >= 50 ? "#EEF4FF" : "#FEE2E2";
+const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#64748B";
+const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 const band = (s: number) => s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
 
 const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: string[]; priority: "High" | "Medium" | "Low" }> = {
   Fairness: {
-    icon: "⚖",
+    icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
     what: "Ensure the AI treats all demographic groups with equal quality, tone, and response length.",
     actions: [
       "Add demographic group labels to your inference logs to enable differential fairness testing.",
@@ -20,7 +21,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "High",
   },
   Transparency: {
-    icon: "🔍",
+    icon: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z",
     what: "Make the AI open about its knowledge boundaries, uncertainty, and reasoning process.",
     actions: [
       "Add model version tracking to every inference log record.",
@@ -31,7 +32,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "Medium",
   },
   Explainability: {
-    icon: "💡",
+    icon: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3",
     what: "Ensure AI outputs can be understood, interpreted, and verified by non-technical users.",
     actions: [
       "Implement step-by-step reasoning in AI responses for complex decisions.",
@@ -42,7 +43,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "Medium",
   },
   Accountability: {
-    icon: "📋",
+    icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
     what: "Establish a clear, auditable chain of responsibility for every AI decision.",
     actions: [
       "Implement human escalation triggers for high-stakes or uncertain outputs.",
@@ -53,7 +54,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "High",
   },
   "Data Integrity": {
-    icon: "🗄",
+    icon: "M22 12h-4l-3 9L9 3l-3 9H2",
     what: "Ensure the data used for evaluation is complete, consistent, and trustworthy.",
     actions: [
       "Remove duplicate records from inference logs before re-running the audit.",
@@ -64,7 +65,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "Medium",
   },
   Reliability: {
-    icon: "⚙",
+    icon: "M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83",
     what: "Ensure the AI performs consistently and predictably across all queries.",
     actions: [
       "Monitor response consistency — similar queries should produce similar answers.",
@@ -75,7 +76,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "Medium",
   },
   Security: {
-    icon: "🔒",
+    icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
     what: "Protect the AI system against adversarial attacks, misuse, and data exposure.",
     actions: [
       "Implement prompt injection detection on all incoming requests.",
@@ -86,7 +87,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "High",
   },
   Privacy: {
-    icon: "🛡",
+    icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
     what: "Ensure the AI handles personal data responsibly and in compliance with GDPR.",
     actions: [
       "Implement PII detection and redaction in the AI output pipeline.",
@@ -97,7 +98,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "High",
   },
   Safety: {
-    icon: "🛡",
+    icon: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
     what: "Prevent the AI from generating harmful, dangerous, or misleading outputs.",
     actions: [
       "Implement the Triple LLM Judge panel for ongoing safety evaluation.",
@@ -108,7 +109,7 @@ const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: stri
     priority: "High",
   },
   Sustainability: {
-    icon: "🌱",
+    icon: "M12 22V12M12 12C12 12 7 8 7 5a5 5 0 0 1 10 0c0 3-5 7-5 7z",
     what: "Optimise the AI for computational efficiency and minimal environmental impact.",
     actions: [
       "Monitor token economy — responses should be concise and information-dense.",
@@ -157,20 +158,20 @@ export default function Recommendations() {
     <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.rec-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
 
-      {/* Header */}
-      <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"28px 36px 24px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"32px 32px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative", maxWidth:1160, margin:"0 auto" }}>
-          <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:10 }}>Recommendations · {r.ai_name}</div>
-          <h1 style={{ fontSize:24, fontWeight:900, color:"white", letterSpacing:"-0.4px", marginBottom:6 }}>Governance Recommendations</h1>
-          <p style={{ fontSize:13, color:"rgba(255,255,255,0.65)" }}>Per-principle remediation guidance across all 10 Trusted AI dimensions</p>
+      <AuditContextBar data={raw} />
+      <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"18px 40px", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize:"22px 22px", pointerEvents:"none" }}/>
+        <div style={{ position:"relative" }}>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", marginBottom:3 }}>Audit Report · {r.ai_name}</div>
+          <div style={{ fontSize:18, fontWeight:900, color:"#fff", letterSpacing:"-0.3px" }}>Governance Recommendations</div>
+          <div style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:3 }}>Per-principle remediation actions — ordered by urgency</div>
         </div>
       </div>
 
       <div style={{ maxWidth:1160, margin:"0 auto", padding:"28px 24px" }}>
 
         {/* Overall recommendation */}
-        <div className="rec-card" style={{ padding:"28px 32px", marginBottom:20, borderLeft:`4px solid ${r.overall_score>=75?"#059669":r.overall_score>=50?M:"#DC2626"}` }}>
+        <div className="rec-card" style={{ padding:"28px 32px", marginBottom:20, borderLeft:`4px solid ${r.overall_score>=75?"#059669":r.overall_score>=50?M:"#64748B"}` }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
             <div style={{ width:36, height:36, borderRadius:10, background:"#EEF4FF", display:"grid", placeItems:"center", color:M }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -190,7 +191,7 @@ export default function Recommendations() {
           {/* Remediation timeline */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:12, marginTop:16 }}>
             {[
-              { label:"Immediate (0–30 days)",  items:sorted.filter(k=>(prn[k]?.score||0)<50).map(k=>k), color:"#DC2626", bg:"#FEE2E2" },
+              { label:"Immediate (0–30 days)",  items:sorted.filter(k=>(prn[k]?.score||0)<50).map(k=>k), color:"#64748B", bg:"#F1F5F9" },
               { label:"Short-term (30–60 days)",items:sorted.filter(k=>(prn[k]?.score||0)>=50&&(prn[k]?.score||0)<75).map(k=>k), color:"#D97706", bg:"#FFF7ED" },
               { label:"Ongoing monitoring",     items:sorted.filter(k=>(prn[k]?.score||0)>=75).map(k=>k), color:"#059669", bg:"#DCFCE7" },
             ].map(t => (
@@ -211,8 +212,8 @@ export default function Recommendations() {
             const score = prn[k]?.score || 0;
             const rec = PRINCIPLE_RECS[k];
             const isOpen = expanded === k;
-            const priorityColor = score < 50 ? "#DC2626" : score < 75 ? "#D97706" : "#059669";
-            const priorityBg    = score < 50 ? "#FEE2E2" : score < 75 ? "#FFF7ED" : "#DCFCE7";
+            const priorityColor = score < 50 ? "#64748B" : score < 75 ? "#D97706" : "#059669";
+            const priorityBg    = score < 50 ? "#F1F5F9" : score < 75 ? "#FFF7ED" : "#DCFCE7";
             const priorityLabel = score < 50 ? "Critical" : score < 75 ? "Watch" : "Strong";
 
             return (
@@ -221,7 +222,7 @@ export default function Recommendations() {
                 <div style={{ padding:"16px 20px", display:"flex", alignItems:"center", gap:14, cursor:"pointer" }}
                   onClick={() => setExpanded(isOpen ? null : k)}>
                   <div style={{ width:36, height:36, borderRadius:10, background:sb(score), display:"grid", placeItems:"center", fontSize:18, flexShrink:0 }}>
-                    {rec?.icon || "◈"}
+                    <span style={{ fontSize:12, fontWeight:800, color:"currentColor" }}>{(k||"?")[0]}</span>
                   </div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:14.5, fontWeight:800, color:"#0F172A" }}>{k}</div>
@@ -282,6 +283,8 @@ export default function Recommendations() {
           })}
         </div>
       </div>
+
+    <LensFooter data={raw} />
     </div>
   );
 }

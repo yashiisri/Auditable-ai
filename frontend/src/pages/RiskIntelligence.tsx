@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
+import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const B = "#00338D", M = "#005EB8";
-const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#DC2626";
-const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EEF4FF" : "#FEF2F2";
+const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#64748B";
+const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 
 const CSS = `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{background:#F8FAFC;}.ri-card{background:white;border-radius:14px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}.ri-exp{overflow:hidden;transition:max-height 0.3s ease;}`;
 
@@ -29,19 +30,20 @@ export default function RiskIntelligence() {
   const low    = findings.filter((f: any) => f.severity === "Low");
   const prn    = r.trusted_ai_principles || {};
   const weakPrinciples = Object.entries(prn).filter(([, v]: any) => v.score < 60).sort((a: any, b: any) => a[1].score - b[1].score);
-  const rc = r.risk_level === "Low" ? "#059669" : r.risk_level === "Moderate" ? M : "#DC2626";
+  const rc = r.risk_level === "Low" ? "#059669" : r.risk_level === "Moderate" ? M : "#64748B";
 
   return (
     <div style={{ minHeight:"100vh", background:"#F8FAFC", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A" }}>
       <style>{CSS}</style>
 
+      <AuditContextBar data={raw} />
       {/* Sticky banner */}
       <div style={{ background:`linear-gradient(135deg,${B},${M})`, padding:"22px 40px", position:"sticky", top:0, zIndex:50 }}>
         <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"28px 28px", pointerEvents:"none" }}/>
         <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div>
-            <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:4 }}>Risk Intelligence · {r.ai_name}</div>
-            <div style={{ fontSize:20, fontWeight:900, color:"white", letterSpacing:"-0.3px" }}>Risk Intelligence</div>
+            <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:4 }}>Audit Report · Risk &amp; Actions</div>
+            <div style={{ fontSize:20, fontWeight:900, color:"white", letterSpacing:"-0.3px" }}>Risk Intelligence &amp; Actions</div>
             <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", marginTop:4 }}>Severity breakdown, governance exposure &amp; deployment blockers</div>
           </div>
           <div style={{ display:"flex", gap:10 }}>
@@ -62,8 +64,8 @@ export default function RiskIntelligence() {
         <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:14, marginBottom:28 }}>
           {[
             { label:"Overall Risk",     val:r.risk_level,         color:rc },
-            { label:"Structural Risk",  val:r.structural_risk,    color:r.structural_risk==="Low"?"#059669":r.structural_risk==="Moderate"?M:"#DC2626" },
-            { label:"High Severity",    val:String(high.length),  color:"#DC2626" },
+            { label:"Structural Risk",  val:r.structural_risk,    color:r.structural_risk==="Low"?"#059669":r.structural_risk==="Moderate"?M:"#64748B" },
+            { label:"High Severity",    val:String(high.length),  color:"#64748B" },
             { label:"Medium Severity",  val:String(medium.length),color:"#D97706" },
             { label:"Low Severity",     val:String(low.length),   color:"#059669" },
             { label:"Governance Score", val:`${r.overall_score}/100`, color:sc(r.overall_score) },
@@ -95,17 +97,17 @@ export default function RiskIntelligence() {
             {high.length > 0 && (
               <div className="ri-card" style={{ overflow:"hidden" }}>
                 <div style={{ padding:"16px 20px", borderBottom:"1px solid #F1F5F9", display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:8, height:8, borderRadius:"50%", background:"#DC2626" }}/>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:"#64748B" }}/>
                   <div style={{ fontSize:14, fontWeight:800, color:"#0F172A" }}>Deployment Blockers — {high.length} High Severity</div>
-                  <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#FEF2F2", color:"#DC2626" }}>Must fix before deployment</div>
+                  <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#F1F5F9", color:"#64748B" }}>Must fix before deployment</div>
                 </div>
                 {high.map((f: any, i: number) => (
                   <div key={i} style={{ borderBottom: i < high.length-1 ? "1px solid #F8FAFC" : "none" }}>
-                    <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", background:expanded===`h${i}`?"#FEF2F2":"white" }}
+                    <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", background:expanded===`h${i}`?"#F1F5F9":"white" }}
                       onClick={() => setExpanded(expanded===`h${i}`?null:`h${i}`)}>
-                      <div style={{ width:6, height:6, borderRadius:"50%", background:"#DC2626", flexShrink:0 }}/>
+                      <div style={{ width:6, height:6, borderRadius:"50%", background:"#64748B", flexShrink:0 }}/>
                       <div style={{ flex:1, fontSize:13.5, fontWeight:600, color:"#0F172A" }}>{f.category}</div>
-                      <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:"#FEE2E2", color:"#DC2626" }}>High</span>
+                      <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:"#F1F5F9", color:"#64748B" }}>High</span>
                       <span style={{ fontSize:12, color:"#CBD5E1", transition:"transform 0.2s", transform:expanded===`h${i}`?"rotate(180deg)":"none" }}>▾</span>
                     </div>
                     {expanded===`h${i}` && (
@@ -180,7 +182,7 @@ export default function RiskIntelligence() {
               <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:14 }}>Risk Heatmap</div>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
                 {[
-                  { label:"High",           count:high.length,           color:"#DC2626", bg:"#FEF2F2" },
+                  { label:"High",           count:high.length,           color:"#64748B", bg:"#F1F5F9" },
                   { label:"Medium",         count:medium.length,         color:"#D97706", bg:"#FFFBEB" },
                   { label:"Low",            count:low.length,            color:"#059669", bg:"#F0FDF4" },
                   { label:"Weak Principles",count:weakPrinciples.length, color:M,         bg:"#EEF4FF" },
@@ -232,6 +234,8 @@ export default function RiskIntelligence() {
           </div>
         </div>
       </div>
+
+    <LensFooter data={raw} />
     </div>
   );
 }

@@ -102,3 +102,13 @@ export const GRID_OVERLAY = {
   backgroundSize: "32px 32px",
   pointerEvents: "none" as const,
 };
+
+/* Helper used by all lens pages to load report data */
+export function loadReportData(locationState: any): any {
+  const fromState = locationState?.data;
+  if (fromState) return fromState;
+  try {
+    const s = sessionStorage.getItem("lastReportData");
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}

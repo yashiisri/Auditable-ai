@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
+import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const B = "#00338D", M = "#005EB8";
-const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#DC2626";
-const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EEF4FF" : "#FEF2F2";
+const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#64748B";
+const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 const band = (s: number) => s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
 
 const FW_META: Record<string, { label: string; desc: string; focus: string }> = {
@@ -36,9 +37,9 @@ const PRINCIPLE_FRAMEWORK: Record<string, string[]> = {
 function alignLabel(status: string, score: number) {
   const good = ["Good Alignment","Compliant","Certified Ready","Aligned"].includes(status);
   const partial = ["Partial Alignment","Conditional","Assessed"].includes(status);
-  if (good) return score>=75?{l:"High Alignment",c:"#059669",b:"#F0FDF4"}:score>=55?{l:"Partial Alignment",c:M,b:"#EEF4FF"}:{l:"Limited Alignment",c:"#DC2626",b:"#FEF2F2"};
-  if (partial) return score>=75?{l:"Partial Alignment",c:M,b:"#EEF4FF"}:{l:"Limited Alignment",c:"#DC2626",b:"#FEF2F2"};
-  return {l:"Limited Alignment",c:"#DC2626",b:"#FEF2F2"};
+  if (good) return score>=75?{l:"High Alignment",c:"#059669",b:"#F0FDF4"}:score>=55?{l:"Partial Alignment",c:M,b:"#EEF4FF"}:{l:"Limited Alignment",c:"#64748B",b:"#F1F5F9"};
+  if (partial) return score>=75?{l:"Partial Alignment",c:M,b:"#EEF4FF"}:{l:"Limited Alignment",c:"#64748B",b:"#F1F5F9"};
+  return {l:"Limited Alignment",c:"#64748B",b:"#F1F5F9"};
 }
 
 const CSS = `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{background:#F8FAFC;}.ra-card{background:white;border-radius:14px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}.ra-fw{padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.15s;margin-bottom:3px;}.ra-fw:hover{background:#F8FAFC;}`;
@@ -75,18 +76,15 @@ export default function RegulatoryAlignment() {
     <div style={{ minHeight:"100vh", background:"#F8FAFC", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A" }}>
       <style>{CSS}</style>
 
-      {/* Sticky banner */}
-      <div style={{ background:`linear-gradient(135deg,${B},${M})`, padding:"22px 40px", position:"sticky", top:0, zIndex:50 }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"28px 28px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div>
-            <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:4 }}>Regulatory Alignment · {r.ai_name}</div>
-            <div style={{ fontSize:20, fontWeight:900, color:"white", letterSpacing:"-0.3px" }}>Regulatory &amp; Framework Alignment</div>
-            <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", marginTop:4 }}>How this AI agent aligns with major governance frameworks</div>
-          </div>
-          <div style={{ padding:"8px 16px", borderRadius:20, background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.18)", fontSize:13, fontWeight:700, color:"white" }}>
-            {r.overall_score}/100
-          </div>
+      <AuditContextBar data={raw} />
+
+      {/* Page header */}
+      <div style={{ background: "linear-gradient(135deg, #00338D, #005EB8)", padding: "18px 40px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "22px 22px", pointerEvents: "none" }}/>
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 3 }}>Audit Report · Regulatory Alignment</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.3px" }}>Regulatory &amp; Framework Alignment</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 3 }}>How this agent aligns with EU AI Act, ISO 42001, NIST AI RMF, and KPMG TAF</div>
         </div>
       </div>
 
@@ -216,6 +214,8 @@ export default function RegulatoryAlignment() {
           )}
         </div>
       </div>
+
+    <LensFooter data={raw} />
     </div>
   );
 }

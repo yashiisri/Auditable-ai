@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
+import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const B = "#00338D", M = "#005EB8";
@@ -32,8 +33,8 @@ export default function LlmAnalysis() {
 
   const accuracyPct = llm.accuracy != null ? Math.round(llm.accuracy * 100) : null;
   const hasError    = !!llm.error;
-  const ac = accuracyPct != null ? (accuracyPct >= 80 ? "#059669" : accuracyPct >= 60 ? M : "#DC2626") : "#94A3B8";
-  const ab = accuracyPct != null ? (accuracyPct >= 80 ? "#F0FDF4" : accuracyPct >= 60 ? "#EEF4FF" : "#FEF2F2") : "#F8FAFC";
+  const ac = accuracyPct != null ? (accuracyPct >= 80 ? "#059669" : accuracyPct >= 60 ? M : "#64748B") : "#94A3B8";
+  const ab = accuracyPct != null ? (accuracyPct >= 80 ? "#F0FDF4" : accuracyPct >= 60 ? "#EEF4FF" : "#F1F5F9") : "#F8FAFC";
   const panelSize  = llm.panel_size ?? (llm.judge_panel?.length ?? (llm.rows_judged > 0 ? 3 : 0));
   const kbCount    = llm.kb_chunks_count ?? llm.kb_chunks_used ?? 0;
   const kbGrounded = llm.kb_grounded ?? (kbCount > 0);
@@ -58,17 +59,17 @@ export default function LlmAnalysis() {
     <div style={{ minHeight:"100vh", background:"#F8FAFC", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A" }}>
       <style>{CSS}</style>
 
-      {/* Sticky banner */}
-      <div style={{ background:`linear-gradient(135deg,${B},${M})`, padding:"22px 40px", position:"sticky", top:0, zIndex:50 }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"28px 28px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div>
-            <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:4 }}>LLM Analysis · {r.ai_name}</div>
-            <div style={{ fontSize:20, fontWeight:900, color:"white", letterSpacing:"-0.3px" }}>Triple-Judge LLM Analysis</div>
-            <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", marginTop:4 }}>Three independent AI judges — majority vote determines the verdict</div>
-          </div>
+      <AuditContextBar data={raw} />
+
+      {/* Page header */}
+      <div style={{ background: "linear-gradient(135deg, #00338D, #005EB8)", padding: "18px 40px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "22px 22px", pointerEvents: "none" }}/>
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 3 }}>Audit Report · LLM Analysis</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.3px" }}>Triple-Judge LLM Analysis</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 3 }}>Three independent AI judges evaluate response accuracy and safety</div>
           {accuracyPct != null && (
-            <div style={{ textAlign:"center", padding:"10px 18px", background:"rgba(255,255,255,0.12)", borderRadius:12, border:"1px solid rgba(255,255,255,0.18)" }}>
+            <div style={{ textAlign:"center", padding:"10px 18px", background:"rgba(255,255,255,0.12)", borderRadius:12, border:"1px solid rgba(255,255,255,0.18)", marginTop:10, display:"inline-block" }}>
               <div style={{ fontSize:28, fontWeight:900, color:"white", lineHeight:1 }}>{accuracyPct}%</div>
               <div style={{ fontSize:10, color:"rgba(255,255,255,0.5)", marginTop:2 }}>ACCURACY</div>
             </div>
@@ -94,7 +95,7 @@ export default function LlmAnalysis() {
             <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
               {[
                 { label:"Rows Judged",   val:String(llm.rows_judged),  color:M, bg:"#EEF4FF" },
-                { label:"Skipped",       val:String(llm.rows_skipped), color:llm.rows_skipped>0?"#DC2626":"#059669", bg:llm.rows_skipped>0?"#FEF2F2":"#F0FDF4" },
+                { label:"Skipped",       val:String(llm.rows_skipped), color:llm.rows_skipped>0?"#64748B":"#059669", bg:llm.rows_skipped>0?"#F1F5F9":"#F0FDF4" },
                 { label:"Disputed",      val:String(disputed),         color:disputed>0?"#D97706":"#059669", bg:disputed>0?"#FFFBEB":"#F0FDF4" },
                 { label:"KB-Grounded",   val:String(kbUsed),           color:kbUsed>0?"#059669":"#94A3B8", bg:kbUsed>0?"#F0FDF4":"#F8FAFC" },
                 { label:"Active Judges", val:String(panelSize>0?panelSize:llm.rows_judged>0?3:0), color:"#7C3AED", bg:"#F3E8FF" },
@@ -162,7 +163,7 @@ export default function LlmAnalysis() {
           <div className="la-card" style={{ padding:"22px 24px", marginBottom:20 }}>
             <div style={{ fontSize:14, fontWeight:800, color:"#0F172A", marginBottom:16 }}>Accuracy Gauge</div>
             <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#94A3B8", marginBottom:6, fontWeight:500 }}>
-              <span>0%</span><span style={{ color:"#DC2626" }}>Poor (&lt;60%)</span><span style={{ color:M }}>Moderate (60–80%)</span><span style={{ color:"#059669" }}>Good (80%+)</span><span>100%</span>
+              <span>0%</span><span style={{ color:"#64748B" }}>Poor (&lt;60%)</span><span style={{ color:M }}>Moderate (60–80%)</span><span style={{ color:"#059669" }}>Good (80%+)</span><span>100%</span>
             </div>
             <div style={{ height:12, background:"linear-gradient(90deg,#FEE2E2 0%,#FEE2E2 60%,#EEF4FF 60%,#EEF4FF 80%,#DCFCE7 80%,#DCFCE7 100%)", borderRadius:99, position:"relative", border:"1px solid #E2E8F0" }}>
               <div style={{ position:"absolute", left:`${Math.min(accuracyPct,98)}%`, top:"50%", transform:"translate(-50%,-50%)", width:20, height:20, background:ac, borderRadius:"50%", border:"3px solid white", boxShadow:`0 0 0 2px ${ac}`, transition:"left 0.8s ease" }}/>
@@ -183,7 +184,7 @@ export default function LlmAnalysis() {
                 {[
                   { label:"High Confidence",  count:nHigh, total:confs.length, color:"#059669", bg:"#F0FDF4", vote:"3/3 unanimous",  tip:"All judges agreed" },
                   { label:"Medium Confidence",count:nMed,  total:confs.length, color:"#D97706", bg:"#FFFBEB", vote:"2/3 majority",   tip:"Solid — review dissent" },
-                  { label:"Low / Disputed",   count:nLow+disputed, total:confs.length, color:"#DC2626", bg:"#FEF2F2", vote:"Split/tied", tip:"Excluded from accuracy" },
+                  { label:"Low / Disputed",   count:nLow+disputed, total:confs.length, color:"#64748B", bg:"#F1F5F9", vote:"Split/tied", tip:"Excluded from accuracy" },
                 ].map(c => {
                   const pct = confs.length > 0 ? Math.round((c.count/confs.length)*100) : 0;
                   return (
@@ -229,6 +230,8 @@ export default function LlmAnalysis() {
           </div>
         </div>
       </div>
+
+    <LensFooter data={raw} />
     </div>
   );
 }

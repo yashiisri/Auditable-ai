@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
+import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 const M = "#005EB8", B = "#00338D", L = "#0091DA";
-const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#DC2626";
-const sb = (s: number) => s >= 75 ? "#DCFCE7" : s >= 50 ? "#EEF4FF" : "#FEE2E2";
+const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#64748B";
+const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 const band = (s: number) => s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
 
 const COLORS: Record<string, string> = {
@@ -139,13 +140,13 @@ export default function GovernancePrinciples() {
     <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.gp-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}.param-row{transition:all 0.18s ease;}.param-row:hover{background:rgba(0,94,184,0.06)!important;border-color:rgba(0,94,184,0.3)!important;}`}</style>
 
-      {/* Header */}
-      <div style={{ background:`linear-gradient(135deg,#00338D,#005EB8)`, padding:"28px 36px 24px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"32px 32px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative", maxWidth:1160, margin:"0 auto" }}>
-          <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:10 }}>Governance Principles · {r.ai_name}</div>
-          <h1 style={{ fontSize:24, fontWeight:900, color:"white", letterSpacing:"-0.4px", marginBottom:6 }}>Trusted AI Principles Assessment</h1>
-          <p style={{ fontSize:13, color:"rgba(255,255,255,0.65)" }}>10-dimension governance evaluation — click any principle to drill into sub-parameters</p>
+      <AuditContextBar data={raw} />
+      <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"18px 40px", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize:"22px 22px", pointerEvents:"none" }}/>
+        <div style={{ position:"relative" }}>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", marginBottom:3 }}>Audit Report · Governance Principles</div>
+          <div style={{ fontSize:18, fontWeight:900, color:"#fff", letterSpacing:"-0.3px" }}>Trusted AI Principles Assessment</div>
+          <div style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:3 }}>10-dimension governance evaluation — click any principle to drill into sub-parameters</div>
         </div>
       </div>
 
@@ -157,7 +158,7 @@ export default function GovernancePrinciples() {
             { label:"Avg Principle Score", val:`${Math.round(pkeys.reduce((s,k)=>s+prn[k].score,0)/Math.max(pkeys.length,1))}`, color:M },
             { label:"Strong (≥75)",        val:`${pkeys.filter(k=>prn[k].score>=75).length}/${pkeys.length}`, color:"#059669" },
             { label:"Watch (50–74)",       val:`${pkeys.filter(k=>prn[k].score>=50&&prn[k].score<75).length}`, color:"#D97706" },
-            { label:"Critical (<50)",      val:`${pkeys.filter(k=>prn[k].score<50).length}`, color:"#DC2626" },
+            { label:"Critical (<50)",      val:`${pkeys.filter(k=>prn[k].score<50).length}`, color:"#64748B" },
           ].map((t,i) => (
             <div key={i} style={{ background:"white", borderRadius:14, border:"1px solid #E2E8F0", padding:"18px 16px", borderTop:`3px solid ${t.color}` }}>
               <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:8 }}>{t.label}</div>
@@ -249,8 +250,8 @@ export default function GovernancePrinciples() {
                         onMouseEnter={() => setHovered(param)} onMouseLeave={() => setHovered(null)}>
                         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
                           <div style={{ flex:1, marginRight:8 }}>
-                            <div style={{ fontSize:13, fontWeight:isAct?700:600, color:"#374151" }}>{param}</div>
-                            {SUB_META[param] && <div style={{ fontSize:11, color:"#94A3B8", marginTop:2 }}>{SUB_META[param]}</div>}
+                            <div style={{ fontSize:12.5, fontWeight:isAct?700:600, color:"#0F172A", lineHeight:1.3 }}>{SUB_META[param] || param}</div>
+                            <div style={{ fontSize:10.5, color:"#94A3B8", marginTop:2, fontFamily:"monospace" }}>{param}</div>
                           </div>
                           <div style={{ textAlign:"right", flexShrink:0 }}>
                             <div style={{ fontSize:20, fontWeight:900, color:sc(v) }}>{v}</div>
@@ -268,18 +269,18 @@ export default function GovernancePrinciples() {
               <div style={{ position:"sticky", top:80, padding:"24px", borderRadius:18, background:"white", border:`2px solid ${(COLORS[sel]||M)}20`, minHeight:280, boxShadow:"0 4px 24px rgba(0,0,0,0.06)" }}>
                 {activeParam && selData.parameters[activeParam] !== undefined ? (
                   <>
-                    <div style={{ fontSize:15, fontWeight:800, color:"#0F172A", marginBottom:6 }}>{activeParam}</div>
-                    <div style={{ fontSize:11, color:"#94A3B8", marginBottom:14 }}>{SUB_META[activeParam]||""}</div>
+                    <div style={{ fontSize:14, fontWeight:800, color:"#0F172A", marginBottom:4, lineHeight:1.3 }}>{SUB_META[activeParam] || activeParam}</div>
+                    <div style={{ fontSize:10.5, color:"#94A3B8", marginBottom:14, fontFamily:"monospace" }}>{activeParam}</div>
                     <div style={{ padding:"12px 14px", borderRadius:12, background:sb(selData.parameters[activeParam] as number), border:`1px solid ${sc(selData.parameters[activeParam] as number)}18`, marginBottom:12 }}>
                       <div style={{ fontSize:10, fontWeight:700, color:sc(selData.parameters[activeParam] as number), textTransform:"uppercase" as const, letterSpacing:"0.08em", marginBottom:6 }}>
-                        {(selData.parameters[activeParam] as number)>=75?"✓ Strong posture":(selData.parameters[activeParam] as number)>=50?"⚠ Watch posture":"✗ Critical — needs attention"}
+                        {(selData.parameters[activeParam] as number)>=75?"Strong posture":(selData.parameters[activeParam] as number)>=50?"Watch posture":"Needs attention"}
                       </div>
                       <div style={{ fontSize:13, lineHeight:1.7, color:"#1E293B" }}>
                         {(selData.parameters[activeParam] as number)>=75
-                          ? `${activeParam} is performing well at ${selData.parameters[activeParam]}/100. This dimension meets enterprise governance standards.`
+                          ? `${SUB_META[activeParam] || activeParam} is performing well at ${selData.parameters[activeParam]}/100. This dimension meets enterprise governance standards.`
                           : (selData.parameters[activeParam] as number)>=50
                           ? `${activeParam} scored ${selData.parameters[activeParam]}/100. There is room for improvement — enriching your logs with relevant columns will raise this score.`
-                          : `${activeParam} is critically low at ${selData.parameters[activeParam]}/100. Add the relevant data column to your logs to enable this signal.`}
+                          : `${SUB_META[activeParam] || activeParam} scored ${selData.parameters[activeParam]}/100. This dimension could not be computed or is critically low. Add the relevant log columns to enable this signal.`}
                       </div>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderRadius:10, background:"#F8FAFC", border:"1px solid #F1F5F9" }}>
@@ -301,6 +302,8 @@ export default function GovernancePrinciples() {
           </div>
         ) : null}
       </div>
+
+    <LensFooter data={raw} />
     </div>
   );
 }

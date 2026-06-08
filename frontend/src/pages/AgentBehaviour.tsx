@@ -1,142 +1,261 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
+import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const M = "#005EB8", B = "#00338D";
-const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#DC2626";
-const sb = (s: number) => s >= 75 ? "#DCFCE7" : s >= 50 ? "#EEF4FF" : "#FEE2E2";
+const FF = "'Plus Jakarta Sans', system-ui, sans-serif";
+const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#64748B";
+const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 const band = (s: number) => s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
+
+/* Plain-English labels for technical parameter names */
+const PARAM_LABELS: Record<string, { label: string; plain: string }> = {
+  "missing_ratio":       { label: "Missing Data", plain: "What % of log fields are empty or null" },
+  "duplicates":          { label: "Duplicate Records", plain: "Identical rows in the dataset that skew results" },
+  "schema_confidence":   { label: "Schema Confidence", plain: "How reliably the expected columns were detected" },
+  "logs_evaluated":      { label: "Records Evaluated", plain: "Total log entries used for this audit" },
+  "column_count":        { label: "Column Count", plain: "Number of data columns in the uploaded file" },
+};
+
+const METRIC_LABELS: Record<string, { label: string; plain: string }> = {
+  "avg_latency_ms":      { label: "Response Latency", plain: "Average time the agent takes to produce a response (lower is better)" },
+  "p95_latency_ms":      { label: "95th Percentile Latency", plain: "Worst-case latency for 95% of requests — used for SLA planning" },
+  "error_rate":          { label: "Error Rate", plain: "Fraction of requests that returned an error or failed to respond" },
+  "hallucination_rate":  { label: "Hallucination Rate", plain: "Fraction of responses containing fabricated or unsupported facts" },
+  "pii_leakage_rate":    { label: "PII Leakage Rate", plain: "How often personal data appeared in the agent's outputs" },
+  "toxicity_score":      { label: "Toxicity Score", plain: "Average harmfulness level of agent responses (lower is better)" },
+  "avg_tokens":          { label: "Avg Response Length", plain: "Mean token count per response — indicates verbosity" },
+  "response_length":     { label: "Response Length", plain: "Average length of responses in tokens" },
+};
+
+const NOTE_LABELS: Record<string, { label: string; plain: string }> = {
+  "semantic_similarity":     { label: "Response Consistency", plain: "Do similar questions get similar answers?" },
+  "sentiment_variance":      { label: "Tone Consistency", plain: "Is the agent's tone stable across different users?" },
+  "response_coherence":      { label: "Response Coherence", plain: "Are individual responses logically well-structured?" },
+  "hallucination_score":     { label: "Hallucination Score", plain: "How often does the agent state things that aren't true?" },
+  "safety_score":            { label: "Safety Score", plain: "Overall safety rating from the LLM judge panel" },
+  "bias_score":              { label: "Bias Score", plain: "How fairly does the agent respond across user groups?" },
+  "bleu_score":              { label: "Answer Accuracy (BLEU)", plain: "How closely responses match expected reference answers" },
+  "rouge_score":             { label: "Answer Overlap (ROUGE)", plain: "How much content from reference answers appears in responses" },
+  "flesch_reading_ease":     { label: "Readability", plain: "How easy the agent's responses are to read and understand" },
+  "lexical_diversity":       { label: "Vocabulary Range", plain: "Variety of language used — low diversity can indicate templated responses" },
+  "pii_detection_rate":      { label: "PII in Outputs", plain: "How often personal data leaked into the agent's responses" },
+  "input_output_relevance":  { label: "Relevance to Question", plain: "How closely each answer addresses what was actually asked" },
+};
+
+function humanise(key: string): string {
+  if (NOTE_LABELS[key]) return NOTE_LABELS[key].label;
+  if (METRIC_LABELS[key]) return METRIC_LABELS[key].label;
+  return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+function explain(key: string): string {
+  if (NOTE_LABELS[key]) return NOTE_LABELS[key].plain;
+  if (METRIC_LABELS[key]) return METRIC_LABELS[key].plain;
+  return "";
+}
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}body{background:#F8FAFC;}
+.ab-card{background:#fff;border-radius:14px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}
+.ab-row{transition:background 0.12s;border-radius:9px;}
+.ab-row:hover{background:#F8FAFC;}
+@keyframes abIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ab-in{animation:abIn 0.32s cubic-bezier(.22,1,.36,1) both;}
+`;
 
 export default function AgentBehaviour() {
   const location = useLocation();
   const navigate = useNavigate();
   const raw = location.state?.data || (() => { try { const s = sessionStorage.getItem("lastReportData"); return s ? JSON.parse(s) : null; } catch { return null; } })();
-  const [anim, setAnim] = useState(false);
+  const [, setAnim] = useState(false);
   useEffect(() => { setTimeout(() => setAnim(true), 100); }, []);
 
   if (!raw) return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:10, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: FF }}>
+      <button onClick={() => navigate("/dashboard")} style={{ padding: "10px 24px", background: M, border: "none", borderRadius: 10, color: "white", fontWeight: 700, cursor: "pointer" }}>← Back</button>
     </div>
   );
 
   const r = raw;
   const d = r.diagnostics || {};
-  const dq = r.data_quality_score || 0;
-  const missing = d.missing_ratio || 0;
-  const completeness = Math.round((1 - missing) * 100);
-  const schemaScore = Math.round((d.schema_confidence || 0) * 100);
-  const dupPenalty = Math.max(0, Math.min(100, Math.round(Math.max(0, 100 - ((d.duplicates||0) / Math.max(r.logs_evaluated||1, 1)) * 500))));
-  const volScore = Math.min(100, Math.round((r.logs_evaluated||0) / 100 * 100));
-  const notes = r.computation_notes ? Object.entries(r.computation_notes).filter(([k]) => k !== "_error") : [];
-  const computed = notes.filter(([, n]: any) => n.status === "computed");
-  const unavailable = notes.filter(([, n]: any) => n.status !== "computed");
-  const _ = anim;
+  const dq            = r.data_quality_score || 0;
+  const missing       = d.missing_ratio || 0;
+  const completeness  = Math.round((1 - missing) * 100);
+  const schemaScore   = Math.round((d.schema_confidence || 0) * 100);
+  const dupCount      = d.duplicates || 0;
+  const dupFreeRate   = Math.max(0, Math.min(100, Math.round(Math.max(0, 100 - (dupCount / Math.max(r.logs_evaluated || 1, 1)) * 500))));
+  const volScore      = Math.min(100, Math.round((r.logs_evaluated || 0) / 100 * 100));
+  const notes         = r.computation_notes ? Object.entries(r.computation_notes).filter(([k]) => k !== "_error") : [];
+  const computed      = notes.filter(([, n]: any) => n.status === "computed");
+  const unavailable   = notes.filter(([, n]: any) => n.status !== "computed");
+
+  /* Build data quality cards — with plain English explanations */
+  const DQ_CARDS = [
+    {
+      label: "Overall Data Quality",
+      value: `${dq}%`,
+      score: dq,
+      formula: "(1 − missing_ratio) × 70 + schema_confidence × 30",
+      explanation: dq >= 75
+        ? `At ${dq}%, your dataset is in good shape. Missing values are low and the schema is well-structured. This supports reliable governance scoring.`
+        : dq >= 50
+        ? `At ${dq}%, your dataset has moderate quality. A missing-value rate of ${(missing * 100).toFixed(1)}% is reducing the reliability of principle scores.`
+        : `At ${dq}%, data quality is poor. Missing fields and structural issues are significantly impacting audit accuracy. Clean the dataset before re-running.`,
+    },
+    {
+      label: "Completeness",
+      value: `${completeness}%`,
+      score: completeness,
+      formula: "(1 − missing_ratio) × 100",
+      explanation: completeness >= 90
+        ? `${completeness}% of all expected fields are populated — excellent. Near-complete data leads to the most accurate governance scores.`
+        : `${completeness}% completeness means ${(missing * 100).toFixed(1)}% of fields are empty. Populate required columns (input, output, task_id, latency) for better results.`,
+    },
+    {
+      label: "No Duplicate Records",
+      value: dupCount === 0 ? "Clean" : `${dupCount} found`,
+      score: dupFreeRate,
+      formula: "clamp(100 − (duplicates / total) × 500, 0, 100)",
+      explanation: dupCount === 0
+        ? "No duplicate records detected. Clean deduplication prevents metrics from being artificially inflated."
+        : `${dupCount} duplicate record${dupCount > 1 ? "s" : ""} found. Duplicates cause metrics like consistency and coherence to appear higher than they really are. Remove them before re-running.`,
+    },
+    {
+      label: "Schema Confidence",
+      value: `${schemaScore}%`,
+      score: schemaScore,
+      formula: "(1 − missing_ratio × 0.5) × 100",
+      explanation: schemaScore >= 85
+        ? `Schema confidence is ${schemaScore}%. The expected column structure was clearly detected — your data is well-formatted.`
+        : `Schema confidence is ${schemaScore}%. Some expected columns may be missing or named differently. Verify your file includes: task_id, input, output, latency.`,
+    },
+    {
+      label: "Log Volume",
+      value: `${r.logs_evaluated || 0} records`,
+      score: volScore,
+      formula: "min(logs_evaluated / 100 × 100, 100)",
+      explanation: (r.logs_evaluated || 0) >= 100
+        ? `${r.logs_evaluated} records is a solid sample size for statistically reliable governance scoring.`
+        : `Only ${r.logs_evaluated || 0} records uploaded. Aim for at least 100 records to get meaningful, statistically stable scores.`,
+    },
+  ];
 
   return (
-    <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.ab-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
+    <div style={{ minHeight: "100vh", background: "#F8FAFC", fontFamily: FF, color: "#0F172A" }}>
+      <style>{CSS}</style>
+      <AuditContextBar data={raw} />
 
-      {/* Header */}
-      <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"28px 36px 24px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"32px 32px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative", maxWidth:1160, margin:"0 auto" }}>
-          <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:10 }}>Agent Behaviour · {r.ai_name}</div>
-          <h1 style={{ fontSize:24, fontWeight:900, color:"white", letterSpacing:"-0.4px", marginBottom:6 }}>Agent Behaviour &amp; Data Quality</h1>
-          <p style={{ fontSize:13, color:"rgba(255,255,255,0.65)" }}>Model metrics, structural integrity, and metric computation transparency</p>
+      {/* Page header */}
+      <div style={{ background: `linear-gradient(135deg, ${B}, ${M})`, padding: "18px 40px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "22px 22px", pointerEvents: "none" }}/>
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 3 }}>Audit Report · {r.ai_name}</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.3px" }}>Data Quality & Agent Behaviour</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 3 }}>How reliable is the data underpinning this audit — and how is your agent actually performing</div>
         </div>
       </div>
 
-      <div style={{ maxWidth:1160, margin:"0 auto", padding:"28px 24px", display:"flex", flexDirection:"column", gap:20 }}>
+      <div style={{ padding: "24px 40px 0" }}>
 
-        {/* Data quality KPIs */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:14 }}>
+        {/* Summary strip */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
           {[
-            { label:"Data Quality Score",  val:`${dq}%`,          score:dq },
-            { label:"Completeness",        val:`${completeness}%`, score:completeness },
-            { label:"Duplicate-Free Rate", val:`${dupPenalty}%`,   score:dupPenalty },
-            { label:"Schema Confidence",   val:`${schemaScore}%`,  score:schemaScore },
-            { label:"Log Volume",          val:`${r.logs_evaluated||0}`, score:volScore },
-            { label:"Structural Risk",     val:r.structural_risk||"—", score:r.structural_risk==="Low"?80:r.structural_risk==="Moderate"?55:30 },
-          ].map((k,i) => (
-            <div key={i} style={{ background:"white", borderRadius:14, border:"1px solid #E2E8F0", padding:"18px 16px", borderTop:`3px solid ${sc(k.score)}` }}>
-              <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:8 }}>{k.label}</div>
-              <div style={{ fontSize:22, fontWeight:900, color:sc(k.score) }}>{k.val}</div>
-              <div style={{ fontSize:9, fontWeight:700, padding:"2px 7px", borderRadius:6, background:sb(k.score), color:sc(k.score), marginTop:6, display:"inline-block", textTransform:"uppercase" as const }}>{band(k.score)}</div>
+            { label: "Data Quality Score", val: `${dq}%`, score: dq },
+            { label: "Completeness",        val: `${completeness}%`, score: completeness },
+            { label: "Log Records",          val: `${r.logs_evaluated || 0}`, score: volScore },
+            { label: "Structural Risk",      val: r.structural_risk || "—", score: r.structural_risk === "Low" ? 80 : r.structural_risk === "Moderate" ? 55 : 30 },
+          ].map((k, i) => (
+            <div key={i} className="ab-card" style={{ padding: "16px 18px", borderTop: `3px solid ${sc(k.score)}` }}>
+              <div style={{ fontSize: 9.5, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 7 }}>{k.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: sc(k.score), lineHeight: 1 }}>{k.val}</div>
+              <div style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: sb(k.score), color: sc(k.score), marginTop: 5, display: "inline-block", textTransform: "uppercase" }}>{band(k.score)}</div>
             </div>
           ))}
         </div>
 
-        {/* Data Structural Integrity */}
-        <div className="ab-card" style={{ padding:"28px 32px" }} id="evidence-logs">
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"#EEF4FF", display:"grid", placeItems:"center", color:M }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
-            </div>
-            <div>
-              <div style={{ fontSize:16, fontWeight:800, color:"#0F172A" }}>Data Structural Integrity</div>
-              <div style={{ fontSize:12, color:"#94A3B8", marginTop:2 }}>Why each structural metric received its score — based on your uploaded dataset</div>
-            </div>
+        {/* ── Data quality breakdown ── */}
+        <div className="ab-card ab-in" style={{ padding: "22px 28px", marginBottom: 16 }}>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>Data Quality Breakdown</div>
+            <div style={{ fontSize: 12, color: "#64748B", marginTop: 3 }}>Why each metric received its score — based on your uploaded dataset</div>
           </div>
-          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {[
-              { label:"Data Quality Score",  val:`${dq}%`,          score:dq,          formula:"(1 − missing_ratio) × 70 + schema_confidence × 30", why:dq>=75?`Score of ${dq}% reflects high completeness and strong schema confidence. Dataset is structurally sound.`:`Score of ${dq}% reflects moderate quality. Missing data ratio of ${(missing*100).toFixed(1)}% reduces reliability.` },
-              { label:"Data Completeness",   val:`${completeness}%`, score:completeness, formula:"(1 − missing_ratio) × 100",                          why:completeness>=90?`${completeness}% of all values are present — excellent completeness.`:`${completeness}% completeness. ${(missing*100).toFixed(1)}% of values are missing.` },
-              { label:"Duplicate-Free Rate", val:`${dupPenalty}%`,   score:dupPenalty,   formula:"clamp(100 − (duplicates / total) × 500)",             why:d.duplicates===0?"No duplicate records detected. Clean data prevents inflated metrics.":`${d.duplicates} duplicate record(s) detected. Remove before re-running the audit.` },
-              { label:"Schema Confidence",   val:`${schemaScore}%`,  score:schemaScore,  formula:"(1 − missing_ratio × 0.5) × 100",                    why:schemaScore>=85?`Schema confidence of ${schemaScore}% indicates a well-structured dataset.`:`Schema confidence of ${schemaScore}% reflects structural inconsistency.` },
-              { label:"Log Volume",          val:`${r.logs_evaluated||0} records`, score:volScore, formula:"min(logs_evaluated / 100 × 100, 100)",      why:(r.logs_evaluated||0)>=100?`${r.logs_evaluated} records — sufficient for reliable governance scoring.`:`Only ${r.logs_evaluated} records. Consider uploading a larger log sample.` },
-            ].map((row,i) => (
-              <div key={i} style={{ padding:"16px 18px", borderRadius:12, background:"#F8FAFC", border:`1.5px solid ${row.score>=75?"rgba(5,150,105,0.2)":row.score>=50?"rgba(0,94,184,0.2)":"rgba(220,38,38,0.2)"}` }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:16, marginBottom:10 }}>
-                  <div>
-                    <div style={{ fontSize:13.5, fontWeight:700, color:"#0F172A", marginBottom:4 }}>{row.label}</div>
-                    <div style={{ fontSize:11, fontFamily:"monospace", background:"white", border:"1px solid #E2E8F0", borderRadius:6, padding:"3px 8px", display:"inline-block", color:"#64748B" }}>{row.formula}</div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {DQ_CARDS.map((row, i) => (
+              <div key={i} style={{
+                padding: "16px 18px", borderRadius: 10,
+                background: "#F8FAFC", border: `1px solid ${row.score >= 75 ? "rgba(5,150,105,0.15)" : row.score >= 50 ? "rgba(0,94,184,0.12)" : "#E2E8F0"}`,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 4 }}>{row.label}</div>
+                    <code style={{ fontSize: 10.5, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 5, padding: "2px 7px", color: "#64748B", display: "inline-block" }}>{row.formula}</code>
                   </div>
-                  <div style={{ textAlign:"right", flexShrink:0 }}>
-                    <div style={{ fontSize:22, fontWeight:900, color:sc(row.score), lineHeight:1 }}>{row.val}</div>
-                    <div style={{ fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:6, background:sb(row.score), color:sc(row.score), marginTop:4, display:"inline-block", textTransform:"uppercase" as const }}>{band(row.score)}</div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: sc(row.score), lineHeight: 1 }}>{row.value}</div>
+                    <div style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: sb(row.score), color: sc(row.score), marginTop: 4, display: "inline-block", textTransform: "uppercase" }}>{band(row.score)}</div>
                   </div>
                 </div>
-                <div style={{ height:5, background:"#E2E8F0", borderRadius:99, marginBottom:10 }}>
-                  <div style={{ width:`${Math.min(row.score,100)}%`, height:"100%", borderRadius:99, background:`linear-gradient(90deg,${sc(row.score)}80,${sc(row.score)})`, transition:"width 0.8s ease" }}/>
+                {/* Progress bar */}
+                <div style={{ height: 4, background: "#E2E8F0", borderRadius: 99, marginBottom: 10 }}>
+                  <div style={{ width: `${Math.min(row.score, 100)}%`, height: "100%", borderRadius: 99, background: sc(row.score), transition: "width 0.9s ease" }}/>
                 </div>
-                <div style={{ fontSize:12.5, color:"#475569", lineHeight:1.7, padding:"10px 12px", background:"white", borderRadius:9, border:"1px solid #E2E8F0" }}>{row.why}</div>
+                <div style={{ fontSize: 12.5, color: "#475569", lineHeight: 1.7, padding: "10px 12px", background: "#fff", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+                  {row.explanation}
+                </div>
               </div>
             ))}
           </div>
+
+          {/* Detected columns */}
           {d.column_names && d.column_names.length > 0 && (
-            <div style={{ marginTop:16, padding:"16px 18px", borderRadius:12, background:"white", border:"1px solid #E2E8F0" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:M, textTransform:"uppercase" as const, letterSpacing:"0.08em", marginBottom:10 }}>Detected Columns ({d.column_names.length})</div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 10, background: "#fff", border: "1px solid #E2E8F0" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Detected Columns ({d.column_names.length})</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {d.column_names.map((col: string) => {
-                  const req = ["task_id","input","output","latency"].some(r2 => col.toLowerCase().includes(r2));
-                  return <span key={col} style={{ padding:"4px 12px", borderRadius:20, fontSize:12, fontWeight:500, background:req?"#DCFCE7":"#F1F5F9", color:req?"#065F46":"#475569", border:req?"1px solid rgba(5,150,105,0.3)":"1px solid #E2E8F0", fontFamily:"monospace" }}>{col}</span>;
+                  const isKey = ["task_id", "input", "output", "latency"].some(k => col.toLowerCase().includes(k));
+                  return (
+                    <span key={col} style={{
+                      padding: "4px 11px", borderRadius: 20, fontSize: 11.5, fontWeight: 500,
+                      background: isKey ? "#DCFCE7" : "#F1F5F9",
+                      color: isKey ? "#065F46" : "#475569",
+                      border: isKey ? "1px solid rgba(5,150,105,0.25)" : "1px solid #E2E8F0",
+                      fontFamily: "monospace",
+                    }}>
+                      {col}
+                    </span>
+                  );
                 })}
               </div>
             </div>
           )}
         </div>
 
-        {/* Model metrics */}
+        {/* ── Measured metrics ── */}
         {r.model_metrics && Object.values(r.model_metrics).some((m: any) => m.value !== null) && (
-          <div className="ab-card" style={{ padding:"28px 32px" }}>
-            <div style={{ fontSize:16, fontWeight:800, color:"#0F172A", marginBottom:4 }}>Model-Specific Metrics</div>
-            <div style={{ fontSize:12, color:"#94A3B8", marginBottom:20 }}>Measured for {r.model_label||r.model_type} — evaluated against model-appropriate thresholds</div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:14 }}>
+          <div className="ab-card ab-in" style={{ padding: "22px 28px", marginBottom: 16 }}>
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>Measured Agent Metrics</div>
+              <div style={{ fontSize: 12, color: "#64748B", marginTop: 3 }}>Performance signals measured directly from your agent's outputs</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
               {Object.entries(r.model_metrics).filter(([, m]: any) => m.value !== null).map(([key, m]: any) => {
-                const mc = m.risk_level==="Low"?"#059669":m.risk_level==="Moderate"?M:"#DC2626";
-                const mcBg = m.risk_level==="Low"?"#DCFCE7":m.risk_level==="Moderate"?"#EEF4FF":"#FEE2E2";
-                const dv = m.unit==="ms"?`${Math.round(m.value)}ms`:m.value.toFixed(3);
-                const dk = key.replace(/_/g," ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+                const mc  = m.risk_level === "Low" ? "#059669" : m.risk_level === "Moderate" ? M : "#64748B";
+                const mcBg = m.risk_level === "Low" ? "#F0FDF4" : m.risk_level === "Moderate" ? "#EFF6FF" : "#F1F5F9";
+                const dv  = m.unit === "ms" ? `${Math.round(m.value)}ms` : (m.value < 1 ? `${(m.value * 100).toFixed(1)}%` : m.value.toFixed(2));
+                const lbl = METRIC_LABELS[key]?.label || humanise(key);
+                const exp = METRIC_LABELS[key]?.plain || m.description || "";
                 return (
-                  <div key={key} style={{ padding:"18px 16px", borderRadius:16, background:mcBg, border:`1px solid ${mc}25` }}>
-                    <div style={{ fontSize:11, color:"#64748B", textTransform:"uppercase" as const, letterSpacing:"0.06em", fontWeight:600, marginBottom:8 }}>{dk}</div>
-                    <div style={{ fontSize:26, fontWeight:800, color:mc, marginBottom:8 }}>{dv}</div>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                      <span style={{ fontSize:11, color:mc, background:"white", border:`1px solid ${mc}40`, padding:"2px 8px", borderRadius:20, fontWeight:700 }}>{m.risk_level}</span>
-                      {m.threshold_low !== undefined && <span style={{ fontSize:10, color:"#94A3B8" }}>threshold: {m.threshold_low}{m.unit?` ${m.unit}`:""}</span>}
+                  <div key={key} style={{ padding: "16px", borderRadius: 12, background: mcBg, border: `1px solid ${mc}20` }}>
+                    <div style={{ fontSize: 10.5, color: "#64748B", fontWeight: 600, letterSpacing: "0.4px", marginBottom: 6, textTransform: "uppercase" }}>{lbl}</div>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: mc, marginBottom: 6, lineHeight: 1 }}>{dv}</div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: mc, background: "#fff", border: `1px solid ${mc}40`, padding: "2px 8px", borderRadius: 20, fontWeight: 700 }}>{m.risk_level}</span>
+                      {m.threshold_low !== undefined && <span style={{ fontSize: 10, color: "#94A3B8" }}>threshold: {m.threshold_low}{m.unit ? ` ${m.unit}` : ""}</span>}
                     </div>
-                    <div style={{ fontSize:11, color:"#64748B", lineHeight:1.5, marginTop:8 }}>{m.description}</div>
+                    {exp && <div style={{ fontSize: 11.5, color: "#475569", lineHeight: 1.6 }}>{exp}</div>}
                   </div>
                 );
               })}
@@ -144,43 +263,63 @@ export default function AgentBehaviour() {
           </div>
         )}
 
-        {/* Computation notes */}
+        {/* ── NLP metric transparency ── */}
         {notes.length > 0 && (
-          <div className="ab-card" style={{ padding:"28px 32px" }}>
-            <div style={{ fontSize:16, fontWeight:800, color:"#0F172A", marginBottom:4 }}>Metric Computation Transparency</div>
-            <div style={{ fontSize:12, color:"#94A3B8", marginBottom:16 }}>Every metric computed directly from your input/output data using real NLP/ML libraries</div>
-            <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:20 }}>
-              {[
-                { label:"Computed",      count:computed.length,    color:"#059669", bg:"#DCFCE7" },
-                { label:"Unavailable",   count:unavailable.length, color:M,         bg:"#EEF4FF" },
-                { label:"Total Metrics", count:notes.length,       color:B,         bg:"#EEF4FF" },
-              ].map(({ label, count, color, bg }) => (
-                <div key={label} style={{ padding:"14px 22px", borderRadius:14, background:bg, border:`1px solid ${color}20`, textAlign:"center", minWidth:120 }}>
-                  <div style={{ fontSize:26, fontWeight:900, color }}>{count}</div>
-                  <div style={{ fontSize:11, color:"#64748B", marginTop:4 }}>{label}</div>
-                </div>
-              ))}
+          <div className="ab-card ab-in" style={{ padding: "22px 28px", marginBottom: 0 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>NLP Metric Details</div>
+                <div style={{ fontSize: 12, color: "#64748B", marginTop: 3 }}>Every score computed directly from input/output text using real NLP libraries</div>
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[
+                  { label: "Computed", count: computed.length, color: "#059669", bg: "#F0FDF4" },
+                  { label: "Unavailable", count: unavailable.length, color: "#64748B", bg: "#F1F5F9" },
+                ].map(({ label, count, color, bg }) => (
+                  <div key={label} style={{ padding: "10px 16px", borderRadius: 10, background: bg, textAlign: "center", minWidth: 90 }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color }}>{count}</div>
+                    <div style={{ fontSize: 10.5, color: "#64748B", marginTop: 2 }}>{label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:10 }}>
-              {notes.map(([key, note]: any) => {
-                const ok = note.status === "computed";
-                const nc = ok ? "#059669" : M;
-                const ncBg = ok ? "#DCFCE7" : "#EEF4FF";
-                const dk = key.replace(/_/g," ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {notes.map(([key, note]: any, i: number) => {
+                const ok   = note.status === "computed";
+                const lbl  = humanise(key);
+                const exp  = explain(key);
+                const val  = note.value !== null && note.value !== undefined
+                  ? (note.value < 1 && note.value > 0 ? `${(note.value * 100).toFixed(1)}%` : note.value.toFixed ? note.value.toFixed(3) : String(note.value))
+                  : "—";
+                const nc   = ok ? M : "#94A3B8";
                 return (
-                  <div key={key} style={{ padding:"14px", borderRadius:14, background:ncBg, border:`1px solid ${nc}20` }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-                      <span style={{ fontSize:12, fontWeight:700, color:"#0F172A" }}>{dk}</span>
-                      <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:10, color:nc, background:"white", border:`1px solid ${nc}30` }}>{ok?"computed":"unavailable"}</span>
+                  <div key={key} className="ab-row" style={{
+                    display: "grid", gridTemplateColumns: "200px 80px 1fr 90px",
+                    gap: 12, padding: "11px 12px", alignItems: "center",
+                    borderBottom: i < notes.length - 1 ? "1px solid #F1F5F9" : "none",
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F172A" }}>{lbl}</div>
+                      {exp && <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1, lineHeight: 1.4 }}>{exp}</div>}
                     </div>
-                    <div style={{ fontSize:22, fontWeight:900, color:nc }}>{note.value !== null ? note.value.toFixed(4) : "—"}</div>
-                    <div style={{ fontSize:10, color:"#94A3B8", lineHeight:1.5, marginTop:4 }}>{note.library}</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: nc, fontFamily: "monospace", textAlign: "right" }}>{val}</div>
+                    <div style={{ fontSize: 11, color: "#64748B" }}>{note.library || ""}</div>
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: ok ? "#F0FDF4" : "#F1F5F9", color: ok ? "#059669" : "#64748B", border: ok ? "1px solid rgba(5,150,105,0.2)" : "1px solid #E2E8F0" }}>
+                        {ok ? "computed" : "unavailable"}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
         )}
+      </div>
+
+      <div style={{ marginTop: 40 }}>
+        <LensFooter data={raw} />
       </div>
     </div>
   );
