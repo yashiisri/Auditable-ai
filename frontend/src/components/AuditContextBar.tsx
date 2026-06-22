@@ -1,219 +1,234 @@
-/**
- * AuditContextBar
- * ─ Sticky blue navbar on every audit workspace page
- * ─ White text throughout; active tab is white pill, inactive is translucent white
- * ─ Score shown once here only — remove from page headers
- * ─ Prev/Next now live at the BOTTOM of each page via <LensFooter> (exported separately)
- */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useLocation } from "react-router-dom";
 
-const B9 = "#00338D";
-const BM = "#005EB8";
-const FF = "'Plus Jakarta Sans', system-ui, sans-serif";
+const B = "#00338D", M = "#005EB8";
 
-export const LENS_ORDER = [
-  { label: "Executive Summary", path: "/audit-overview"        },
-  { label: "Data Quality",      path: "/agent-behaviour"       },
-  { label: "LLM Analysis",      path: "/llm-analysis"          },
-  { label: "Governance",        path: "/governance-principles"  },
-  { label: "Regulatory",        path: "/regulatory-alignment"  },
-  { label: "Risk & Actions",    path: "/risk-intelligence"     },
-  { label: "Export",            path: "/download-report"       },
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+const IconSummary = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+  </svg>
+);
+const IconShield = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+const IconAlert = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+const IconBrain = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+  </svg>
+);
+const IconDatabase = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+  </svg>
+);
+const IconGlobe = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+const IconLightbulb = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/>
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+  </svg>
+);
+const IconDownload = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+const IconChevronRight = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6"/>
+  </svg>
+);
+
+// ── Route metadata — matches Sidebar.tsx paths exactly ───────────────────────
+
+const REPORT_SECTIONS = [
+  { path: "/audit-overview",        label: "Executive Summary",     shortLabel: "Summary",    icon: IconSummary  },
+  { path: "/agent-behaviour",       label: "Data Quality",          shortLabel: "Data",       icon: IconDatabase },
+  { path: "/llm-analysis",          label: "LLM Analysis",          shortLabel: "LLM",        icon: IconBrain    },
+  { path: "/governance-principles", label: "Governance Principles", shortLabel: "Principles", icon: IconShield   },
+  { path: "/regulatory-alignment",  label: "Regulatory Alignment",  shortLabel: "Regulatory", icon: IconGlobe    },
+  { path: "/risk-intelligence",     label: "Risk & Actions",        shortLabel: "Risks",      icon: IconAlert    },
+  { path: "/recommendations",       label: "Recommendations",       shortLabel: "Actions",    icon: IconLightbulb},
+  { path: "/download-report",       label: "Export Report",         shortLabel: "Export",     icon: IconDownload },
 ];
 
-function bandLabel(s: number) {
-  return s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
-}
-/* slate-grey for critical — clean, not brown, not red */
-function bandColor(s: number) {
-  return s >= 75 ? "#34D399" : s >= 50 ? "#FCD34D" : "#94A3B8";
-}
+// ── AuditContextBar ───────────────────────────────────────────────────────────
+// A slim gradient banner showing current section + AI name + score.
+// Replaces the old full top-navbar — Sidebar handles all navigation.
 
-function getState() {
-  try { const s = sessionStorage.getItem("lastReportData"); return s ? { state: { data: JSON.parse(s) } } : {}; }
-  catch { return {}; }
-}
+export default function AuditContextBar({ data }: { data: any }) {
+  const { pathname } = useLocation();
 
-/* ── Sticky top navbar ─────────────────────────────────────────────── */
-export default function AuditContextBar({ data }: { data: Record<string, unknown> | null }) {
-  const navigate    = useNavigate();
-  const location    = useLocation();
+  const score     = data?.overall_score;
+  const risk      = data?.risk_level;
+  const aiName    = data?.ai_name   || "AI System";
+  const modelType = data?.model_label || data?.model_type || "";
 
-  const score     = (data as any)?.overall_score ?? 0;
-  const agentName = (data as any)?.ai_name ?? localStorage.getItem("activeAI") ?? "AI Agent";
-  const navTo     = (path: string) => navigate(path, getState());
+  const current  = REPORT_SECTIONS.find(s => s.path === pathname);
+  const IconComp = current?.icon;
 
-  return (
-    <>
-      <style>{`
-        .acb-tab { border: none; cursor: pointer; font-family: ${FF}; transition: background 0.14s, color 0.14s; }
-        .acb-tab:hover { background: rgba(255,255,255,0.18) !important; }
-      `}</style>
-      <div style={{
-        position: "sticky", top: 0, zIndex: 40,
-        background: `linear-gradient(90deg, ${B9} 0%, ${BM} 100%)`,
-        fontFamily: FF, boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
-      }}>
-        {/* Subtle dot-grid texture */}
-        <div style={{
-          position: "absolute", inset: 0, pointerEvents: "none",
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-        }} />
-
-        <div style={{ position: "relative", display: "flex", alignItems: "center", padding: "0 24px", height: 52 }}>
-
-          {/* Agent chip */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: 22, flexShrink: 0 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>
-                {agentName}
-              </div>
-              {score > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                  <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 800, color: bandColor(score), letterSpacing: "-0.3px" }}>
-                    {score}
-                  </span>
-                  <span style={{ fontSize: 9.5, fontWeight: 700, color: bandColor(score), textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    {bandLabel(score)}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div style={{ width: 1, height: 26, background: "rgba(255,255,255,0.16)", marginRight: 18, flexShrink: 0 }} />
-
-          {/* Lens tabs */}
-          <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, overflow: "hidden" }}>
-            {LENS_ORDER.map(lens => {
-              const active = location.pathname === lens.path;
-              return (
-                <button
-                  key={lens.path}
-                  className="acb-tab"
-                  onClick={() => navTo(lens.path)}
-                  style={{
-                    padding: "5px 12px", borderRadius: 6,
-                    fontSize: 12, fontWeight: active ? 700 : 400,
-                    background: active ? "rgba(255,255,255,0.95)" : "transparent",
-                    color: active ? B9 : "rgba(255,255,255,0.78)",
-                    whiteSpace: "nowrap",
-                    letterSpacing: active ? "-0.1px" : "0",
-                  }}
-                >
-                  {lens.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-/* ── Bottom page-turner — import and place at the end of every lens page ── */
-export function LensFooter({ data }: { data: Record<string, unknown> | null }) {
-  const navigate    = useNavigate();
-  const location    = useLocation();
-  const currentIdx  = LENS_ORDER.findIndex(l => l.path === location.pathname);
-  const prev        = currentIdx > 0 ? LENS_ORDER[currentIdx - 1] : null;
-  const next        = currentIdx >= 0 && currentIdx < LENS_ORDER.length - 1 ? LENS_ORDER[currentIdx + 1] : null;
-  const navTo       = (path: string) => navigate(path, getState());
-
-  const agentName   = (data as any)?.ai_name ?? localStorage.getItem("activeAI") ?? "AI Agent";
-  const currentLabel = LENS_ORDER[currentIdx]?.label ?? "";
+  const riskCol = risk === "Low" ? "#059669" : risk === "Moderate" ? "#D97706" : "#DC2626";
+  const riskBg  = risk === "Low" ? "#DCFCE7" : risk === "Moderate" ? "#FEF3C7" : "#FEE2E2";
 
   return (
     <div style={{
-      borderTop: "1px solid #E2E8F0",
-      background: "#F8FAFC",
-      padding: "20px 40px",
+      background: `linear-gradient(135deg, ${B} 0%, ${M} 100%)`,
+      padding: "11px 32px",
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      fontFamily: FF,
-      gap: 12,
+      gap: 16,
+      flexWrap: "wrap" as const,
+      position: "relative",
+      overflow: "hidden",
     }}>
-      {/* Left: prev */}
-      <button
-        onClick={() => prev && navTo(prev.path)}
-        disabled={!prev}
-        style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "12px 20px", borderRadius: 10,
-          border: "1.5px solid #E2E8F0", background: prev ? "#fff" : "#F8FAFC",
-          cursor: prev ? "pointer" : "default", opacity: prev ? 1 : 0,
-          transition: "all 0.15s", fontFamily: FF,
-          boxShadow: prev ? "0 1px 3px rgba(0,0,0,0.04)" : "none",
-        }}
-        onMouseEnter={e => { if (prev) { (e.currentTarget as HTMLButtonElement).style.borderColor = BM; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(0,94,184,0.1)"; } }}
-        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.boxShadow = prev ? "0 1px 3px rgba(0,0,0,0.04)" : "none"; }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={prev ? BM : "#CBD5E1"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-        <div style={{ textAlign: "left" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 1 }}>Previous</div>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: BM }}>{prev?.label}</div>
-        </div>
-      </button>
+      {/* Dot-grid overlay */}
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "18px 18px", pointerEvents: "none" }} />
 
-      {/* Centre: breadcrumb */}
-      <div style={{ textAlign: "center", flex: 1 }}>
-        <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 500 }}>{agentName} · Audit Report</div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#334155", marginTop: 2 }}>{currentLabel}</div>
-        {/* Dot progress */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 8 }}>
-          {LENS_ORDER.map((l, i) => (
-            <div
-              key={l.path}
-              onClick={() => navTo(l.path)}
-              style={{
-                width: i === currentIdx ? 20 : 6, height: 6, borderRadius: 3,
-                background: i < currentIdx ? BM : i === currentIdx ? B9 : "#CBD5E1",
-                cursor: "pointer", transition: "all 0.25s",
-              }}
-            />
-          ))}
+      {/* Left: section + AI name */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+        {/* Current section */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          {IconComp && (
+            <span style={{ color: "rgba(255,255,255,0.65)", display: "flex", flexShrink: 0 }}>
+              <IconComp />
+            </span>
+          )}
+          <div>
+            <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.4)", lineHeight: 1, marginBottom: 2 }}>
+              Audit Report
+            </div>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: "white", letterSpacing: "-0.2px", lineHeight: 1.2 }}>
+              {current?.label ?? "Report"}
+            </div>
+          </div>
         </div>
+
+        <div style={{ width: 1, height: 26, background: "rgba(255,255,255,0.18)", flexShrink: 0 }} />
+
+        {/* AI name */}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 8.5, fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.5px", textTransform: "uppercase" as const, marginBottom: 2 }}>AI System</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, maxWidth: 200 }}>{aiName}</div>
+        </div>
+
+        {modelType && (
+          <span style={{
+            fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.55)",
+            background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.14)",
+            padding: "2px 8px", borderRadius: 20, flexShrink: 0, whiteSpace: "nowrap" as const,
+          }}>{modelType}</span>
+        )}
       </div>
 
-      {/* Right: next */}
-      <button
-        onClick={() => next && navTo(next.path)}
-        disabled={!next}
-        style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "12px 20px", borderRadius: 10,
-          border: `1.5px solid ${next ? BM : "#E2E8F0"}`,
-          background: next ? `linear-gradient(135deg, ${B9}, ${BM})` : "#F8FAFC",
-          cursor: next ? "pointer" : "default", opacity: next ? 1 : 0,
-          transition: "all 0.15s", fontFamily: FF,
-          boxShadow: next ? "0 4px 14px rgba(0,51,141,0.2)" : "none",
-        }}
-        onMouseEnter={e => { if (next) { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 18px rgba(0,51,141,0.28)"; } }}
-        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "none"; (e.currentTarget as HTMLButtonElement).style.boxShadow = next ? "0 4px 14px rgba(0,51,141,0.2)" : "none"; }}
-      >
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 1 }}>Next</div>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: "#fff" }}>{next?.label}</div>
-        </div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 6 15 12 9 18"/>
-        </svg>
-      </button>
+      {/* Right: score + risk */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        {score != null && (
+          <div style={{
+            display: "flex", alignItems: "baseline", gap: 3,
+            background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)",
+            padding: "5px 12px", borderRadius: 9,
+          }}>
+            <span style={{ fontSize: 20, fontWeight: 900, color: "white", lineHeight: 1 }}>{score}</span>
+            <span style={{ fontSize: 9.5, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>/100</span>
+          </div>
+        )}
+        {risk && (
+          <div style={{
+            padding: "4px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+            color: riskCol, background: riskBg, border: `1px solid ${riskCol}25`,
+          }}>
+            {risk} Risk
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── LensFooter — prev/next section navigator + progress dots ─────────────────
+
+export function LensFooter({ data, currentPath }: { data: any; currentPath?: string }) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const active = currentPath || pathname;
+
+  const navTo = (path: string) => navigate(path, { state: { data } });
+  const currentIdx = REPORT_SECTIONS.findIndex(s => s.path === active);
+  const prev = currentIdx > 0       ? REPORT_SECTIONS[currentIdx - 1] : null;
+  const next = currentIdx < REPORT_SECTIONS.length - 1 ? REPORT_SECTIONS[currentIdx + 1] : null;
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "20px 0", marginTop: 40,
+      borderTop: "1px solid #E2E8F0",
+      gap: 16, flexWrap: "wrap" as const,
+    }}>
+
+      {/* ← Prev */}
+      <div>
+        {prev ? (
+          <button
+            onClick={() => navTo(prev.path)}
+            style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "1px solid #E2E8F0", borderRadius: 10, padding: "8px 14px", cursor: "pointer", color: "#64748B", fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = M; (e.currentTarget as HTMLButtonElement).style.color = M; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#64748B"; }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span style={{ display: "flex", alignItems: "center", gap: 5 }}><prev.icon /> {prev.label}</span>
+          </button>
+        ) : <div />}
+      </div>
+
+      {/* Progress dots */}
+      <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+        {REPORT_SECTIONS.map((item, idx) => (
+          <button
+            key={item.path}
+            onClick={() => navTo(item.path)}
+            title={item.label}
+            style={{
+              width: idx === currentIdx ? 20 : 7, height: 7, borderRadius: 4,
+              background: idx === currentIdx ? M : "#CBD5E1",
+              border: "none", cursor: "pointer", padding: 0,
+              transition: "all 0.2s", flexShrink: 0,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Next → */}
+      <div>
+        {next ? (
+          <button
+            onClick={() => navTo(next.path)}
+            style={{ display: "flex", alignItems: "center", gap: 8, background: `linear-gradient(135deg, ${B}, ${M})`, border: "none", borderRadius: 10, padding: "8px 14px", cursor: "pointer", color: "white", fontSize: 12.5, fontWeight: 700, fontFamily: "inherit", transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,51,141,0.2)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "none"; }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 5 }}><next.icon /> {next.label}</span>
+            <IconChevronRight />
+          </button>
+        ) : <div />}
+      </div>
     </div>
   );
 }

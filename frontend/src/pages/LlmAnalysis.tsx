@@ -61,21 +61,7 @@ export default function LlmAnalysis() {
 
       <AuditContextBar data={raw} />
 
-      {/* Page header */}
-      <div style={{ background: "linear-gradient(135deg, #00338D, #005EB8)", padding: "18px 40px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "22px 22px", pointerEvents: "none" }}/>
-        <div style={{ position: "relative" }}>
-          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 3 }}>Audit Report · LLM Analysis</div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.3px" }}>Triple-Judge LLM Analysis</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 3 }}>Three independent AI judges evaluate response accuracy and safety</div>
-          {accuracyPct != null && (
-            <div style={{ textAlign:"center", padding:"10px 18px", background:"rgba(255,255,255,0.12)", borderRadius:12, border:"1px solid rgba(255,255,255,0.18)", marginTop:10, display:"inline-block" }}>
-              <div style={{ fontSize:28, fontWeight:900, color:"white", lineHeight:1 }}>{accuracyPct}%</div>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,0.5)", marginTop:2 }}>ACCURACY</div>
-            </div>
-          )}
-        </div>
-      </div>
+
 
       {/* Body */}
       <div style={{ padding:"28px 40px 60px" }}>

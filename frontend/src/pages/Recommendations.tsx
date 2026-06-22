@@ -159,14 +159,6 @@ export default function Recommendations() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.rec-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
 
       <AuditContextBar data={raw} />
-      <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"18px 40px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize:"22px 22px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative" }}>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", marginBottom:3 }}>Audit Report · {r.ai_name}</div>
-          <div style={{ fontSize:18, fontWeight:900, color:"#fff", letterSpacing:"-0.3px" }}>Governance Recommendations</div>
-          <div style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:3 }}>Per-principle remediation actions — ordered by urgency</div>
-        </div>
-      </div>
 
       <div style={{ maxWidth:1160, margin:"0 auto", padding:"28px 24px" }}>
 

@@ -53,7 +53,7 @@ const REPORT_ITEMS = [
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
   },
   {
-    label: "Risk & Actions", path: "/risk-intelligence",
+    label: "Risks", path: "/risk-intelligence",
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
   },
   {
@@ -248,6 +248,16 @@ export default function Sidebar() {
             <TopItem key={item.path} {...item} locked={!hasAgent} active={isActive(item.path)} onClick={() => go(item.path)} />
           ))}
 
+          {/* My Audits */}
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", padding: "10px 8px 3px" }}>My Audits</div>
+          <TopItem
+            label="Audit History"
+            path="/profile"
+            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
+            active={isActive("/profile")}
+            onClick={() => navigate("/profile")}
+          />
+
           {/* Audit Report — timeline style */}
           <div style={{ margin: "10px 0 0" }}>
             <div style={{
@@ -297,12 +307,17 @@ export default function Sidebar() {
             style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "7px 9px", borderRadius: 8, cursor: "pointer", marginBottom: 2,
-              background: isActive("/profile") ? "rgba(255,255,255,0.12)" : "transparent",
+              background: isActive("/profile") ? "rgba(255,255,255,0.15)" : "transparent",
+              border: isActive("/profile") ? "1px solid rgba(255,255,255,0.2)" : "1px solid transparent",
               transition: "background 0.12s",
+              position: "relative",
             }}
             onMouseEnter={e => { if (!isActive("/profile")) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.08)"; }}
             onMouseLeave={e => { if (!isActive("/profile")) (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
           >
+            {isActive("/profile") && (
+              <div style={{ position: "absolute", left: 0, top: "16%", bottom: "16%", width: 3, borderRadius: 2, background: "#fff" }} />
+            )}
             <div style={{
               width: 28, height: 28, borderRadius: 8, flexShrink: 0,
               background: "rgba(255,255,255,0.18)",

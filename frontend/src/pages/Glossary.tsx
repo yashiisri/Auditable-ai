@@ -2,18 +2,52 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* ─── hooks ─────────────────────────────────────────────────────────────── */
-function useInView(threshold = 0.1) {
+function useInView(threshold = 0.15, rootMargin = "0px") {
   const ref = useRef<HTMLDivElement>(null);
   const [v, setV] = useState(false);
   useEffect(() => {
-    const el = ref.current; if (!el) return;
+    const el = ref.current;
+    if (!el) return;
     const o = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) { setV(true); o.disconnect(); } },
-      { threshold }
+      { threshold, rootMargin }
     );
-    o.observe(el); return () => o.disconnect();
-  }, [threshold]);
+    o.observe(el);
+    return () => o.disconnect();
+  }, [threshold, rootMargin]);
   return { ref, v };
+}
+
+function useScrollProgress() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const h = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(docHeight > 0 ? scrollTop / docHeight : 0);
+    };
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+  return progress;
+}
+
+function useCountUp(target: number, active: boolean, duration = 1400) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let start: number | null = null;
+    const step = (ts: number) => {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      const pct = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - pct, 3);
+      setVal(Math.round(ease * target));
+      if (pct < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [active, target, duration]);
+  return val;
 }
 
 function useMouseParallax() {
@@ -49,23 +83,63 @@ function useTypewriter(words: string[], speed = 75, pause = 2000) {
 }
 
 /* ─── animated primitives ───────────────────────────────────────────────── */
-function Reveal({ children, delay = 0, from = "bottom" }: {
-  children: React.ReactNode; delay?: number; from?: "bottom" | "left" | "right";
+function Reveal({ children, delay = 0, from = "bottom", distance = 52 }: {
+  children: React.ReactNode;
+  delay?: number;
+  from?: "bottom" | "left" | "right" | "top";
+  distance?: number;
 }) {
-  const { ref, v } = useInView();
-  const t: Record<string, string> = {
-    bottom: "translateY(52px)", left: "translateX(-52px)", right: "translateX(52px)",
+  const { ref, v } = useInView(0.12);
+  const transforms: Record<string, string> = {
+    bottom: `translateY(${distance}px)`,
+    top: `translateY(-${distance}px)`,
+    left: `translateX(-${distance}px)`,
+    right: `translateX(${distance}px)`,
   };
   return (
     <div ref={ref} style={{
       opacity: v ? 1 : 0,
-      transform: v ? "none" : t[from],
+      transform: v ? "none" : transforms[from],
+      transition: `opacity 0.9s cubic-bezier(.16,1,.3,1) ${delay}s, transform 0.9s cubic-bezier(.16,1,.3,1) ${delay}s`,
+    }}>{children}</div>
+  );
+}
+
+function ScaleReveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const { ref, v } = useInView(0.1);
+  return (
+    <div ref={ref} style={{
+      opacity: v ? 1 : 0,
+      transform: v ? "scale(1)" : "scale(0.88)",
       transition: `opacity 0.85s cubic-bezier(.16,1,.3,1) ${delay}s, transform 0.85s cubic-bezier(.16,1,.3,1) ${delay}s`,
     }}>{children}</div>
   );
 }
 
+function BlurReveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const { ref, v } = useInView(0.1);
+  return (
+    <div ref={ref} style={{
+      opacity: v ? 1 : 0,
+      filter: v ? "blur(0px)" : "blur(8px)",
+      transform: v ? "translateY(0)" : "translateY(24px)",
+      transition: `opacity 0.85s cubic-bezier(.16,1,.3,1) ${delay}s, filter 0.85s cubic-bezier(.16,1,.3,1) ${delay}s, transform 0.85s cubic-bezier(.16,1,.3,1) ${delay}s`,
+    }}>{children}</div>
+  );
+}
 
+function CountUpStat({ value, suffix = "", label }: { value: number; suffix?: string; label: string }) {
+  const { ref, v } = useInView(0.2);
+  const count = useCountUp(value, v);
+  return (
+    <div ref={ref} style={{ textAlign: "center" }}>
+      <div style={{ fontSize: "clamp(32px,4vw,52px)", fontWeight: 900, color: "white", lineHeight: 1, letterSpacing: "-2px" }}>
+        {count}{suffix}
+      </div>
+      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontWeight: 600, marginTop: 8, letterSpacing: "0.5px" }}>{label}</div>
+    </div>
+  );
+}
 
 /* ─── data ──────────────────────────────────────────────────────────────── */
 const MARQUEE = [
@@ -76,41 +150,13 @@ const MARQUEE = [
 ];
 
 const STEPS = [
-  {
-    num: "01", color: "#00338D",
-    title: "Register & Log In",
-    desc: "Create your organisation account and log in securely. Every workspace is isolated, encrypted, and scoped to your team. Your audit history, AI registrations, and reports are all stored privately under your account.",
-  },
-  {
-    num: "02", color: "#005EB8",
-    title: "Register Your AI System",
-    desc: "Give your AI system a name and submit it for registration. Our multi-signal detector automatically identifies the model type — General LLM, RAG Pipeline, Classification Model, Image CV, Summarisation, or Automation Agent — with a confidence score.",
-  },
-  {
-    num: "03", color: "#0091DA",
-    title: "Black Box API Testing",
-    desc: "Connect your AI via API endpoint + key, or a deployed UI URL. Governance probes are fired automatically and responses are ingested into the SDCC pipeline. Optionally upload a Knowledge Base to ground the evaluation against your own reference material.",
-  },
-  {
-    num: "04", color: "#00A3A1",
-    title: "Upload Inference Logs",
-    desc: "Upload a CSV of your AI's real production inference logs. We accept any schema — our parser automatically maps columns like input, output, latency, task_id, and more. No preprocessing required.",
-  },
-  {
-    num: "05", color: "#005EB8",
-    title: "SDCC Quality Pipeline",
-    desc: "The Structural & Data Completeness Check (SDCC) runs automatically on your logs — whether uploaded manually or ingested from Black Box probes. It scores your data across 12 quality dimensions — column coverage, completeness, latency distribution, output variance, and more — before any evaluation begins.",
-  },
-  {
-    num: "06", color: "#00338D",
-    title: "Triple LLM Judge Panel",
-    desc: "Three independent LLM judges from different providers each evaluate every AI response for factual accuracy. A majority vote determines the verdict. This cross-provider approach eliminates single-model bias.",
-  },
-  {
-    num: "07", color: "#0091DA",
-    title: "TAF Score & Full Report",
-    desc: "Receive a complete governance audit report. 10 principles scored 0–100, an overall governance rating, risk level classification, drill-down of principles with remediation steps, and a publication-ready downloadable PDF.",
-  },
+  { num: "01", color: "#00338D", title: "Register & Log In", desc: "Create your organisation account and log in securely. Every workspace is isolated, encrypted, and scoped to your team. Your audit history, AI registrations, and reports are all stored privately under your account." },
+  { num: "02", color: "#005EB8", title: "Register Your AI System", desc: "Give your AI system a name and submit it for registration. Our multi-signal detector automatically identifies the model type — General LLM, RAG Pipeline, Classification Model, Image CV, Summarisation, or Automation Agent — with a confidence score." },
+  { num: "03", color: "#0091DA", title: "Black Box API Testing", desc: "Connect your AI via API endpoint + key, or a deployed UI URL. Governance probes are fired automatically and responses are ingested into the SDCC pipeline. Optionally upload a Knowledge Base to ground the evaluation against your own reference material." },
+  { num: "04", color: "#00A3A1", title: "Upload Inference Logs", desc: "Upload a CSV of your AI's real production inference logs. We accept any schema — our parser automatically maps columns like input, output, latency, task_id, and more. No preprocessing required." },
+  { num: "05", color: "#005EB8", title: "SDCC Quality Pipeline", desc: "The Structural & Data Completeness Check (SDCC) runs automatically on your logs — whether uploaded manually or ingested from Black Box probes. It scores your data across 12 quality dimensions before any evaluation begins." },
+  { num: "06", color: "#00338D", title: "Triple LLM Judge Panel", desc: "Three independent LLM judges from different providers each evaluate every AI response for factual accuracy. A majority vote determines the verdict. This cross-provider approach eliminates single-model bias." },
+  { num: "07", color: "#0091DA", title: "TAF Score & Full Report", desc: "Receive a complete governance audit report. 10 principles scored 0–100, an overall governance rating, risk level classification, drill-down of principles with remediation steps, and a publication-ready downloadable PDF." },
 ];
 
 const PRINCIPLES = [
@@ -127,9 +173,9 @@ const PRINCIPLES = [
 ];
 
 const FEATURES = [
-  { accent: "#00338D", title: "Auto Model Detection",    desc: "Automatically identifies your AI type from logs — LLM, RAG, Classification, Image CV, Summarisation, or Automation." },
-  { accent: "#005EB8", title: "Black Box API Audit",     desc: "Provide an API endpoint + key, or a deployed UI URL — probes are fired and responses auto-ingested into the SDCC pipeline." },
-  { accent: "#0091DA", title: "20+ Computed Metrics",    desc: "BLEU, ROUGE, BERTScore, latency percentiles, hallucination rate — computed live from your logs." },
+  { accent: "#00338D", title: "Auto Model Detection",     desc: "Automatically identifies your AI type from logs — LLM, RAG, Classification, Image CV, Summarisation, or Automation." },
+  { accent: "#005EB8", title: "Black Box API Audit",      desc: "Provide an API endpoint + key, or a deployed UI URL — probes are fired and responses auto-ingested into the SDCC pipeline." },
+  { accent: "#0091DA", title: "20+ Computed Metrics",     desc: "BLEU, ROUGE, BERTScore, latency percentiles, hallucination rate — computed live from your logs." },
   { accent: "#00A3A1", title: "Drill-Down of Principles", desc: "Each TAF principle comes with a score, the sub-parameters behind it, and specific remediation steps." },
   { accent: "#005EB8", title: "Publication-Ready PDF",    desc: "Export a polished audit report with charts, risk analysis, and compliance mapping — ready to share." },
 ];
@@ -142,19 +188,18 @@ const FRAMEWORKS = [
 ];
 
 const GLOSSARY_TERMS = [
-  { term: "SDCC",                def: "Structural & Data Completeness Check — scores your inference logs across 12 quality dimensions before evaluation begins." },
-  { term: "TAF Score",           def: "A 0–100 composite governance rating across 10 KPMG principles. Above 75 = Low Risk. 50–74 = Medium. Below 50 = High Risk." },
-  { term: "LLM Judge",           def: "A panel of three LLMs from different providers that vote on each AI response's accuracy. Majority vote determines the verdict." },
-  { term: "Inference Logs",      def: "A CSV of your AI's real production data — inputs, outputs, latency, task IDs. The raw evidence your audit is built on." },
-  { term: "Black Box Audit",     def: "An audit via API endpoint + key, or a deployed UI URL — no model access needed. Probes are fired and responses auto-ingested into the SDCC pipeline." },
-  { term: "Knowledge Base",      def: "PDFs, docs, or text files you upload to ground the LLM Judge against your own reference material — improves accuracy scoring for RAG and domain-specific systems." },
-  { term: "Adversarial Probe",   def: "A crafted test input designed to expose AI weaknesses — bias, hallucination, prompt injection, refusal gaps, and more." },
-  { term: "Risk Level",          def: "Low (75–100), Medium (50–74), or High (0–49) — based on your TAF Score. Determines urgency of remediation." },
-  { term: "Hallucination Rate",  def: "The share of AI responses containing fabricated or unsupported information, as judged by the LLM panel." },
-  { term: "BERTScore",           def: "A semantic similarity metric using contextual embeddings — captures meaning, not just word overlap." },
-  { term: "BLEU / ROUGE",        def: "Classic NLP metrics measuring n-gram overlap between AI outputs and reference answers." },
-  { term: "Auto Model Detection",def: "ML classifier that identifies your AI system type from log patterns — no manual tagging needed." },
-  { term: "Remediation Step",    def: "A specific, actionable fix generated for each TAF principle where your AI scored below threshold." },
+  { term: "SDCC",               def: "Structural & Data Completeness Check — scores your inference logs across 12 quality dimensions before evaluation begins." },
+  { term: "TAF Score",          def: "A 0–100 composite governance rating across 10 KPMG principles. Above 75 = Low Risk. 50–74 = Medium. Below 50 = High Risk." },
+  { term: "LLM Judge",          def: "A panel of three LLMs from different providers that vote on each AI response's accuracy. Majority vote determines the verdict." },
+  { term: "Inference Logs",     def: "A CSV of your AI's real production data — inputs, outputs, latency, task IDs. The raw evidence your audit is built on." },
+  { term: "Black Box Audit",    def: "An audit via API endpoint + key, or a deployed UI URL — no model access needed. Probes are fired and responses auto-ingested." },
+  { term: "Knowledge Base",     def: "PDFs, docs, or text files you upload to ground the LLM Judge against your own reference material — improves accuracy scoring." },
+  { term: "Adversarial Probe",  def: "A crafted test input designed to expose AI weaknesses — bias, hallucination, prompt injection, refusal gaps, and more." },
+  { term: "Risk Level",         def: "Low (75–100), Medium (50–74), or High (0–49) — based on your TAF Score. Determines urgency of remediation." },
+  { term: "Hallucination Rate", def: "The share of AI responses containing fabricated or unsupported information, as judged by the LLM panel." },
+  { term: "BERTScore",          def: "A semantic similarity metric using contextual embeddings — captures meaning, not just word overlap." },
+  { term: "BLEU / ROUGE",       def: "Classic NLP metrics measuring n-gram overlap between AI outputs and reference answers." },
+  { term: "Remediation Step",   def: "A specific, actionable fix generated for each TAF principle where your AI scored below threshold." },
 ];
 
 /* ─── CSS ───────────────────────────────────────────────────────────────── */
@@ -165,24 +210,28 @@ html{scroll-behavior:smooth;}
 body{background:#fff;}
 .gl{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#0B1F33;overflow-x:hidden;}
 
+/* ── PROGRESS BAR ── */
+.gl-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#00338D,#0091DA,#00A3A1);z-index:500;transition:width 0.1s linear;border-radius:0 2px 2px 0;}
+
 /* ── NAV ── */
-.gl-nav{position:fixed;top:0;left:0;right:0;z-index:300;height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 56px;transition:background 0.4s,box-shadow 0.4s,border-color 0.4s;}
+.gl-nav{position:fixed;top:0;left:0;right:0;z-index:300;height:70px;padding:0 48px;transition:background 0.4s,box-shadow 0.4s,border-color 0.4s;}
 .gl-nav.scrolled{background:rgba(255,255,255,0.96);backdrop-filter:blur(24px);border-bottom:1px solid rgba(0,51,141,0.07);box-shadow:0 4px 40px rgba(0,51,141,0.06);}
+.gl-nav-inner{max-width:1400px;margin:0 auto;height:100%;display:flex;align-items:center;justify-content:space-between;}
 .gl-nav-brand{display:flex;align-items:center;gap:12px;cursor:pointer;}
 .gl-nav-brand img{height:40px;}
 .gl-nav-brand-text{display:flex;flex-direction:column;line-height:1.1;}
 .gl-nav-brand-name{font-size:16px;font-weight:800;color:#00338D;letter-spacing:-0.3px;}
 .gl-nav-brand-sub{font-size:10px;font-weight:600;color:#A0B4CC;letter-spacing:1.2px;text-transform:uppercase;}
 .gl-nav-center{display:flex;align-items:center;gap:2px;}
-.gl-nav-link{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;color:#5A6A7A;cursor:pointer;border:none;background:transparent;transition:color 0.2s;font-family:inherit;position:relative;}
+.gl-nav-link{padding:8px 14px;border-radius:5px;font-size:13px;font-weight:600;color:#5A6A7A;cursor:pointer;border:none;background:transparent;transition:color 0.2s;font-family:inherit;position:relative;}
 .gl-nav-link::after{content:'';position:absolute;bottom:3px;left:50%;right:50%;height:2px;background:#005EB8;border-radius:2px;transition:left 0.25s,right 0.25s;}
 .gl-nav-link:hover{color:#005EB8;}
 .gl-nav-link:hover::after,.gl-nav-link.active::after{left:14px;right:14px;}
 .gl-nav-link.active{color:#005EB8;}
 .gl-nav-right{display:flex;align-items:center;gap:10px;}
-.gl-nav-ghost{padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;color:#00338D;cursor:pointer;border:1.5px solid #C7D9F5;background:transparent;transition:all 0.2s;font-family:inherit;}
+.gl-nav-ghost{padding:9px 20px;border-radius:6px;font-size:13px;font-weight:700;color:#00338D;cursor:pointer;border:1.5px solid #C7D9F5;background:transparent;transition:all 0.2s;font-family:inherit;}
 .gl-nav-ghost:hover{background:#EEF4FF;border-color:#005EB8;}
-.gl-nav-cta{padding:10px 22px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;border:none;background:linear-gradient(135deg,#00338D,#005EB8);transition:all 0.25s;font-family:inherit;box-shadow:0 4px 16px rgba(0,51,141,0.24);}
+.gl-nav-cta{padding:10px 22px;border-radius:6px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;border:none;background:linear-gradient(135deg,#00338D,#005EB8);transition:all 0.25s;font-family:inherit;box-shadow:0 4px 16px rgba(0,51,141,0.24);}
 .gl-nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,51,141,0.34);}
 
 /* ── HERO ── */
@@ -198,9 +247,9 @@ body{background:#fff;}
 .gl-hero-tw{color:#0091DA;border-right:2.5px solid #0091DA;padding-right:3px;animation:blink 1s step-end infinite;}
 @keyframes blink{0%,100%{border-color:#0091DA;}50%{border-color:transparent;}}
 .gl-hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:hfu 0.9s cubic-bezier(.16,1,.3,1) 0.32s both;}
-.gl-btn-p{padding:16px 36px;border-radius:14px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;border:none;background:linear-gradient(135deg,#00338D,#005EB8);box-shadow:0 8px 28px rgba(0,51,141,0.28);transition:all 0.3s;font-family:inherit;}
+.gl-btn-p{padding:16px 36px;border-radius:8px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;border:none;background:linear-gradient(135deg,#00338D,#005EB8);box-shadow:0 8px 28px rgba(0,51,141,0.28);transition:all 0.3s;font-family:inherit;}
 .gl-btn-p:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(0,51,141,0.36);}
-.gl-btn-s{padding:16px 36px;border-radius:14px;font-size:15px;font-weight:700;color:#00338D;cursor:pointer;border:2px solid #C7D9F5;background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);transition:all 0.3s;font-family:inherit;}
+.gl-btn-s{padding:16px 36px;border-radius:8px;font-size:15px;font-weight:700;color:#00338D;cursor:pointer;border:2px solid #C7D9F5;background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);transition:all 0.3s;font-family:inherit;}
 .gl-btn-s:hover{border-color:#005EB8;background:#EEF4FF;transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,51,141,0.1);}
 .gl-hero-scroll{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;animation:hfu 1s cubic-bezier(.16,1,.3,1) 1.1s both;}
 .gl-hero-scroll span{font-size:10px;font-weight:700;color:#A0B4CC;letter-spacing:2.5px;text-transform:uppercase;}
@@ -218,6 +267,12 @@ body{background:#fff;}
 .gl-mq-sep{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.35);flex-shrink:0;}
 @keyframes mq{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 
+/* ── STATS STRIP ── */
+.gl-stats{background:linear-gradient(135deg,#00338D 0%,#005EB8 60%,#0091DA 100%);padding:72px 60px;position:relative;overflow:hidden;}
+.gl-stats::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;}
+.gl-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:40px;max-width:900px;margin:0 auto;position:relative;}
+.gl-stats-divider{width:1px;background:rgba(255,255,255,0.15);position:absolute;top:10%;bottom:10%;left:25%;transform:translateX(-50%);}
+
 /* ── SECTION SHELL ── */
 .gl-sec{padding:100px 60px;max-width:1200px;margin:0 auto;}
 .gl-sec-alt{padding:100px 0;background:linear-gradient(160deg,#F7FAFF 0%,#EEF4FF 55%,#F0FAFA 100%);}
@@ -230,42 +285,41 @@ body{background:#fff;}
 
 /* ── STEPS ── */
 .gl-steps{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:64px;}
-.gl-step{background:#fff;border:1.5px solid #E8EEF6;border-radius:22px;padding:32px 28px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
-.gl-step::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);border-radius:22px 22px 0 0;}
+.gl-step{background:#fff;border:1.5px solid #E8EEF6;border-radius:10px;padding:32px 28px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
+.gl-step::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);border-radius:10px 10px 0 0;}
 .gl-step:hover{transform:translateY(-7px);box-shadow:0 24px 56px rgba(0,51,141,0.1);border-color:var(--c);}
 .gl-step-top{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
-.gl-step-num{width:46px;height:46px;border-radius:13px;background:var(--c);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;letter-spacing:0.5px;flex-shrink:0;box-shadow:0 6px 18px color-mix(in srgb,var(--c) 35%,transparent);}
+.gl-step-num{width:46px;height:46px;border-radius:6px;background:var(--c);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;letter-spacing:0.5px;flex-shrink:0;box-shadow:0 6px 18px color-mix(in srgb,var(--c) 35%,transparent);}
 .gl-step-title{font-size:16.5px;font-weight:800;color:#00338D;line-height:1.2;}
 .gl-step-desc{font-size:14px;color:#5A7090;line-height:1.75;}
 
 /* ── PRINCIPLES ── */
 .gl-principles{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:64px;}
-.gl-principle{background:#fff;border:1.5px solid #E8EEF6;border-radius:20px;padding:26px 20px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
-.gl-principle::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);border-radius:20px 20px 0 0;}
+.gl-principle{background:#fff;border:1.5px solid #E8EEF6;border-radius:10px;padding:26px 20px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
+.gl-principle::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);border-radius:10px 10px 0 0;}
 .gl-principle:hover{transform:translateY(-8px);box-shadow:0 20px 48px rgba(0,51,141,0.1);border-color:var(--c);}
 .gl-principle-name{font-size:14px;font-weight:800;color:#00338D;margin-bottom:10px;}
 .gl-principle-desc{font-size:12.5px;color:#6B7C93;line-height:1.62;}
 
 /* ── FEATURES ── */
 .gl-features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:64px;}
-.gl-feature{background:#fff;border:1.5px solid #E8EEF6;border-radius:22px;padding:34px 28px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
-.gl-feature::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--a);border-radius:22px 22px 0 0;}
+.gl-feature{background:#fff;border:1.5px solid #E8EEF6;border-radius:10px;padding:34px 28px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
+.gl-feature::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--a);border-radius:10px 10px 0 0;}
 .gl-feature:hover{transform:translateY(-7px);box-shadow:0 22px 52px rgba(0,51,141,0.1);border-color:var(--a);}
-.gl-feature-dot{width:44px;height:44px;border-radius:12px;background:color-mix(in srgb,var(--a) 12%,white);border:1.5px solid color-mix(in srgb,var(--a) 18%,transparent);margin-bottom:20px;}
 .gl-feature-title{font-size:16px;font-weight:800;color:#00338D;margin-bottom:10px;}
 .gl-feature-desc{font-size:13.5px;color:#6B7C93;line-height:1.7;}
 
 /* ── FRAMEWORKS ── */
 .gl-fw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:64px;}
-.gl-fw{background:#fff;border-radius:22px;padding:36px 26px;border:1.5px solid #E8EEF6;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
-.gl-fw::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--c);border-radius:0 0 22px 22px;}
+.gl-fw{background:#fff;border-radius:10px;padding:36px 26px;border:1.5px solid #E8EEF6;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
+.gl-fw::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--c);border-radius:0 0 10px 10px;}
 .gl-fw:hover{transform:translateY(-8px);box-shadow:0 24px 56px rgba(0,51,141,0.1);}
 .gl-fw-name{font-size:20px;font-weight:900;color:#00338D;margin-bottom:12px;letter-spacing:-0.5px;}
 .gl-fw-desc{font-size:13.5px;color:#6B7C93;line-height:1.68;}
 
 /* ── GLOSSARY ── */
 .gl-terms{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:64px;}
-.gl-term{background:#fff;border:1.5px solid #E8EEF6;border-radius:18px;padding:28px 24px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
+.gl-term{background:#fff;border:1.5px solid #E8EEF6;border-radius:10px;padding:28px 24px;transition:all 0.35s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
 .gl-term::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,#005EB8,#0091DA);border-radius:3px 0 0 3px;transform:scaleY(0);transform-origin:top;transition:transform 0.35s cubic-bezier(.16,1,.3,1);}
 .gl-term:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(0,51,141,0.09);border-color:#C7D9F5;}
 .gl-term:hover::after{transform:scaleY(1);}
@@ -279,9 +333,9 @@ body{background:#fff;}
 .gl-cta-h2{font-size:clamp(32px,5vw,62px);font-weight:900;color:#fff;letter-spacing:-2px;margin-bottom:20px;position:relative;}
 .gl-cta-sub{font-size:18px;color:rgba(255,255,255,0.7);margin-bottom:50px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.72;position:relative;}
 .gl-cta-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;position:relative;}
-.gl-cta-w{padding:16px 38px;border-radius:14px;font-size:15px;font-weight:700;color:#00338D;cursor:pointer;border:none;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.16);transition:all 0.3s;font-family:inherit;}
+.gl-cta-w{padding:16px 38px;border-radius:8px;font-size:15px;font-weight:700;color:#00338D;cursor:pointer;border:none;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.16);transition:all 0.3s;font-family:inherit;}
 .gl-cta-w:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,0.22);}
-.gl-cta-o{padding:16px 38px;border-radius:14px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(255,255,255,0.32);background:rgba(255,255,255,0.08);backdrop-filter:blur(8px);transition:all 0.3s;font-family:inherit;}
+.gl-cta-o{padding:16px 38px;border-radius:8px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(255,255,255,0.32);background:rgba(255,255,255,0.08);backdrop-filter:blur(8px);transition:all 0.3s;font-family:inherit;}
 .gl-cta-o:hover{border-color:#fff;background:rgba(255,255,255,0.14);transform:translateY(-3px);}
 
 /* ── FOOTER ── */
@@ -298,6 +352,7 @@ body{background:#fff;}
   .gl-principles{grid-template-columns:repeat(3,1fr);}
   .gl-fw-grid{grid-template-columns:repeat(2,1fr);}
   .gl-steps{grid-template-columns:1fr;}
+  .gl-stats-grid{grid-template-columns:repeat(2,1fr);}
 }
 @media(max-width:768px){
   .gl-nav{padding:0 20px;}.gl-nav-center{display:none;}
@@ -310,8 +365,15 @@ body{background:#fff;}
   .gl-fw-grid{grid-template-columns:1fr;}
   .gl-terms{grid-template-columns:1fr;}
   .gl-cta{padding:60px 20px;}
+  .gl-stats{padding:48px 20px;}
+  .gl-stats-grid{grid-template-columns:repeat(2,1fr);gap:24px;}
   .gl-footer{flex-direction:column;gap:16px;text-align:center;padding:28px 20px;}
   .gl-footer-links{justify-content:center;flex-wrap:wrap;}
+}
+
+/* ── REDUCED MOTION ── */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}
 }
 `;
 
@@ -325,6 +387,7 @@ export default function Glossary() {
     72, 2000
   );
   const mouse = useMouseParallax();
+  const progress = useScrollProgress();
 
   const scrollTo = useCallback((id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -349,23 +412,28 @@ export default function Glossary() {
     <div className="gl">
       <style>{CSS}</style>
 
+      {/* SCROLL PROGRESS BAR */}
+      <div className="gl-progress" style={{ width: `${progress * 100}%` }} />
+
       {/* NAV */}
       <nav className={`gl-nav${scrolled ? " scrolled" : ""}`}>
-        <div className="gl-nav-brand" onClick={() => scrollTo("hero")}>
-          <img src="/kpmg-logo.png" alt="KPMG" />
-          <div className="gl-nav-brand-text">
-            <span className="gl-nav-brand-name">TrustShield AI</span>
-            <span className="gl-nav-brand-sub">KPMG Trusted AI</span>
+        <div className="gl-nav-inner">
+          <div className="gl-nav-brand" onClick={() => scrollTo("hero")}>
+            <img src="/kpmg-logo.png" alt="KPMG" />
+            <div className="gl-nav-brand-text">
+              <span className="gl-nav-brand-name">TrustShield AI</span>
+              <span className="gl-nav-brand-sub">KPMG Trusted AI</span>
+            </div>
           </div>
-        </div>
-        <div className="gl-nav-center">
-          {([["how","How It Works"],["principles","TAF Principles"],["features","Features"],["frameworks","Frameworks"],["glossary","Glossary"]] as [string,string][]).map(([id,label]) => (
-            <button key={id} className={`gl-nav-link${active===id?" active":""}`} onClick={() => scrollTo(id)}>{label}</button>
-          ))}
-        </div>
-        <div className="gl-nav-right">
-          <button className="gl-nav-ghost" onClick={() => navigate("/login")}>Sign In</button>
-          <button className="gl-nav-cta" onClick={() => navigate("/register")}>Get Started</button>
+          <div className="gl-nav-center">
+            {([["how","How It Works"],["principles","TAF Principles"],["features","Features"],["frameworks","Frameworks"],["glossary","Glossary"]] as [string,string][]).map(([id,label]) => (
+              <button key={id} className={`gl-nav-link${active===id?" active":""}`} onClick={() => scrollTo(id)}>{label}</button>
+            ))}
+          </div>
+          <div className="gl-nav-right">
+            <button className="gl-nav-ghost" onClick={() => navigate("/login")}>Sign In</button>
+            <button className="gl-nav-cta" onClick={() => navigate("/register")}>Get Started</button>
+          </div>
         </div>
       </nav>
 
@@ -410,6 +478,16 @@ export default function Glossary() {
         </div>
       </div>
 
+      {/* STATS STRIP — count-up animation */}
+      <div className="gl-stats">
+        <div className="gl-stats-grid">
+          <CountUpStat value={10}  suffix=""  label="Governance Principles" />
+          <CountUpStat value={4}   suffix=""  label="Regulatory Frameworks" />
+          <CountUpStat value={50}  suffix="+" label="Sub-parameters Scored" />
+          <CountUpStat value={12}  suffix=""  label="SDCC Quality Dimensions" />
+        </div>
+      </div>
+
       {/* HOW IT WORKS */}
       <section id="how" className="gl-sec">
         <Reveal>
@@ -419,7 +497,7 @@ export default function Glossary() {
         </Reveal>
         <div className="gl-steps">
           {STEPS.map((s, i) => (
-            <Reveal key={s.num} delay={i * 0.06} from={i % 2 === 0 ? "left" : "right"}>
+            <ScaleReveal key={s.num} delay={i * 0.07}>
               <div className="gl-step" style={{ "--c": s.color } as React.CSSProperties}>
                 <div className="gl-step-top">
                   <div className="gl-step-num">{s.num}</div>
@@ -427,7 +505,7 @@ export default function Glossary() {
                 </div>
                 <div className="gl-step-desc">{s.desc}</div>
               </div>
-            </Reveal>
+            </ScaleReveal>
           ))}
         </div>
       </section>
@@ -442,12 +520,12 @@ export default function Glossary() {
           </Reveal>
           <div className="gl-principles">
             {PRINCIPLES.map((p, i) => (
-              <Reveal key={p.name} delay={i * 0.05}>
+              <BlurReveal key={p.name} delay={i * 0.06}>
                 <div className="gl-principle" style={{ "--c": p.color } as React.CSSProperties}>
                   <div className="gl-principle-name">{p.name}</div>
                   <div className="gl-principle-desc">{p.desc}</div>
                 </div>
-              </Reveal>
+              </BlurReveal>
             ))}
           </div>
         </div>
@@ -462,7 +540,7 @@ export default function Glossary() {
         </Reveal>
         <div className="gl-features">
           {FEATURES.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.08}>
+            <Reveal key={f.title} delay={i * 0.09} from={i % 2 === 0 ? "left" : "right"}>
               <div className="gl-feature" style={{ "--a": f.accent } as React.CSSProperties}>
                 <div className="gl-feature-title">{f.title}</div>
                 <div className="gl-feature-desc">{f.desc}</div>
@@ -482,12 +560,12 @@ export default function Glossary() {
           </Reveal>
           <div className="gl-fw-grid">
             {FRAMEWORKS.map((f, i) => (
-              <Reveal key={f.name} delay={i * 0.1}>
+              <ScaleReveal key={f.name} delay={i * 0.1}>
                 <div className="gl-fw" style={{ "--c": f.color } as React.CSSProperties}>
                   <div className="gl-fw-name">{f.name}</div>
                   <div className="gl-fw-desc">{f.desc}</div>
                 </div>
-              </Reveal>
+              </ScaleReveal>
             ))}
           </div>
         </div>
@@ -502,12 +580,12 @@ export default function Glossary() {
         </Reveal>
         <div className="gl-terms">
           {GLOSSARY_TERMS.map((g, i) => (
-            <Reveal key={g.term} delay={i * 0.04}>
+            <BlurReveal key={g.term} delay={i * 0.04}>
               <div className="gl-term">
                 <div className="gl-term-label">{g.term}</div>
                 <div className="gl-term-def">{g.def}</div>
               </div>
-            </Reveal>
+            </BlurReveal>
           ))}
         </div>
       </section>

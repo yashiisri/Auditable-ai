@@ -141,14 +141,7 @@ export default function GovernancePrinciples() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.gp-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}.param-row{transition:all 0.18s ease;}.param-row:hover{background:rgba(0,94,184,0.06)!important;border-color:rgba(0,94,184,0.3)!important;}`}</style>
 
       <AuditContextBar data={raw} />
-      <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"18px 40px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize:"22px 22px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative" }}>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", marginBottom:3 }}>Audit Report · Governance Principles</div>
-          <div style={{ fontSize:18, fontWeight:900, color:"#fff", letterSpacing:"-0.3px" }}>Trusted AI Principles Assessment</div>
-          <div style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:3 }}>10-dimension governance evaluation — click any principle to drill into sub-parameters</div>
-        </div>
-      </div>
+
 
       <div style={{ maxWidth:1160, margin:"0 auto", padding:"28px 24px" }}>
 

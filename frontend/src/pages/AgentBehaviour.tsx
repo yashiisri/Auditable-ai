@@ -65,6 +65,26 @@ const CSS = `
 .ab-in{animation:abIn 0.32s cubic-bezier(.22,1,.36,1) both;}
 `;
 
+
+/* ── InfoTooltip ─────────────────────────────────────────────────────── */
+function InfoTooltip({ text, width = 200 }: { text: string; width?: number }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", verticalAlign: "middle", marginLeft: 4, cursor: "help" }}
+      onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+      {show && (
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", background: "#0F172A", color: "white", fontSize: 11.5, lineHeight: 1.5, padding: "7px 11px", borderRadius: 8, width, pointerEvents: "none", boxShadow: "0 4px 16px rgba(0,0,0,0.25)", zIndex: 9999, whiteSpace: "normal" as const }}>
+          {text}
+          <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", borderWidth: 5, borderStyle: "solid", borderColor: "#0F172A transparent transparent transparent" }} />
+        </div>
+      )}
+    </span>
+  );
+}
+
 export default function AgentBehaviour() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -147,28 +167,20 @@ export default function AgentBehaviour() {
       <style>{CSS}</style>
       <AuditContextBar data={raw} />
 
-      {/* Page header */}
-      <div style={{ background: `linear-gradient(135deg, ${B}, ${M})`, padding: "18px 40px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "22px 22px", pointerEvents: "none" }}/>
-        <div style={{ position: "relative" }}>
-          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 3 }}>Audit Report · {r.ai_name}</div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.3px" }}>Data Quality & Agent Behaviour</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 3 }}>How reliable is the data underpinning this audit — and how is your agent actually performing</div>
-        </div>
-      </div>
+
 
       <div style={{ padding: "24px 40px 0" }}>
 
         {/* Summary strip */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
           {[
-            { label: "Data Quality Score", val: `${dq}%`, score: dq },
-            { label: "Completeness",        val: `${completeness}%`, score: completeness },
-            { label: "Log Records",          val: `${r.logs_evaluated || 0}`, score: volScore },
-            { label: "Structural Risk",      val: r.structural_risk || "—", score: r.structural_risk === "Low" ? 80 : r.structural_risk === "Moderate" ? 55 : 30 },
+            { label: "Data Quality Score", val: `${dq}%`, score: dq, tip: "Composite score: (1 − missing_ratio) × 70 + schema_confidence × 30. Reflects how complete and well-structured your log data is." },
+            { label: "Completeness",        val: `${completeness}%`, score: completeness, tip: "Percentage of log fields that are populated. 100% means no missing values — every row has all expected columns filled." },
+            { label: "Log Records",          val: `${r.logs_evaluated || 0}`, score: volScore, tip: "Number of AI responses evaluated. More records = more statistically reliable governance scores. Under 50 records reduces confidence." },
+            { label: "Structural Risk",      val: r.structural_risk || "—", score: r.structural_risk === "Low" ? 80 : r.structural_risk === "Moderate" ? 55 : 30, tip: "Risk from how your data is organised — missing columns, wrong types, or inconsistent schema. Low = well-structured. High = audit scores may be unreliable." },
           ].map((k, i) => (
             <div key={i} className="ab-card" style={{ padding: "16px 18px", borderTop: `3px solid ${sc(k.score)}` }}>
-              <div style={{ fontSize: 9.5, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 7 }}>{k.label}</div>
+              <div style={{ fontSize: 9.5, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "0.6px", marginBottom: 7, display: "flex", alignItems: "center", gap: 4 }}>{k.label}{(k as any).tip && <InfoTooltip text={(k as any).tip} />}</div>
               <div style={{ fontSize: 22, fontWeight: 900, color: sc(k.score), lineHeight: 1 }}>{k.val}</div>
               <div style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: sb(k.score), color: sc(k.score), marginTop: 5, display: "inline-block", textTransform: "uppercase" }}>{band(k.score)}</div>
             </div>

@@ -3,55 +3,89 @@ import React, { useState, useEffect } from "react";
 import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const B = "#00338D", M = "#005EB8";
+const B = "#00338D", M = "#005EB8", T = "#0091DA";
 const FF = "'Plus Jakarta Sans', system-ui, sans-serif";
 
-/* score → colour helpers — slate/grey for critical, NOT brown/red */
-const sc  = (s: number) => s >= 75 ? "#059669" : s >= 50 ? "#2563EB" : "#64748B";
-const scT = (s: number) => s >= 75 ? "#059669" : s >= 50 ? "#2563EB" : "#475569";
-const sb  = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
+const sc   = (s: number) => s >= 75 ? "#059669" : s >= 50 ? "#2563EB" : "#64748B";
+const scT  = (s: number) => s >= 75 ? "#059669" : s >= 50 ? "#2563EB" : "#475569";
+const sb   = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 const band = (s: number) => s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
-const fmt = (d: string) => { try { return new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch { return d; } };
+const fmt  = (d: string) => { try { return new Date(d).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }); } catch { return d; } };
+const pct  = (n: number) => `${Math.round(n * 100)}%`;
 
-/* ── Narrative generator ────────────────────────────────────────────── */
-function buildNarrative(r: any, highFindings: number, weakPrinciples: string[]) {
+/* ── Narrative ────────────────────────────────────────────────────── */
+function buildNarrative(r: any, highF: number, weakPrn: string[]) {
   const name  = r.ai_name || "This agent";
   const score = r.overall_score;
-  const ok    = score >= 75 && highFindings === 0;
-
+  const ok    = score >= 75 && highF === 0;
   const opening = ok
     ? `${name} meets enterprise governance standards with a score of ${score}/100 and no high-severity findings. The agent is cleared for production deployment.`
-    : highFindings > 0
-    ? `${name} returned a score of ${score}/100 with ${highFindings} high-severity finding${highFindings > 1 ? "s" : ""} that must be resolved before production. These represent active deployment blockers.`
+    : highF > 0
+    ? `${name} returned a score of ${score}/100 with ${highF} high-severity finding${highF > 1 ? "s" : ""} that must be resolved before production. These represent active deployment blockers.`
     : `${name} scored ${score}/100, satisfying baseline requirements with identifiable gaps. No deployment blockers detected.`;
-
-  const middle = weakPrinciples.length > 0
-    ? `The weakest governance dimensions are ${weakPrinciples.slice(0, 3).join(", ")}${weakPrinciples.length > 3 ? ` and ${weakPrinciples.length - 3} others` : ""}. Targeted remediation in these areas will have the highest impact on the next audit cycle.`
+  const middle = weakPrn.length > 0
+    ? `The weakest governance dimensions are ${weakPrn.slice(0, 3).join(", ")}${weakPrn.length > 3 ? ` and ${weakPrn.length - 3} others` : ""}. Targeted remediation in these areas will have the highest impact on the next audit cycle.`
     : `All governance dimensions are performing at acceptable levels, with consistent alignment across the KPMG Trusted AI Framework.`;
-
   const closing = ok
     ? `Recommended action: Approve for production. Schedule a re-assessment in 90 days to maintain compliance standing.`
     : score >= 60
     ? `Recommended action: Conditional approval — complete the Recommendations actions and re-audit within 30 days.`
     : `Recommended action: Hold deployment. Engage the AI governance team to implement a structured remediation plan.`;
-
   return { opening, middle, closing };
 }
 
-/* ── Inline progress arc ────────────────────────────────────────────── */
-function Arc({ score, size = 100 }: { score: number; size?: number }) {
+/* ── Score arc ────────────────────────────────────────────────────── */
+function Arc({ score, size = 96 }: { score: number; size?: number }) {
   const cx = size / 2, cy = size / 2, r = size * 0.36;
   const circ = 2 * Math.PI * r;
   const dash = (score / 100) * circ;
   const color = sc(score);
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display:"block" }}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F1F5F9" strokeWidth={size * 0.08}/>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={size * 0.08}
         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-        transform={`rotate(-90 ${cx} ${cy})`} style={{ transition: "stroke-dasharray 1.2s ease" }}/>
+        transform={`rotate(-90 ${cx} ${cy})`} style={{ transition:"stroke-dasharray 1.2s ease" }}/>
       <text x={cx} y={cy + 5} textAnchor="middle" fill="#0F172A" fontSize={size * 0.21} fontWeight="900" fontFamily={FF}>{score}</text>
     </svg>
+  );
+}
+
+/* ── InfoTooltip ──────────────────────────────────────────────────── */
+function InfoTooltip({ text, width = 200 }: { text: string; width?: number }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span style={{ position:"relative", display:"inline-flex", alignItems:"center", verticalAlign:"middle", marginLeft:5, cursor:"help" }}
+      onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+      {show && (
+        <div style={{ position:"absolute", bottom:"calc(100% + 6px)", left:"50%", transform:"translateX(-50%)",
+          background:"#0F172A", color:"white", fontSize:11.5, lineHeight:1.5, padding:"7px 11px", borderRadius:8,
+          width, pointerEvents:"none", boxShadow:"0 4px 16px rgba(0,0,0,0.25)", zIndex:9999, whiteSpace:"normal" }}>
+          {text}
+          <div style={{ position:"absolute", top:"100%", left:"50%", transform:"translateX(-50%)", borderWidth:5, borderStyle:"solid", borderColor:"#0F172A transparent transparent transparent" }}/>
+        </div>
+      )}
+    </span>
+  );
+}
+
+/* ── Gate check row ───────────────────────────────────────────────── */
+function Gate({ pass, label, detail }: { pass: boolean; label: string; detail: string }) {
+  return (
+    <div style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", borderRadius:9, background:pass?"#F0FDF4":"#F8FAFC", border:`1px solid ${pass?"#BBF7D0":"#E2E8F0"}` }}>
+      <div style={{ width:20, height:20, borderRadius:"50%", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center", background:pass?"#059669":"#CBD5E1" }}>
+        {pass
+          ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+      </div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:12.5, fontWeight:700, color:pass?"#059669":"#374151", marginBottom:1 }}>{label}</div>
+        <div style={{ fontSize:11.5, color:"#64748B", lineHeight:1.4 }}>{detail}</div>
+      </div>
+    </div>
   );
 }
 
@@ -65,6 +99,7 @@ const CSS = `
 .es-lens:hover{background:#F1F5F9;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .es-in{animation:fadeUp 0.35s cubic-bezier(.22,1,.36,1) both;}
+.es-pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.3px;}
 `;
 
 export default function ExecutiveSummary() {
@@ -75,153 +110,396 @@ export default function ExecutiveSummary() {
   useEffect(() => { setTimeout(() => setAnim(true), 60); }, []);
 
   if (!raw) return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", gap: 14, fontFamily: FF, background: "#F8FAFC" }}>
-      <div style={{ fontSize: 15, color: "#64748B" }}>No audit data. Run a governance evaluation first.</div>
-      <button onClick={() => navigate("/dashboard")} style={{ padding: "10px 24px", background: M, border: "none", borderRadius: 10, color: "white", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>← Go to Audit Pipeline</button>
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100vh", gap:14, fontFamily:FF, background:"#F8FAFC" }}>
+      <div style={{ fontSize:15, color:"#64748B" }}>No audit data. Run a governance evaluation first.</div>
+      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:10, color:"white", fontWeight:700, cursor:"pointer", fontSize:13 }}>← Go to Audit Pipeline</button>
     </div>
   );
 
   const r = raw;
-  const prn          = r.trusted_ai_principles || {};
-  const pkeys        = Object.keys(prn);
-  const avgPrn       = pkeys.length ? Math.round(pkeys.reduce((s: number, k: string) => s + prn[k].score, 0) / pkeys.length) : 0;
-  const highF        = (r.findings || []).filter((f: any) => f.severity === "High").length;
-  const medF         = (r.findings || []).filter((f: any) => f.severity === "Medium").length;
-  const lowF         = (r.findings || []).filter((f: any) => f.severity === "Low").length;
-  const weakPrn      = pkeys.filter(k => prn[k].score < 60);
-  const deployReady  = r.overall_score >= 75 && highF === 0;
-  const narrative    = buildNarrative(r, highF, weakPrn);
+  const prn        = r.trusted_ai_principles || {};
+  const pkeys      = Object.keys(prn);
+  const avgPrn     = pkeys.length ? Math.round(pkeys.reduce((s: number, k: string) => s + prn[k].score, 0) / pkeys.length) : 0;
+  const highF      = (r.findings || []).filter((f: any) => f.severity === "High").length;
+  const medF       = (r.findings || []).filter((f: any) => f.severity === "Medium").length;
+  const lowF       = (r.findings || []).filter((f: any) => f.severity === "Low").length;
+  const weakPrn    = pkeys.filter(k => prn[k].score < 60);
+  const deployReady = r.overall_score >= 75 && highF === 0;
+  const narrative  = buildNarrative(r, highF, weakPrn);
+
+  const isRerun        = !!(r.parent_audit_id || (r.rerun_sequence && r.rerun_sequence > 1));
+  const deltaSummary   = r.delta_summary || null;
+  const rerunSequence  = r.rerun_sequence || null;
+  const userContext    = r.operator_change_context || r.user_context || null;
+  const principleDeltas: any[] = r.principle_deltas || [];
+  const resolvedFindings: any[] = r.resolved_findings || [];
+  const persistingFindings: any[] = r.persisting_findings || [];
+  const newFindings: any[] = r.new_findings || [];
+
+  // LLM Judge
+  const llm        = r.llm_judge;
+  const llmAcc     = llm?.accuracy != null ? Math.round(llm.accuracy * 100) : null;
+  const llmGrounded = llm?.kb_grounded || llm?.kb_used?.some(Boolean) || false;
+  const llmPanel   = llm?.judge_panel?.length || llm?.panel_size || (llm?.judge_model ? 1 : null);
+  const llmDisputed = llm?.disputed_rows?.length ?? 0;
+  const llmRows    = llm?.rows_judged || 0;
+
+  // Data health (from diagnostics)
+  const diag      = r.diagnostics || {};
+  const missingPct = diag.missing_ratio != null ? Math.round(diag.missing_ratio * 100) : null;
+  const schemaConf = diag.schema_confidence != null ? Math.round(diag.schema_confidence * 100) : null;
+  const dupCount   = diag.duplicates ?? null;
+
+  // Model identity
+  const modelLabel  = (r.model_label || r.model_type || "—").replace(/_/g, " ");
+  const detConf     = r.detection_confidence != null ? Math.round(r.detection_confidence * 100) : null;
+  const auditSource = r.audit_source || (r.probe_results?.length ? "Black Box" : "Log Upload");
+  const domain      = r.domain || r.ai_domain || r.ai_description_used || null;
+
+  // Top priority recommendations — take highest severity findings first, cap at 3
+  const topActions = [...(r.findings || [])]
+    .sort((a: any, b: any) => {
+      const o: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
+      return (o[a.severity] ?? 3) - (o[b.severity] ?? 3);
+    })
+    .slice(0, 3);
+
+  // Deployment gates
+  const gates = [
+    { pass: highF === 0,                  label: "No high-severity findings",       detail: highF === 0 ? "All critical governance checks passed." : `${highF} finding${highF>1?"s":""} must be resolved before deployment.` },
+    { pass: r.overall_score >= 75,        label: "Governance score ≥ 75",           detail: `Current score: ${r.overall_score}/100. Threshold is 75 for production readiness.` },
+    { pass: (r.data_quality_score||0) >= 60, label: "Data quality ≥ 60%",          detail: `Data quality: ${r.data_quality_score||0}%. Low data quality reduces score reliability.` },
+    { pass: weakPrn.length <= 2,          label: "≤ 2 weak governance dimensions",  detail: weakPrn.length === 0 ? "All dimensions performing at acceptable levels." : `Weak: ${weakPrn.slice(0,3).join(", ")}${weakPrn.length>3?` +${weakPrn.length-3} more`:""}` },
+    ...(llmAcc !== null ? [{ pass: llmAcc >= 70, label: "LLM Judge accuracy ≥ 70%", detail: `Current accuracy: ${llmAcc}%. Below 70% indicates unreliable response quality.` }] : []),
+  ];
+  const gatesPassed = gates.filter(g => g.pass).length;
 
   const LENS_LINKS = [
-    { label: "Data Quality",         path: "/agent-behaviour",       desc: "Dataset completeness, schema confidence, NLP metrics" },
-    { label: "LLM Analysis",         path: "/llm-analysis",          desc: "Accuracy probe results and safety scoring"            },
-    { label: "Governance Principles",path: "/governance-principles", desc: "10-dimension KPMG Trusted AI assessment"              },
-    { label: "Regulatory Alignment", path: "/regulatory-alignment",  desc: "EU AI Act, ISO 42001, NIST framework compliance"     },
-    { label: "Risk & Actions",       path: "/risk-intelligence",     desc: "Severity breakdown and remediation actions"          },
+    { label:"Data Quality",          path:"/agent-behaviour",       desc:"Dataset completeness, schema confidence, NLP metrics" },
+    { label:"LLM Analysis",          path:"/llm-analysis",          desc:"Accuracy probe results and safety scoring"            },
+    { label:"Governance Principles", path:"/governance-principles", desc:"10-dimension KPMG Trusted AI assessment"              },
+    { label:"Regulatory Alignment",  path:"/regulatory-alignment",  desc:"EU AI Act, ISO 42001, NIST framework compliance"     },
+    { label:"Risk & Actions",        path:"/risk-intelligence",     desc:"Severity breakdown and remediation actions"          },
+    { label:"Recommendations",       path:"/recommendations",       desc:"Per-principle remediation roadmap"                   },
   ];
-  const nav = (path: string) => navigate(path, { state: { data: r } });
+  const nav = (path: string) => navigate(path, { state:{ data:r } });
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", fontFamily: FF, color: "#0F172A" }}>
+    <div style={{ minHeight:"100vh", background:"#F8FAFC", fontFamily:FF, color:"#0F172A" }}>
       <style>{CSS}</style>
       <AuditContextBar data={r} />
 
-      {/* ── Page title bar (no score here — already in navbar) ───── */}
-      <div style={{ background: `linear-gradient(135deg, ${B}, ${M})`, padding: "18px 40px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "22px 22px", pointerEvents: "none" }}/>
-        <div style={{ position: "relative" }}>
-          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 3 }}>Audit Report · Executive Summary</div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.3px" }}>{r.ai_name}</div>
-          <div style={{ display: "flex", gap: 14, marginTop: 4, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
-            <span>{r.model_label || r.model_type || "AI Model"}</span>
-            {r.evaluated_at && <><span>·</span><span>{fmt(r.evaluated_at)}</span></>}
-            {r.report_id && <><span>·</span><span style={{ fontFamily: "monospace" }}>#{r.report_id.slice(0, 10)}</span></>}
+      {/* ── RERUN DELTA BANNER ─────────────────────────────────────── */}
+      {isRerun && deltaSummary && (
+        <div style={{ background:"linear-gradient(135deg,#1E3A8A,#2563EB)", padding:0 }}>
+          <div style={{ padding:"14px 40px", display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" as const }}>
+            <span style={{ fontSize:16 }}>↺</span>
+            <div style={{ flex:1, minWidth:200 }}>
+              <div style={{ fontSize:13, fontWeight:800, color:"white" }}>Re-run #{rerunSequence} Comparison</div>
+              {userContext && <div style={{ fontSize:11, color:"rgba(255,255,255,0.65)", marginTop:2 }}>"{userContext.slice(0,100)}{userContext.length>100?"…":""}"</div>}
+            </div>
+            <div style={{ display:"flex", gap:10, flexWrap:"wrap" as const }}>
+              {[
+                { label:"Score",       val:`${deltaSummary.overall_score_change>=0?"+":""}${deltaSummary.overall_score_change}`, color:deltaSummary.overall_score_change>=0?"#6EE7B7":"#FCA5A5" },
+                { label:"Resolved",    val:deltaSummary.resolved_count,   color:"#6EE7B7" },
+                { label:"Regressed",   val:deltaSummary.regressed_count,  color:deltaSummary.regressed_count>0?"#FCA5A5":"rgba(255,255,255,0.5)" },
+                { label:"New Findings",val:deltaSummary.new_finding_count??0, color:(deltaSummary.new_finding_count??0)>0?"#FDE68A":"rgba(255,255,255,0.5)" },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign:"center", padding:"8px 14px", background:"rgba(255,255,255,0.1)", borderRadius:10 }}>
+                  <div style={{ fontSize:18, fontWeight:900, color:s.color, lineHeight:1 }}>{s.val}</div>
+                  <div style={{ fontSize:9.5, color:"rgba(255,255,255,0.55)", marginTop:2 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
+          {principleDeltas.filter((pd: any) => !pd.not_reprobed).length > 0 && (
+            <div style={{ padding:"0 40px 14px", display:"flex", gap:6, flexWrap:"wrap" as const }}>
+              {principleDeltas.filter((pd: any) => !pd.not_reprobed).map((pd: any) => {
+                const mlColors: Record<string, {color:string;bg:string}> = { RESOLVED:{color:"#059669",bg:"#DCFCE7"}, REGRESSED:{color:"#DC2626",bg:"#FEE2E2"}, IMPROVING:{color:"#0284C7",bg:"#E0F2FE"}, WORSENING:{color:"#D97706",bg:"#FEF3C7"}, UNCHANGED:{color:"#64748B",bg:"#F1F5F9"} };
+                const ml = mlColors[pd.movement_label||"UNCHANGED"]||mlColors.UNCHANGED;
+                const icons: Record<string,string> = { RESOLVED:"✓", REGRESSED:"✗", IMPROVING:"↑", WORSENING:"↓", UNCHANGED:"–" };
+                return (
+                  <div key={pd.principle} style={{ padding:"3px 9px", borderRadius:20, background:ml.bg, fontSize:10.5, fontWeight:700, color:ml.color, display:"flex", gap:4, alignItems:"center" }}>
+                    <span>{icons[pd.movement_label||"UNCHANGED"]}</span>
+                    <span>{pd.principle}</span>
+                    <span style={{ opacity:0.7 }}>{pd.prior_score}→{pd.current_score}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {(resolvedFindings.length+persistingFindings.length+newFindings.length)>0 && (
+            <div style={{ padding:"0 40px 14px", display:"flex", gap:8 }}>
+              {resolvedFindings.length>0 && <span style={{ fontSize:11, fontWeight:700, color:"#DCFCE7", background:"rgba(5,150,105,0.25)", padding:"3px 10px", borderRadius:20 }}>✓ {resolvedFindings.length} Resolved</span>}
+              {persistingFindings.length>0 && <span style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.7)", background:"rgba(255,255,255,0.1)", padding:"3px 10px", borderRadius:20 }}>○ {persistingFindings.length} Persisting</span>}
+              {newFindings.length>0 && <span style={{ fontSize:11, fontWeight:700, color:"#FDE68A", background:"rgba(217,119,6,0.25)", padding:"3px 10px", borderRadius:20 }}>⚡ {newFindings.length} New</span>}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
-      <div style={{ padding: "24px 40px 0" }}>
+      <div style={{ padding:"24px 40px 0" }}>
 
-        {/* ── VERDICT NARRATIVE — score shown ONCE here in big type ── */}
-        <div className="es-card es-in" style={{ padding: "24px 28px", marginBottom: 20, display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start" }}>
+        {/* ── VERDICT HERO ─────────────────────────────────────────── */}
+        <div className="es-card es-in" style={{ padding:"26px 28px", marginBottom:20, display:"grid", gridTemplateColumns:"1fr auto", gap:24, alignItems:"start" }}>
           <div>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6 }}>Audit Verdict</div>
-            <div style={{ fontSize: 17, fontWeight: 900, color: "#0F172A", marginBottom: 16, letterSpacing: "-0.3px" }}>
+            <div style={{ fontSize:10.5, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.8px", marginBottom:6 }}>Audit Verdict</div>
+            <div style={{ fontSize:17, fontWeight:900, color:"#0F172A", marginBottom:16, letterSpacing:"-0.3px" }}>
               {deployReady ? "Approved for Deployment" : r.overall_score >= 60 ? "Conditional — Remediation Required" : "Hold — Significant Gaps Identified"}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {[narrative.opening, narrative.middle, narrative.closing].map((text, i) => (
-                <p key={i} style={{
-                  margin: 0, fontSize: 13.5, lineHeight: 1.8,
-                  color: i === 2 ? "#0F172A" : "#475569",
-                  fontWeight: i === 2 ? 600 : 400,
-                  paddingTop: i > 0 ? 10 : 0,
-                  borderTop: i > 0 ? "1px solid #F1F5F9" : "none",
-                }}>
+                <p key={i} style={{ margin:0, fontSize:13.5, lineHeight:1.8, color:i===2?"#0F172A":"#475569", fontWeight:i===2?600:400, paddingTop:i>0?10:0, borderTop:i>0?"1px solid #F1F5F9":"none" }}>
                   {text}
                 </p>
               ))}
             </div>
           </div>
-
-          {/* Score arc — the ONE place the overall number appears on this page */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, flexShrink:0 }}>
             <Arc score={r.overall_score} size={96} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: scT(r.overall_score), textTransform: "uppercase", letterSpacing: "0.5px" }}>{band(r.overall_score)}</div>
-            <div style={{ padding: "3px 10px", borderRadius: 20, background: sb(r.overall_score), fontSize: 10.5, fontWeight: 600, color: scT(r.overall_score) }}>
+            <div style={{ fontSize:11, fontWeight:700, color:scT(r.overall_score), textTransform:"uppercase", letterSpacing:"0.5px" }}>{band(r.overall_score)}</div>
+            <div style={{ padding:"3px 10px", borderRadius:20, background:sb(r.overall_score), fontSize:10.5, fontWeight:600, color:scT(r.overall_score) }}>
               {deployReady ? "Deploy ready" : "Needs work"}
             </div>
           </div>
         </div>
 
         {/* ── TWO-COLUMN BODY ──────────────────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 252px", gap: 20, alignItems: "start" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 252px", gap:20, alignItems:"start" }}>
 
           {/* LEFT */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
-            {/* Data metrics — NOT the overall score again, just supporting metrics */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+            {/* ── 1. AGENT IDENTITY ─────────────────────────────────── */}
+            <div className="es-card" style={{ padding:"20px 24px" }}>
+              <div style={{ fontSize:13, fontWeight:800, color:"#0F172A", marginBottom:14 }}>Agent Identity</div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginBottom:14 }}>
+                {[
+                  { label:"AI System Type",    val:modelLabel,  tip:"Detected from log structure and column patterns. Affects which governance metrics are applied." },
+                  { label:"Detection Confidence", val:detConf!=null?`${detConf}%`:"—", tip:"How confident the system is in its model type classification. <70% means some metrics may use fallback methods." },
+                  { label:"Audit Source",      val:auditSource, tip:"How the audit data was collected — live API/UI probing (Black Box) or log file upload (SDCC)." },
+                ].map((k, i) => (
+                  <div key={i} style={{ padding:"12px 14px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:6, display:"flex", alignItems:"center" }}>
+                      {k.label}<InfoTooltip text={k.tip} width={200}/>
+                    </div>
+                    <div style={{ fontSize:14, fontWeight:800, color:"#0F172A" }}>{k.val}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Domain / description row */}
+              {domain && (
+                <div style={{ padding:"10px 14px", borderRadius:9, background:"#EEF4FF", border:`1px solid ${M}20`, fontSize:12.5, color:"#1E3A5F", lineHeight:1.6 }}>
+                  <span style={{ fontWeight:700, color:M }}>Domain / context: </span>{domain}
+                </div>
+              )}
+              {/* Evaluated at + log count inline */}
+              <div style={{ display:"flex", gap:16, marginTop:12, fontSize:12, color:"#64748B" }}>
+                <span>Evaluated: <strong style={{ color:"#374151" }}>{r.evaluated_at ? fmt(r.evaluated_at) : "—"}</strong></span>
+                <span>Records: <strong style={{ color:"#374151" }}>{r.logs_evaluated||0}</strong></span>
+                {r.report_id && <span>Report ID: <strong style={{ color:"#374151", fontFamily:"monospace" }}>#{r.report_id.slice(0,10)}</strong></span>}
+                {isRerun && <span style={{ display:"inline-flex", alignItems:"center", gap:4, padding:"1px 8px", borderRadius:20, background:"#E0F2FE", color:"#0284C7", fontWeight:700, fontSize:11 }}>↺ Re-run #{rerunSequence}</span>}
+              </div>
+            </div>
+
+            {/* ── 2. CORE METRICS ROW ───────────────────────────────── */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
               {[
-                { label: "Data Quality",  val: `${r.data_quality_score}%`, sub: `${r.logs_evaluated || 0} records`,      color: sc(r.data_quality_score) },
-                { label: "Avg Principle", val: `${avgPrn}/100`,            sub: `${pkeys.length} dimensions`,             color: sc(avgPrn) },
-                { label: "Findings",      val: `${(r.findings||[]).length}`, sub: `${highF} critical · ${medF} watch`,    color: highF > 0 ? "#64748B" : medF > 0 ? "#D97706" : "#059669" },
-              ].map((k, i) => (
-                <div key={i} className="es-card" style={{ padding: "16px 18px", borderTop: `3px solid ${k.color}` }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 7 }}>{k.label}</div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: k.color, lineHeight: 1, marginBottom: 4 }}>{k.val}</div>
-                  <div style={{ fontSize: 11, color: "#64748B" }}>{k.sub}</div>
+                { label:"Governance Score", val:`${r.overall_score}/100`, sub:band(r.overall_score), color:sc(r.overall_score), tip:"Weighted composite score across all 10 KPMG Trusted AI dimensions. 75+ is production-ready." },
+                { label:"Data Quality",     val:`${r.data_quality_score||0}%`, sub:`${r.logs_evaluated||0} records`, color:sc(r.data_quality_score||0), tip:"How complete and well-structured the log data is. Low scores reduce the reliability of all governance findings." },
+                { label:"Avg Principle",    val:`${avgPrn}/100`, sub:`${pkeys.length} dimensions`, color:sc(avgPrn), tip:"Average score across all evaluated KPMG Trusted AI principles." },
+                { label:"Findings",         val:`${(r.findings||[]).length}`, sub:`${highF} critical · ${medF} watch`, color:highF>0?"#64748B":medF>0?"#D97706":"#059669", tip:"Total governance gaps found. High findings are deployment blockers." },
+              ].map((k,i) => (
+                <div key={i} className="es-card" style={{ padding:"14px 16px", borderTop:`3px solid ${k.color}` }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:6, display:"flex", alignItems:"center" }}>
+                    {k.label}<InfoTooltip text={k.tip} width={210}/>
+                  </div>
+                  <div style={{ fontSize:22, fontWeight:900, color:k.color, lineHeight:1, marginBottom:3 }}>{k.val}</div>
+                  <div style={{ fontSize:11, color:"#64748B" }}>{k.sub}</div>
                 </div>
               ))}
             </div>
 
-            {/* Findings */}
-            <div className="es-card" style={{ padding: "20px 24px" }}>
-              <div style={{ fontSize: 13.5, fontWeight: 800, color: "#0F172A", marginBottom: 14 }}>Findings Breakdown</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: highF + medF > 0 ? 16 : 0 }}>
+            {/* ── 3. DATA HEALTH ────────────────────────────────────── */}
+            <div className="es-card" style={{ padding:"20px 24px" }}>
+              <div style={{ fontSize:13, fontWeight:800, color:"#0F172A", marginBottom:3 }}>Data Health</div>
+              <div style={{ fontSize:11.5, color:"#94A3B8", marginBottom:14 }}>Structural integrity of the uploaded logs — affects reliability of all governance metrics</div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:14 }}>
                 {[
-                  { sev: "High",   count: highF, color: "#64748B", bg: "#F1F5F9" },
-                  { sev: "Medium", count: medF,  color: "#D97706", bg: "#FFF7ED" },
-                  { sev: "Low",    count: lowF,  color: "#059669", bg: "#F0FDF4" },
+                  { label:"Schema Confidence", val:schemaConf!=null?`${schemaConf}%`:"—", good:(schemaConf||0)>=70, tip:"How reliably the required columns were detected. <70% suggests column naming issues." },
+                  { label:"Missing Data",       val:missingPct!=null?`${missingPct}%`:"—", good:(missingPct||0)<10, tip:"Percentage of cells with missing values. >15% significantly reduces metric accuracy." },
+                  { label:"Duplicates",         val:dupCount!=null?String(dupCount):"—", good:(dupCount||0)===0, tip:"Duplicate rows detected (by task_id if present). Duplicates can inflate metric scores." },
+                  { label:"Structural Risk",    val:r.structural_risk||"—", good:r.structural_risk==="Low", tip:"Overall data structural risk rating. High = schema or completeness issues that may distort audit results." },
+                ].map((k,i) => {
+                  const col = k.good ? "#059669" : "#D97706";
+                  const bg  = k.good ? "#F0FDF4" : "#FFFBEB";
+                  return (
+                    <div key={i} style={{ padding:"11px 13px", borderRadius:10, background:bg, border:`1px solid ${col}25` }}>
+                      <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:5, display:"flex", alignItems:"center" }}>
+                        {k.label}<InfoTooltip text={k.tip} width={190}/>
+                      </div>
+                      <div style={{ fontSize:16, fontWeight:900, color:col }}>{k.val}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Column warnings */}
+              {(r.column_warnings||[]).length > 0 && (
+                <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
+                  {(r.column_warnings as string[]).slice(0,3).map((w,i) => (
+                    <div key={i} style={{ display:"flex", gap:8, padding:"8px 11px", borderRadius:8, background:"#FFFBEB", border:"1px solid #FDE68A", fontSize:12, color:"#92400E" }}>
+                      <span style={{ flexShrink:0 }}>⚠</span>{w}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── 4. LLM JUDGE SNAPSHOT — only if llm_judge present ── */}
+            {llm && (
+              <div className="es-card" style={{ padding:"20px 24px" }}>
+                <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:3 }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:"#0F172A" }}>LLM Judge Panel</div>
+                  {llmPanel && <span style={{ fontSize:10.5, fontWeight:700, color:M, background:"#EEF4FF", padding:"2px 8px", borderRadius:20 }}>{llmPanel}-judge panel</span>}
+                  {llmGrounded && <span style={{ fontSize:10.5, fontWeight:700, color:"#059669", background:"#F0FDF4", padding:"2px 8px", borderRadius:20 }}>KB-grounded</span>}
+                </div>
+                <div style={{ fontSize:11.5, color:"#94A3B8", marginBottom:14 }}>Cross-model accuracy panel evaluating response quality against expected outputs</div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 }}>
+                  {[
+                    { label:"Accuracy",      val:llmAcc!=null?`${llmAcc}%`:"—",       good:(llmAcc||0)>=70, tip:"Percentage of AI responses judged correct by the panel. 85%+ is strong; below 70% indicates reliability issues." },
+                    { label:"Rows Judged",   val:String(llmRows),                      good:llmRows>=30, tip:"Number of log rows evaluated by the LLM judge panel. 30+ gives statistically meaningful accuracy scores." },
+                    { label:"Disputed Rows", val:String(llmDisputed),                  good:llmDisputed===0, tip:"Rows where judges disagreed. High dispute rates suggest ambiguous responses or inconsistent behaviour." },
+                    { label:"KB Grounded",   val:llmGrounded?"Yes":"No",               good:llmGrounded, tip:"Whether the judge evaluated responses against your uploaded knowledge base. KB-grounded audits are more accurate for RAG and domain-specific systems." },
+                  ].map((k,i) => {
+                    const col = k.good ? "#059669" : "#D97706";
+                    return (
+                      <div key={i} style={{ padding:"11px 13px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:5, display:"flex", alignItems:"center" }}>
+                          {k.label}<InfoTooltip text={k.tip} width={195}/>
+                        </div>
+                        <div style={{ fontSize:16, fontWeight:900, color:col }}>{k.val}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Accuracy bar */}
+                {llmAcc !== null && (
+                  <div style={{ marginTop:14 }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", fontSize:10.5, color:"#94A3B8", marginBottom:5 }}>
+                      <span>0%</span><span style={{ color:M, fontWeight:600 }}>Industry benchmark 85%+</span><span>100%</span>
+                    </div>
+                    <div style={{ position:"relative", height:8, background:"#F1F5F9", borderRadius:99, overflow:"hidden" }}>
+                      <div style={{ position:"absolute", left:"85%", top:0, bottom:0, width:1, background:`${M}60`, zIndex:1 }}/>
+                      <div style={{ width:`${llmAcc}%`, height:"100%", background:sc(llmAcc), borderRadius:99, transition:"width 1s ease" }}/>
+                    </div>
+                    {llm.warnings && llm.warnings.length > 0 && (
+                      <div style={{ marginTop:10, padding:"8px 12px", background:"#FFFBEB", border:"1px solid #FDE68A", borderRadius:8, fontSize:12, color:"#92400E" }}>
+                        ⚠ {llm.warnings[0]}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── 5. DEPLOYMENT READINESS CHECKLIST ─────────────────── */}
+            <div className="es-card" style={{ padding:"20px 24px" }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:3 }}>
+                <div style={{ fontSize:13, fontWeight:800, color:"#0F172A" }}>Deployment Readiness</div>
+                <div style={{ fontSize:12, fontWeight:700, color:gatesPassed===gates.length?"#059669":gatesPassed>=gates.length-1?M:"#64748B" }}>
+                  {gatesPassed}/{gates.length} gates passed
+                </div>
+              </div>
+              <div style={{ fontSize:11.5, color:"#94A3B8", marginBottom:14 }}>All gates must pass for production deployment approval</div>
+              {/* Gate progress bar */}
+              <div style={{ height:5, background:"#F1F5F9", borderRadius:99, overflow:"hidden", marginBottom:14 }}>
+                <div style={{ width:`${(gatesPassed/gates.length)*100}%`, height:"100%", background:gatesPassed===gates.length?"#059669":gatesPassed>=gates.length-1?M:"#D97706", borderRadius:99, transition:"width 1s ease" }}/>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {gates.map((g, i) => <Gate key={i} {...g}/>)}
+              </div>
+            </div>
+
+            {/* ── 6. FINDINGS BREAKDOWN ─────────────────────────────── */}
+            <div className="es-card" style={{ padding:"20px 24px" }}>
+              <div style={{ fontSize:13.5, fontWeight:800, color:"#0F172A", marginBottom:14 }}>Findings Breakdown</div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginBottom:highF+medF>0?16:0 }}>
+                {[
+                  { sev:"High",   count:highF, color:"#64748B", bg:"#F1F5F9" },
+                  { sev:"Medium", count:medF,  color:"#D97706", bg:"#FFF7ED" },
+                  { sev:"Low",    count:lowF,  color:"#059669", bg:"#F0FDF4" },
                 ].map(s => (
-                  <div key={s.sev} style={{ padding: "12px", borderRadius: 10, background: s.bg, textAlign: "center" }}>
-                    <div style={{ fontSize: 28, fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.count}</div>
-                    <div style={{ fontSize: 10.5, color: s.color, fontWeight: 700, marginTop: 3 }}>{s.sev}</div>
+                  <div key={s.sev} style={{ padding:"12px", borderRadius:10, background:s.bg, textAlign:"center" }}>
+                    <div style={{ fontSize:28, fontWeight:900, color:s.color, lineHeight:1 }}>{s.count}</div>
+                    <div style={{ fontSize:10.5, color:s.color, fontWeight:700, marginTop:3 }}>{s.sev}</div>
                   </div>
                 ))}
               </div>
-              {/* Top findings — only High + Medium, capped at 4 */}
-              {(r.findings || []).filter((f: any) => f.severity === "High" || f.severity === "Medium").slice(0, 4).map((f: any, i: number) => (
-                <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", borderRadius: 9, background: "#F8FAFC", border: "1px solid #E2E8F0", marginBottom: 6, alignItems: "flex-start" }}>
-                  <div style={{ width: 5, height: 5, borderRadius: "50%", flexShrink: 0, marginTop: 5, background: f.severity === "High" ? "#64748B" : "#D97706" }} />
+              {(r.findings||[]).filter((f: any) => f.severity==="High"||f.severity==="Medium").slice(0,4).map((f: any, i: number) => (
+                <div key={i} style={{ display:"flex", gap:10, padding:"10px 12px", borderRadius:9, background:"#F8FAFC", border:"1px solid #E2E8F0", marginBottom:6, alignItems:"flex-start" }}>
+                  <div style={{ width:5, height:5, borderRadius:"50%", flexShrink:0, marginTop:5, background:f.severity==="High"?"#64748B":"#D97706" }}/>
                   <div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0F172A", marginBottom: 1 }}>{f.category || f.probe}</div>
-                    <div style={{ fontSize: 11.5, color: "#64748B", lineHeight: 1.5 }}>{(f.issue || f.recommendation || "").slice(0, 120)}{(f.issue||"").length > 120 ? "…" : ""}</div>
+                    <div style={{ fontSize:12.5, fontWeight:600, color:"#0F172A", marginBottom:1 }}>{f.category||f.probe}</div>
+                    <div style={{ fontSize:11.5, color:"#64748B", lineHeight:1.5 }}>{(f.issue||f.recommendation||"").slice(0,130)}{(f.issue||"").length>130?"…":""}</div>
                   </div>
                 </div>
               ))}
-              {(r.findings||[]).length > 4 && (
-                <div style={{ fontSize: 12, color: M, fontWeight: 600, cursor: "pointer", marginTop: 4 }} onClick={() => nav("/risk-intelligence")}>
+              {(r.findings||[]).length>4 && (
+                <div style={{ fontSize:12, color:M, fontWeight:600, cursor:"pointer", marginTop:4 }} onClick={() => nav("/risk-intelligence")}>
                   View all {(r.findings||[]).length} findings →
                 </div>
               )}
             </div>
 
-            {/* Principle bars — sorted weakest first */}
+            {/* ── 7. TOP PRIORITY ACTIONS ───────────────────────────── */}
+            {topActions.length > 0 && (
+              <div className="es-card" style={{ padding:"20px 24px" }}>
+                <div style={{ fontSize:13, fontWeight:800, color:"#0F172A", marginBottom:3 }}>Top Priority Actions</div>
+                <div style={{ fontSize:11.5, color:"#94A3B8", marginBottom:14 }}>Highest-impact remediations — resolve these first to maximise score improvement</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {topActions.map((f: any, i: number) => {
+                    const sevColor = f.severity==="High" ? "#64748B" : f.severity==="Medium" ? "#D97706" : "#059669";
+                    const sevBg    = f.severity==="High" ? "#F1F5F9" : f.severity==="Medium" ? "#FFF7ED" : "#F0FDF4";
+                    return (
+                      <div key={i} style={{ display:"flex", gap:12, padding:"13px 16px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E2E8F0", alignItems:"flex-start" }}>
+                        <div style={{ width:22, height:22, borderRadius:6, background:`linear-gradient(135deg,${B},${M})`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:11, fontWeight:900, color:"white" }}>{i+1}</div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                            <span style={{ fontSize:13, fontWeight:700, color:"#0F172A" }}>{f.category}</span>
+                            <span style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:20, background:sevBg, color:sevColor }}>{f.severity}</span>
+                          </div>
+                          <div style={{ fontSize:12.5, color:"#374151", lineHeight:1.6, marginBottom:6 }}>{f.issue||f.note||""}</div>
+                          {f.recommendation && (
+                            <div style={{ fontSize:11.5, color:M, fontWeight:600, lineHeight:1.5 }}>
+                              → {f.recommendation.slice(0,140)}{f.recommendation.length>140?"…":""}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div style={{ fontSize:12, color:M, fontWeight:600, cursor:"pointer", textAlign:"right" as const }} onClick={() => nav("/recommendations")}>
+                    View full remediation roadmap →
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── 8. PRINCIPLE SCORES ───────────────────────────────── */}
             {pkeys.length > 0 && (
-              <div className="es-card" style={{ padding: "20px 24px" }}>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: "#0F172A", marginBottom: 14 }}>Governance Dimensions</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[...pkeys].sort((a, b) => prn[a].score - prn[b].score).map(k => {
+              <div className="es-card" style={{ padding:"20px 24px" }}>
+                <div style={{ fontSize:13.5, fontWeight:800, color:"#0F172A", marginBottom:14 }}>Governance Dimensions</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {[...pkeys].sort((a,b) => prn[a].score-prn[b].score).map(k => {
                     const s = prn[k].score;
                     return (
-                      <div key={k} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ fontSize: 12, fontWeight: 500, color: "#374151", minWidth: 128, flexShrink: 0 }}>{k}</div>
-                        <div className="es-bar" style={{ flex: 1 }}>
-                          <div className="es-bar-fill" style={{ width: `${s}%`, background: sc(s) }}/>
+                      <div key={k} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                        <div style={{ fontSize:12, fontWeight:500, color:"#374151", minWidth:128, flexShrink:0 }}>{k}</div>
+                        <div className="es-bar" style={{ flex:1 }}>
+                          <div className="es-bar-fill" style={{ width:`${s}%`, background:sc(s) }}/>
                         </div>
-                        <div style={{ fontSize: 12.5, fontWeight: 800, color: sc(s), minWidth: 28, textAlign: "right" }}>{s}</div>
-                        <div style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: sb(s), color: sc(s), minWidth: 52, textAlign: "center" }}>{band(s)}</div>
+                        <div style={{ fontSize:12.5, fontWeight:800, color:sc(s), minWidth:28, textAlign:"right" }}>{s}</div>
+                        <div style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:4, background:sb(s), color:sc(s), minWidth:52, textAlign:"center" }}>{band(s)}</div>
                       </div>
                     );
                   })}
@@ -229,69 +507,103 @@ export default function ExecutiveSummary() {
               </div>
             )}
 
-            {/* Framework compliance */}
-            {Object.keys(r.framework_compliance || {}).length > 0 && (
-              <div className="es-card" style={{ padding: "20px 24px", marginBottom: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: "#0F172A", marginBottom: 14 }}>Framework Compliance</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                  {Object.entries(r.framework_compliance || {}).map(([key, status]: any) => {
-                    const labels: Record<string, string> = { EU_AI_Act: "EU AI Act", ISO_42001: "ISO 42001", NIST_AI_RMF: "NIST AI RMF", KPMG_TAF: "KPMG Trusted AI" };
+            {/* ── 9. FRAMEWORK COMPLIANCE ───────────────────────────── */}
+            {Object.keys(r.framework_compliance||{}).length > 0 && (
+              <div className="es-card" style={{ padding:"20px 24px", marginBottom:0 }}>
+                <div style={{ fontSize:13.5, fontWeight:800, color:"#0F172A", marginBottom:14 }}>Framework Compliance</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                  {Object.entries(r.framework_compliance||{}).map(([key,status]: any) => {
+                    const labels: Record<string,string> = { EU_AI_Act:"EU AI Act", ISO_42001:"ISO 42001", NIST_AI_RMF:"NIST AI RMF", KPMG_TAF:"KPMG Trusted AI" };
                     const comp    = ["Compliant","Aligned","Good","Certified"].some(x => status?.includes(x));
                     const partial = ["Conditional","Partial","Assessed"].some(x => status?.includes(x));
-                    const fc = comp ? "#059669" : partial ? "#2563EB" : "#64748B";
-                    const fbg = comp ? "#F0FDF4" : partial ? "#EFF6FF" : "#F1F5F9";
+                    const fc  = comp?"#059669":partial?"#2563EB":"#64748B";
+                    const fbg = comp?"#F0FDF4":partial?"#EFF6FF":"#F1F5F9";
                     return (
-                      <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{labels[key] || key}</div>
-                        <div style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: fbg, color: fc }}>{comp ? "Aligned" : partial ? "Partial" : "Limited"}</div>
+                      <div key={key} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
+                        <div style={{ fontSize:13, fontWeight:600 }}>{labels[key]||key}</div>
+                        <div style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:fbg, color:fc }}>{comp?"Aligned":partial?"Partial":"Limited"}</div>
                       </div>
                     );
                   })}
                 </div>
               </div>
             )}
+
           </div>
 
-          {/* RIGHT — navigation only, no score repetition */}
-          <div style={{ position: "sticky", top: 70 }}>
-            <div className="es-card" style={{ padding: "16px 14px", marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Audit Sections</div>
-              {LENS_LINKS.map((l, i) => (
+          {/* RIGHT SIDEBAR ─────────────────────────────────────────── */}
+          <div style={{ position:"sticky", top:70, display:"flex", flexDirection:"column", gap:14 }}>
+
+            {/* Navigation */}
+            <div className="es-card" style={{ padding:"16px 14px" }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.6px", marginBottom:10 }}>Audit Sections</div>
+              {LENS_LINKS.map((l,i) => (
                 <div key={i} className="es-lens" onClick={() => nav(l.path)}>
                   <div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0F172A", marginBottom: 1 }}>{l.label}</div>
-                    <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.4 }}>{l.desc}</div>
+                    <div style={{ fontSize:12.5, fontWeight:600, color:"#0F172A", marginBottom:1 }}>{l.label}</div>
+                    <div style={{ fontSize:11, color:"#94A3B8", lineHeight:1.4 }}>{l.desc}</div>
                   </div>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 6 15 12 9 18"/>
-                  </svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
                 </div>
               ))}
             </div>
 
-            {/* Audit metadata only — no score */}
-            <div className="es-card" style={{ padding: "16px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Audit Info</div>
+            {/* Audit metadata */}
+            <div className="es-card" style={{ padding:"16px 14px" }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.6px", marginBottom:10 }}>Audit Info</div>
               {[
-                { l: "Model",       v: (r.model_label || r.model_type || "—").replace(/_/g, " ") },
-                { l: "Evaluated",   v: r.evaluated_at ? fmt(r.evaluated_at).split(",")[0] : "—" },
-                { l: "Logs",        v: `${r.logs_evaluated || 0}` },
-                { l: "Report ID",   v: r.report_id ? `#${r.report_id.slice(0, 10)}` : "—" },
-                { l: "Dimensions",  v: `${pkeys.length}` },
+                { l:"Model",      v:(r.model_label||r.model_type||"—").replace(/_/g," ") },
+                { l:"Evaluated",  v:r.evaluated_at ? fmt(r.evaluated_at).split(",")[0] : "—" },
+                { l:"Logs",       v:`${r.logs_evaluated||0}` },
+                { l:"Dimensions", v:`${pkeys.length}` },
+                { l:"Report ID",  v:r.report_id ? `#${r.report_id.slice(0,10)}` : "—" },
+                ...(detConf!==null?[{ l:"Detect. conf.", v:`${detConf}%` }]:[]),
+                ...(isRerun?[{ l:"Run #", v:`${rerunSequence}` },{ l:"Scope", v:r.rerun_scope||"targeted" }]:[]),
               ].map(({ l, v }) => (
-                <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12, padding: "6px 0", borderBottom: "1px solid #F8FAFC" }}>
-                  <span style={{ color: "#94A3B8", fontWeight: 500 }}>{l}</span>
-                  <span style={{ color: "#334155", fontWeight: 600, textAlign: "right", maxWidth: "55%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</span>
+                <div key={l} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", fontSize:12, padding:"6px 0", borderBottom:"1px solid #F8FAFC" }}>
+                  <span style={{ color:"#94A3B8", fontWeight:500 }}>{l}</span>
+                  <span style={{ color:"#334155", fontWeight:600, textAlign:"right", maxWidth:"55%", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v}</span>
                 </div>
               ))}
             </div>
-          </div>
 
+            {/* Findings severity summary */}
+            <div className="es-card" style={{ padding:"16px 14px" }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.6px", marginBottom:10 }}>Finding Summary</div>
+              {[
+                { label:"High",   count:highF, color:"#64748B", bg:"#F1F5F9", note:"Deployment blockers" },
+                { label:"Medium", count:medF,  color:"#D97706", bg:"#FFF7ED", note:"Address within 60 days" },
+                { label:"Low",    count:lowF,  color:"#059669", bg:"#F0FDF4", note:"Monitor & review" },
+              ].map(s => (
+                <div key={s.label} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", borderRadius:8, background:s.bg, marginBottom:6 }}>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:700, color:s.color }}>{s.label}</div>
+                    <div style={{ fontSize:10, color:"#94A3B8" }}>{s.note}</div>
+                  </div>
+                  <div style={{ fontSize:22, fontWeight:900, color:s.color }}>{s.count}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Score gauge visual */}
+            <div className="es-card" style={{ padding:"16px 14px", textAlign:"center" }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.6px", marginBottom:12 }}>Overall Score</div>
+              <Arc score={r.overall_score} size={80}/>
+              <div style={{ fontSize:11, color:scT(r.overall_score), fontWeight:700, marginTop:6, textTransform:"uppercase", letterSpacing:"0.5px" }}>{band(r.overall_score)}</div>
+              <div style={{ fontSize:10.5, color:"#64748B", marginTop:4 }}>{r.risk_level} risk</div>
+              {llmAcc !== null && (
+                <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid #F1F5F9" }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:6 }}>LLM Accuracy</div>
+                  <div style={{ fontSize:20, fontWeight:900, color:sc(llmAcc) }}>{llmAcc}%</div>
+                </div>
+              )}
+            </div>
+
+          </div>
         </div>
       </div>
 
-      {/* ── BOTTOM NAV ───────────────────────────────────────────────── */}
-      <div style={{ marginTop: 40 }}>
+      <div style={{ marginTop:40 }}>
         <LensFooter data={r} />
       </div>
     </div>

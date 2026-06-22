@@ -684,31 +684,67 @@ class ConnectorSchema(BaseModel):
 # decision stakes, data sensitivity).
 
 class RegistrationProfileSchema(BaseModel):
+    # ── Who uses the agent ─────────────────────────────────────────────────
     end_users: Optional[str] = ""
-    # e.g. "employees", "customers", "clinicians", "students", "public"
+    # e.g. "Internal Employees", "External Customers (B2C)", "Healthcare Professionals"
 
+    # ── How it makes decisions ─────────────────────────────────────────────
     decision_influence: Optional[str] = ""
-    # e.g. "informational only", "recommendations", "approvals", "automated actions"
+    # e.g. "Informational only", "Recommendations", "Approvals", "Automated actions"
 
+    # ── What data it handles ───────────────────────────────────────────────
     data_types: Optional[List[str]] = []
-    # multi-select: ["PII", "financial", "medical", "legal", "proprietary IP", "none"]
+    # multi-select: ["Personal Identifiable Information (PII)", "Financial data",
+    #                "Medical / health records", "Legal documents", "Biometric data", "None"]
 
     jurisdictions: Optional[List[str]] = []
-    # e.g. ["India", "EU", "US"] — affects which bias dimensions and regs are relevant
+    # e.g. ["European Union (GDPR / EU AI Act)", "United States (CCPA / HIPAA / NIST)"]
+    # affects which bias dimensions and regulations are applied to probes
+
+    # ── Deployment context ─────────────────────────────────────────────────
+    deployment_status: Optional[str] = ""
+    # e.g. "Production — full deployment", "Pilot — limited live users"
+
+    real_time_data: Optional[str] = ""
+    # freeform: "Queries customer CRM, weather API, internal knowledge base"
+    # maps to fingerprinter "data_access" dimension
+
+    autonomous_actions: Optional[str] = ""
+    # freeform: "Books appointments, sends confirmation emails, modifies records"
+    # maps to fingerprinter "autonomous_actions" dimension — activates agentic safety probes
+
+    output_visibility: Optional[str] = ""
+    # e.g. "External — end-user / customer facing", "Internal only"
+
+    # ── Governance ────────────────────────────────────────────────────────
+    oversight_model: Optional[str] = ""
+    # e.g. "Human-in-the-loop for every decision", "Fully automated — no human review"
+    # directly affects Accountability and Safety TAF scores
 
     highest_stakes_failure: Optional[str] = ""
-    # freeform one sentence: "Misdiagnosis in triage", "Wrongful credit denial", etc.
+    # freeform one sentence: "Misclassifies fraud as legitimate", "Misdiagnosis in triage"
+    # maps to fingerprinter "refusals" dimension — generates targeted adversarial probes
 
+    bias_tested: Optional[str] = ""
+    # e.g. "Yes — formal bias audit completed", "No — not yet tested for bias"
+    # affects Fairness scoring context
+
+    # ── Legacy / system prompt (kept for backward compat) ─────────────────
     system_prompt: Optional[str] = ""
-    # Optional: paste your system prompt for richer context (kept private)
+    # Prefer providing system_prompt at the top AISystemSchema level.
+    # Kept here for existing records that stored it nested in the profile.
 
 
 class AISystemSchema(BaseModel):
-    name: str
+    name:        str
     description: str
-    domain: str
-    connector: ConnectorSchema
-    # Approach 3: optional enriched profile — feels like config, not a questionnaire
+    domain:      str
+    # connector is now a stub at registration time — type and endpoint will be
+    # empty strings, headers will be {}.  Real credentials are entered per-audit
+    # in the Dashboard and never persisted.
+    connector:   ConnectorSchema
+    # Enriched deployment and governance profile — feeds the behavioral fingerprinter,
+    # probe generator, and LLM Judge panel.
     profile: Optional[RegistrationProfileSchema] = None
 
 
@@ -727,6 +763,9 @@ def register_ai_system(ai_data: AISystemSchema, current_user=Depends(get_current
         "name":        ai_data.name,
         "description": ai_data.description,
         "domain":      ai_data.domain,
+        # Connector may be a stub (type="", endpoint="") when registered from
+        # the new flow — credentials are provided per-audit via the Dashboard.
+        # Still stored so the field is always present for existing code paths.
         "connector":   ai_data.connector.dict(),
         "owner_id":    str(current_user["_id"]),
         "created_at":  datetime.utcnow(),
@@ -734,9 +773,15 @@ def register_ai_system(ai_data: AISystemSchema, current_user=Depends(get_current
         "audit_runs":  0,
     }
 
-    # Store the enriched profile if provided (Approach 3)
     if ai_data.profile:
-        doc["registration_profile"] = ai_data.profile.dict()
+        profile_dict = ai_data.profile.dict()
+
+        # Hoist system_prompt to top level so _get_ai_context() finds it
+        # without needing to dig into registration_profile.
+        if profile_dict.get("system_prompt"):
+            doc["system_prompt"] = profile_dict["system_prompt"]
+
+        doc["registration_profile"] = profile_dict
 
     ai_collection.insert_one(doc)
     return {"message": "AI system registered successfully"}

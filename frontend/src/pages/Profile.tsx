@@ -614,7 +614,7 @@
 // }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -641,7 +641,28 @@ interface AuditRecord {
   probes_run?: number;
   mode?: string;
   findings?: any[];
+  // Re-run linkage
+  rerun_sequence?: number;
+  parent_audit_id?: string;
+  rerun_scope?: string;
+  operator_change_context?: string;
+  // Delta fields (present on re-run records)
+  delta_summary?: {
+    overall_score_change: number;
+    resolved_count: number;
+    regressed_count: number;
+    improving_count: number;
+    worsening_count: number;
+    new_finding_count: number;
+    principles_improved: string[];
+    principles_regressed: string[];
+  };
 }
+
+const KPMG_PRINCIPLES = [
+  "Safety","Security","Privacy","Fairness","Reliability",
+  "Transparency","Accountability","Explainability","Data Integrity","Sustainability",
+];
 
 const BASE_URL = "http://localhost:8000";
 
@@ -717,6 +738,20 @@ export default function Profile() {
 
   const [mounted, setMounted] = useState(false);
 
+  // ── Re-run state ──────────────────────────────────────────────────────────
+  const [rerunTarget, setRerunTarget]   = useState<AuditRecord | null>(null);
+  const [rerunContext, setRerunContext] = useState("");
+  const [rerunChangeType, setRerunChangeType] = useState("bug_fix");
+  const [rerunPrinciples, setRerunPrinciples] = useState<string[]>([]);
+  const [rerunLoading, setRerunLoading] = useState(false);
+  const [rerunError, setRerunError]     = useState("");
+  const [rerunApiKey, setRerunApiKey]   = useState("");
+  const [rerunEndpoint, setRerunEndpoint] = useState("");
+  const [rerunStep, setRerunStep]       = useState<1 | 2>(1);
+  // Which AI system groups are expanded in the project list
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setTimeout(() => setMounted(true), 60);
     loadProfile();
@@ -750,19 +785,34 @@ export default function Profile() {
         bbRes.status === "fulfilled" ? (bbRes.value.data.history || []) : [];
       const rawReports: any[] =
         repRes.status === "fulfilled" ? (repRes.value.data.reports || []) : [];
-      const repList: AuditRecord[] = rawReports.map((r) => ({
-        audit_id:      r.report_id,
-        ai_name:       r.ai_name,
-        overall_score: r.overall_score ?? 0,
-        risk_level:    r.risk_level    ?? "Unknown",
-        status:        "completed",
-        created_at:    r.evaluated_at  ?? r.created_at ?? new Date().toISOString(),
-        mode:          "evaluate",
-        findings:      r.findings,
-      }));
-      const merged = [...bbList, ...repList].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      );
+
+      // Map SDCC reports — only include if NOT already covered by a blackbox record
+      // (same ai_name + same date window) to avoid duplicates in the list
+      const bbAiNames = new Set(bbList.map(b => b.ai_name));
+      const repList: AuditRecord[] = rawReports
+        .filter(r => !bbAiNames.has(r.ai_name))   // skip if blackbox audit exists for this AI
+        .map((r) => ({
+          audit_id:      r.report_id,
+          ai_name:       r.ai_name,
+          overall_score: r.overall_score ?? 0,
+          risk_level:    r.risk_level    ?? "Unknown",
+          status:        "completed",
+          created_at:    r.evaluated_at  ?? r.created_at ?? new Date().toISOString(),
+          mode:          "evaluate",
+          findings:      r.findings,
+        }));
+
+      // Merge and sort: within each AI, order by rerun_sequence asc then created_at asc
+      const merged = [...bbList, ...repList].sort((a, b) => {
+        // Primary: group by ai_name alphabetically
+        const nameComp = a.ai_name.localeCompare(b.ai_name);
+        if (nameComp !== 0) return nameComp;
+        // Within same AI: baseline first, then re-runs in sequence order
+        const seqA = a.rerun_sequence ?? 1;
+        const seqB = b.rerun_sequence ?? 1;
+        if (seqA !== seqB) return seqA - seqB;
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
       setAudits(merged);
     } catch {
       setAudits([]);
@@ -806,8 +856,54 @@ export default function Profile() {
     }
   };
 
+  // ── Re-run handlers ──────────────────────────────────────────────────────
+  const handleStartRerun = (e: React.MouseEvent, audit: AuditRecord) => {
+    e.stopPropagation();
+    setRerunTarget(audit);
+    setRerunContext("");
+    setRerunChangeType("bug_fix");
+    setRerunPrinciples([]);
+    setRerunError("");
+    setRerunApiKey("");
+    setRerunEndpoint("");
+    setRerunStep(1);
+  };
+
+  const handleSubmitRerun = async () => {
+    if (!rerunTarget) return;
+    if (!rerunContext.trim()) { setRerunError("Please describe what changed."); return; }
+    if (!rerunApiKey.trim()) { setRerunError("API key is required."); return; }
+    setRerunLoading(true);
+    setRerunError("");
+    try {
+      const userContextFull = [
+        rerunContext.trim(),
+        `Change type: ${rerunChangeType}`,
+        rerunPrinciples.length > 0 ? `Operator claims fixed: ${rerunPrinciples.join(", ")}` : "",
+      ].filter(Boolean).join(" | ");
+      const res = await axios.post(
+        `${BASE_URL}/blackbox/audit/rerun`,
+        {
+          prior_audit_id: rerunTarget.audit_id,
+          user_context:   userContextFull,
+          api_key:        rerunApiKey.trim(),
+          endpoint:       rerunEndpoint.trim() || undefined,
+          mode:           rerunTarget.mode === "evaluate" ? "api" : (rerunTarget.mode || "api"),
+        },
+        { headers: authHeader() },
+      );
+      setRerunTarget(null);
+      await loadAuditHistory();
+      navigate("/report", { state: { data: res.data } });
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || "Re-run failed. Try again.";
+      setRerunError(typeof detail === "string" ? detail : JSON.stringify(detail));
+    } finally {
+      setRerunLoading(false);
+    }
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
     localStorage.removeItem("activeAI");
     navigate("/login");
   };
@@ -853,7 +949,7 @@ export default function Profile() {
   const initials = profile ? getInitials(profile.name) : "??";
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F1F5F9", color: "#1E293B", fontFamily: "'Plus Jakarta Sans', sans-serif", paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "#F1F5F9", color: "#1E293B", fontFamily: "'Plus Jakarta Sans', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
@@ -1090,12 +1186,15 @@ export default function Profile() {
           </div>
 
           {/* RIGHT – Audit History */}
-          <div className="card" style={{ padding: "26px 28px" }}>
+          <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", padding: "26px 28px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <p className="sec-heading"> My Projects</p>
-              <button className="btn-ghost" style={{ fontSize: 12, padding: "7px 14px" }} onClick={() => navigate("/dashboard")}>
-                + New Audit
-              </button>
+              <p style={{ fontSize: 15, fontWeight: 800, color: "#1E293B", margin: 0 }}>My Projects</p>
+              <button
+                onClick={() => navigate("/dashboard")}
+                style={{ padding: "7px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#2563EB"; (e.currentTarget as HTMLButtonElement).style.color = "#2563EB"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#64748B"; }}
+              >+ New Audit</button>
             </div>
 
             {auditsLoading ? (
@@ -1105,55 +1204,144 @@ export default function Profile() {
               </div>
             ) : audits.length === 0 ? (
               <div style={{ textAlign: "center", padding: "52px 20px" }}>
-                <div style={{ fontSize: 42, marginBottom: 14 }}></div>
+                <div style={{ fontSize: 42, marginBottom: 14 }}>📋</div>
                 <p style={{ color: "#94A3B8", fontSize: 13, marginBottom: 16 }}>No audits run yet.</p>
-                <button className="btn-primary" onClick={() => navigate("/dashboard")}>Run your first audit →</button>
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                >Run your first audit →</button>
               </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 9, maxHeight: 440, overflowY: "auto", paddingRight: 4 }}>
-                {audits.map((audit) => {
-                  const rc = riskColor(audit.risk_level);
-                  const rbg = riskBg(audit.risk_level);
-                  const { color: sc, label: grade, bg: sgbg } = scoreGrade(audit.overall_score ?? 0);
-                  return (
-                    <div key={audit.audit_id} className="audit-item" onClick={() => handleAuditClick(audit)}>
+            ) : (() => {
+              const groups: Record<string, AuditRecord[]> = {};
+              audits.forEach(a => {
+                if (!groups[a.ai_name]) groups[a.ai_name] = [];
+                groups[a.ai_name].push(a);
+              });
+              Object.keys(groups).forEach(name => {
+                groups[name].sort((a, b) => (a.rerun_sequence ?? 1) - (b.rerun_sequence ?? 1));
+              });
+              const groupKeys = Object.keys(groups).sort((a, b) => {
+                const latestA = Math.max(...groups[a].map(r => new Date(r.created_at).getTime()));
+                const latestB = Math.max(...groups[b].map(r => new Date(r.created_at).getTime()));
+                return latestB - latestA;
+              });
 
-                      <ScoreRing score={audit.overall_score ?? 0} size={52} />
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 540, overflowY: "auto" }}>
+                  {groupKeys.map(aiName => {
+                    const chain = groups[aiName];
+                    const latest = chain[chain.length - 1];
+                    const baseline = chain[0];
+                    const hasReruns = chain.length > 1;
+                    const isExpanded = expandedGroups.has(aiName);
+                    const { color: sc, label: grade, bg: sgbg } = scoreGrade(latest.overall_score ?? 0);
+                    const rc  = riskColor(latest.risk_level);
+                    const rbg = riskBg(latest.risk_level);
+                    const scoreDelta = hasReruns ? (latest.overall_score ?? 0) - (baseline.overall_score ?? 0) : null;
 
-                      <div style={{ flex: 1, minWidth: 110 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: "#1E293B", marginBottom: 3 }}>
-                          {audit.ai_name}
+                    return (
+                      <div key={aiName} style={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "white" }}>
+                        {/* Header row */}
+                        <div
+                          onClick={() => {
+                            if (hasReruns) {
+                              setExpandedGroups(prev => { const next = new Set(prev); next.has(aiName) ? next.delete(aiName) : next.add(aiName); return next; });
+                            } else {
+                              handleAuditClick(baseline);
+                            }
+                          }}
+                          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", cursor: "pointer", borderBottom: isExpanded ? "1px solid #F1F5F9" : "none", background: isExpanded ? "#F8FBFF" : "white", borderRadius: isExpanded ? "12px 12px 0 0" : 12 }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#EFF6FF"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = isExpanded ? "#F8FBFF" : "white"; }}
+                        >
+                          {/* Score circle */}
+                          <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${sc}15`, border: `2px solid ${sc}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <span style={{ fontSize: 14, fontWeight: 900, color: sc }}>{latest.overall_score ?? 0}</span>
+                          </div>
+
+                          {/* Name + date */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13.5, fontWeight: 700, color: "#1E293B", marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                              {aiName}
+                              {hasReruns && (
+                                <span style={{ fontSize: 10, fontWeight: 700, background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED", padding: "1px 6px", borderRadius: 20 }}>
+                                  {chain.length} runs
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#94A3B8" }}>
+                              {fmtDate(latest.created_at)}
+                              {latest.probes_run ? ` · ${latest.probes_run} probes` : ""}
+                              {latest.mode ? ` · ${latest.mode === "evaluate" ? "Evaluate" : latest.mode.toUpperCase()}` : ""}
+                            </div>
+                          </div>
+
+                          {/* Delta */}
+                          {scoreDelta !== null && (
+                            <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 20, color: scoreDelta > 0 ? "#059669" : scoreDelta < 0 ? "#DC2626" : "#94A3B8", background: scoreDelta > 0 ? "#DCFCE7" : scoreDelta < 0 ? "#FEE2E2" : "#F8FAFC", border: `1px solid ${scoreDelta > 0 ? "#86EFAC" : scoreDelta < 0 ? "#FECACA" : "#E2E8F0"}`, flexShrink: 0 }}>
+                              {scoreDelta > 0 ? "+" : ""}{scoreDelta}
+                            </span>
+                          )}
+
+                          {/* Grade + Risk */}
+                          <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: sgbg, border: `1px solid ${sc}20`, padding: "2px 8px", borderRadius: 20, flexShrink: 0 }}>{grade}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rbg, border: `1px solid ${rc}20`, padding: "2px 8px", borderRadius: 20, flexShrink: 0 }}>{latest.risk_level}</span>
+
+                          <span style={{ color: hasReruns ? "#94A3B8" : "#2563EB", fontSize: 16, fontWeight: 700, flexShrink: 0, transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "none", display: "inline-block" }}>›</span>
                         </div>
-                        <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 500 }}>
-                          {fmtDate(audit.created_at)}
-                          {audit.probes_run ? ` · ${audit.probes_run} probes` : ""}
-                          {audit.mode ? ` · ${audit.mode === "evaluate" ? "Evaluate" : audit.mode.toUpperCase()}` : ""}
-                        </div>
+
+                        {/* Expanded chain */}
+                        {isExpanded && (
+                          <div style={{ padding: "10px 14px 12px" }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 8 }}>Audit history</div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                              {chain.map((audit, idx) => {
+                                const isBase = idx === 0;
+                                const ds = audit.delta_summary;
+                                const { color: asc, bg: asbg } = scoreGrade(audit.overall_score ?? 0);
+                                const arc = riskColor(audit.risk_level);
+                                const arbg = riskBg(audit.risk_level);
+                                return (
+                                  <div key={audit.audit_id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 10px", borderRadius: 8, background: "#F8FAFC", border: "1px solid #E2E8F0", cursor: "pointer" }}
+                                    onClick={() => handleAuditClick(audit)}
+                                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#EFF6FF"; (e.currentTarget as HTMLDivElement).style.borderColor = "#BFDBFE"; }}
+                                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "#F8FAFC"; (e.currentTarget as HTMLDivElement).style.borderColor = "#E2E8F0"; }}
+                                  >
+                                    <div style={{ textAlign: "center" as const, minWidth: 36, flexShrink: 0 }}>
+                                      <div style={{ fontSize: 16, fontWeight: 900, color: asc, lineHeight: 1 }}>{audit.overall_score}</div>
+                                      <div style={{ fontSize: 9, color: "#94A3B8" }}>/100</div>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontSize: 11, fontWeight: 700, color: isBase ? "#2563EB" : "#7C3AED", marginBottom: 1 }}>
+                                        {isBase ? "Baseline" : `Re-run #${audit.rerun_sequence ?? 1}`}
+                                        <span style={{ fontSize: 10, fontWeight: 700, color: arc, background: arbg, padding: "0 5px", borderRadius: 20, marginLeft: 6 }}>{audit.risk_level}</span>
+                                      </div>
+                                      <div style={{ fontSize: 10, color: "#94A3B8" }}>{fmtDate(audit.created_at)}{audit.probes_run ? ` · ${audit.probes_run} probes` : ""}</div>
+                                    </div>
+                                    {ds && !isBase && (
+                                      <span style={{ fontSize: 10, fontWeight: 800, color: ds.overall_score_change >= 0 ? "#059669" : "#DC2626", background: ds.overall_score_change >= 0 ? "#DCFCE7" : "#FEE2E2", padding: "1px 6px", borderRadius: 20, flexShrink: 0 }}>
+                                        {ds.overall_score_change >= 0 ? "+" : ""}{Math.round(ds.overall_score_change)} pts
+                                      </span>
+                                    )}
+                                    {idx === chain.length - 1 && audit.status === "completed" && audit.mode !== "evaluate" && (
+                                      <button onClick={e => handleStartRerun(e, audit)}
+                                        style={{ padding: "3px 8px", borderRadius: 6, border: "1.5px solid #BFDBFE", background: "#EFF6FF", color: "#2563EB", fontSize: 10, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                                        ↺ Re-run
+                                      </button>
+                                    )}
+                                    <span style={{ color: "#2563EB", fontSize: 14, flexShrink: 0 }}>›</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
-
-                      <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: sgbg, border: `1px solid ${sc}30`, padding: "3px 10px", borderRadius: 20, flexShrink: 0 }}>
-                        {grade}
-                      </span>
-
-                      <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rbg, border: `1px solid ${rc}30`, padding: "3px 10px", borderRadius: 20, flexShrink: 0 }}>
-                        {audit.risk_level}
-                      </span>
-
-                      <span style={{
-                        fontSize: 11, fontWeight: 700, flexShrink: 0, padding: "3px 10px", borderRadius: 20,
-                        color: audit.status === "completed" ? "#059669" : "#D97706",
-                        background: audit.status === "completed" ? "#DCFCE7" : "#FEF3C7",
-                        border: `1px solid ${audit.status === "completed" ? "#86EFAC" : "#FCD34D"}`,
-                      }}>
-                        {audit.status === "completed" ? " Done" : "⏳ " + audit.status}
-                      </span>
-
-                      <span style={{ color: "#2563EB", fontSize: 18, flexShrink: 0, fontWeight: 700 }}>›</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {audits.length > 0 && (
               <p style={{ margin: "14px 0 0", fontSize: 11, color: "#94A3B8", textAlign: "center" }}>
@@ -1208,6 +1396,186 @@ export default function Profile() {
         </div>
 
       </div>
+
+      {/* ── RE-RUN CHANGE DIALOG ──────────────────────────────────────────────── */}
+      {rerunTarget && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+          onClick={(e) => { if (e.target === e.currentTarget) setRerunTarget(null); }}
+        >
+          <div
+            ref={dialogRef}
+            style={{ background: "white", borderRadius: 20, padding: "32px 36px", width: "100%", maxWidth: 560, boxShadow: "0 28px 70px rgba(0,0,0,0.22)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#2563EB", letterSpacing: "1.5px", textTransform: "uppercase" as const, marginBottom: 5 }}>
+                  Re-run Audit · Step {rerunStep} of 2
+                </div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1E293B", margin: 0 }}>
+                  {rerunStep === 1 ? "↺ What changed?" : "🔑 Connection details"}
+                </h2>
+                <p style={{ fontSize: 12, color: "#94A3B8", margin: "4px 0 0", fontWeight: 500 }}>
+                  {rerunTarget.ai_name} · Score: <strong style={{ color: "#2563EB" }}>{rerunTarget.overall_score}</strong>
+                </p>
+              </div>
+              <button onClick={() => setRerunTarget(null)} style={{ background: "none", border: "none", color: "#94A3B8", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+
+            {/* Step progress bar */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+              {[1, 2].map(s => (
+                <div key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: rerunStep >= s ? "#2563EB" : "#E2E8F0", transition: "background 0.3s" }} />
+              ))}
+            </div>
+
+            {/* ── STEP 1 ── */}
+            {rerunStep === 1 && (<>
+
+              {/* Prior baseline snapshot */}
+              <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "1px", marginBottom: 8 }}>Prior audit baseline</div>
+                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" as const }}>
+                  <div style={{ textAlign: "center" as const }}>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: rerunTarget.overall_score >= 75 ? "#059669" : rerunTarget.overall_score >= 50 ? "#2563EB" : "#DC2626" }}>{rerunTarget.overall_score}</div>
+                    <div style={{ fontSize: 9.5, color: "#94A3B8" }}>Score</div>
+                  </div>
+                  <div style={{ textAlign: "center" as const }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: riskColor(rerunTarget.risk_level) }}>{rerunTarget.risk_level}</div>
+                    <div style={{ fontSize: 9.5, color: "#94A3B8" }}>Risk</div>
+                  </div>
+                  {(rerunTarget.findings?.length ?? 0) > 0 && (
+                    <div style={{ textAlign: "center" as const }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "#DC2626" }}>{rerunTarget.findings!.length}</div>
+                      <div style={{ fontSize: 9.5, color: "#94A3B8" }}>Findings</div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 8, lineHeight: 1.5 }}>
+                  Phase 1 behavioral fingerprinting always re-runs first. Significant drift → full re-audit. Stable → targeted re-probe of failing principles only.
+                </div>
+              </div>
+
+              {/* What changed */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
+                  What changed in this AI system? *
+                </label>
+                <textarea
+                  value={rerunContext}
+                  onChange={(e) => setRerunContext(e.target.value)}
+                  placeholder="e.g. Updated system prompt to restrict legal advice, patched safety filters, re-trained on bias dataset…"
+                  rows={3}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, background: "#F8FAFC" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.boxShadow = "none"; }}
+                />
+                <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 3 }}>
+                  Injected into every probe wave — makes re-probing adversarially targeted at your claimed fixes.
+                </div>
+              </div>
+
+              {/* Change type */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>Change type</label>
+                <select value={rerunChangeType} onChange={(e) => setRerunChangeType(e.target.value)}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", cursor: "pointer", boxSizing: "border-box" as const }}>
+                  <option value="model_update">Model update / version change</option>
+                  <option value="system_prompt">System prompt change</option>
+                  <option value="fine_tuning">Fine-tuning / retraining</option>
+                  <option value="safety_filters">Safety filter update</option>
+                  <option value="knowledge_base">Knowledge base update</option>
+                  <option value="bug_fix">Bug fix / patch</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {/* Claimed fixed principles */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 8 }}>
+                  Which principles do you believe were fixed?{" "}
+                  <span style={{ color: "#94A3B8", fontWeight: 500, textTransform: "none" as const }}>(optional — makes probing harder on these)</span>
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6 }}>
+                  {KPMG_PRINCIPLES.map((p) => {
+                    const selected = rerunPrinciples.includes(p);
+                    return (
+                      <button key={p} type="button"
+                        onClick={() => setRerunPrinciples(prev => selected ? prev.filter(x => x !== p) : [...prev, p])}
+                        style={{ padding: "4px 11px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}>
+                        {selected ? "✓ " : ""}{p}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
+
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <button onClick={() => setRerunTarget(null)} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+                <button
+                  onClick={() => { if (!rerunContext.trim()) { setRerunError("Please describe what changed."); return; } setRerunError(""); setRerunStep(2); }}
+                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
+                  Next →
+                </button>
+              </div>
+            </>)}
+
+            {/* ── STEP 2 ── */}
+            {rerunStep === 2 && (<>
+
+              {/* What will happen */}
+              <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 12, marginBottom: 14, fontSize: 12, color: "#1D4ED8", lineHeight: 1.65 }}>
+                <strong>What happens next:</strong> Phase 1 fingerprinting re-runs first. If drift is detected a full re-audit triggers automatically. Otherwise only failing/weak principles are re-probed — seeded adversarially with your change context.
+              </div>
+
+              {/* Change context preview */}
+              <div style={{ padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 10, marginBottom: 16, fontSize: 12, color: "#166534" }}>
+                <strong>Change context:</strong> {rerunContext.trim().slice(0, 120)}{rerunContext.length > 120 ? "…" : ""}
+                {rerunPrinciples.length > 0 && <div style={{ marginTop: 3 }}><strong>Claimed fixes:</strong> {rerunPrinciples.join(", ")}</div>}
+              </div>
+
+              {/* Endpoint (optional) */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
+                  AI endpoint URL <span style={{ color: "#94A3B8", fontWeight: 500, textTransform: "none" as const }}>(optional — leave blank to reuse prior)</span>
+                </label>
+                <input type="text" value={rerunEndpoint} onChange={(e) => setRerunEndpoint(e.target.value)}
+                  placeholder="https://api.example.com/v1/chat/completions"
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }} />
+              </div>
+
+              {/* API key */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>API key *</label>
+                <input type="password" value={rerunApiKey} onChange={(e) => setRerunApiKey(e.target.value)}
+                  placeholder="Your AI endpoint API key"
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }} />
+                <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>Keys are never stored — used for this request only.</p>
+              </div>
+
+              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
+
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <button onClick={() => { setRerunStep(1); setRerunError(""); }} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
+                <button onClick={handleSubmitRerun} disabled={rerunLoading}
+                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: rerunLoading ? "#93C5FD" : "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: rerunLoading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, boxShadow: rerunLoading ? "none" : "0 4px 12px rgba(37,99,235,0.3)" }}>
+                  {rerunLoading ? (
+                    <><div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Running re-audit…</>
+                  ) : "↺ Start Re-run"}
+                </button>
+              </div>
+            </>)}
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -37,25 +37,7 @@ export default function RiskIntelligence() {
       <style>{CSS}</style>
 
       <AuditContextBar data={raw} />
-      {/* Sticky banner */}
-      <div style={{ background:`linear-gradient(135deg,${B},${M})`, padding:"22px 40px", position:"sticky", top:0, zIndex:50 }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)", backgroundSize:"28px 28px", pointerEvents:"none" }}/>
-        <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div>
-            <div style={{ fontSize:10, fontWeight:700, letterSpacing:"1.4px", textTransform:"uppercase", color:"rgba(255,255,255,0.5)", marginBottom:4 }}>Audit Report · Risk &amp; Actions</div>
-            <div style={{ fontSize:20, fontWeight:900, color:"white", letterSpacing:"-0.3px" }}>Risk Intelligence &amp; Actions</div>
-            <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", marginTop:4 }}>Severity breakdown, governance exposure &amp; deployment blockers</div>
-          </div>
-          <div style={{ display:"flex", gap:10 }}>
-            <div style={{ padding:"6px 14px", borderRadius:20, background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.18)", fontSize:13, fontWeight:700, color:"white" }}>
-              {r.overall_score}/100
-            </div>
-            <div style={{ padding:"6px 14px", borderRadius:20, background:rc+"22", border:`1px solid ${rc}50`, fontSize:12, fontWeight:700, color:"white" }}>
-              {r.risk_level} Risk
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Body */}
       <div style={{ padding:"28px 40px 60px" }}>
@@ -175,7 +157,7 @@ export default function RiskIntelligence() {
           </div>
 
           {/* Right: heatmap + exposure */}
-          <div style={{ display:"flex", flexDirection:"column", gap:14, position:"sticky", top:90 }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:14, position:"sticky", top:80 }}>
 
             {/* Risk heatmap */}
             <div className="ri-card" style={{ padding:"18px 16px" }}>

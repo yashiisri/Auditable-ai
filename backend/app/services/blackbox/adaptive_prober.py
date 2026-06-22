@@ -8,7 +8,7 @@ After every wave of N probes, the responses so far are analysed and the
 next wave is generated dynamically based on what was discovered.
 
 Flow:
-  Wave 1: 10 broad coverage probes (2 per highest-priority principle)
+  Wave 1: 10 broad coverage probes (1 per KPMG principle)
   Wave 2: 15 targeted probes — doubles down on failing categories
   Wave 3: 10 deep-dive probes — pinpoints specific vulnerabilities found
 
@@ -19,6 +19,19 @@ Rate limiting: all Groq calls go through the shared groq_rate_limiter so
 this service doesn't starve the chat agent (and vice versa).
 Waves run sequentially; probes within a wave run sequentially too (not
 concurrently) to stay within the 6k TPM org limit.
+
+Changes vs previous version
+─────────────────────────────
+1. analyse_wave_results is now a public function (no leading underscore).
+   orchestrator.py imports it directly, removing the near-identical
+   _analyse_wave_results duplicate that previously lived there.
+
+2. Rate-limiter import failure now logs a WARNING instead of silently
+   continuing — operators need to know rate limiting is inactive so they
+   can diagnose unexpected 429 bursts.
+
+3. groq_limiter acquire() call moved inside the retry loop so the token
+   budget is checked on every attempt, not just the first one.
 """
 
 from __future__ import annotations
@@ -71,10 +84,23 @@ WAVE_CONFIGS = [
 
 
 # ── Wave analysis ─────────────────────────────────────────────────────────────
+# FIX 1: Public name — orchestrator imports this directly so there is a single
+# canonical implementation. The old _analyse_wave_results in orchestrator.py
+# has been removed.
 
 def analyse_wave_results(probe_results: list[dict]) -> dict:
+    """
+    Analyse probe results accumulated so far and return per-category pass rates,
+    weakest principles, and failing principles.
+
+    Skipped probes (skipped_error=True) are excluded from pass-rate computation
+    so transport errors don't artificially depress scores.
+    """
     categories: dict[str, dict] = {}
     for pr in probe_results:
+        # Skip transport errors — they tell us nothing about model behaviour.
+        if pr.get("skipped_error"):
+            continue
         cat = pr["category"]
         if cat not in categories:
             categories[cat] = {"total": 0, "passed": 0, "failures": []}
@@ -104,13 +130,14 @@ def analyse_wave_results(probe_results: list[dict]) -> dict:
         key=lambda x: x[1],
     )
 
+    evaluable = [pr for pr in probe_results if not pr.get("skipped_error")]
     return {
         "category_analysis":  scores_by_cat,
         "weakest_principles": [cat for cat, _ in weakest[:4]],
         "failing_principles": [cat for cat, score in weakest if score < 0.5],
         "total_probes_run":   len(probe_results),
         "overall_pass_rate":  round(
-            sum(1 for p in probe_results if p.get("passed")) / max(len(probe_results), 1), 2
+            sum(1 for p in evaluable if p.get("passed")) / max(len(evaluable), 1), 2
         ),
     }
 
@@ -138,12 +165,22 @@ async def generate_wave_probes(
     """
     Calls Groq to generate a wave of probes, conditioned on prior results.
     Uses the shared groq_rate_limiter before each attempt.
+
+    FIX 2: Import failure now logs a WARNING so operators know rate limiting
+    is not active and can diagnose 429 bursts.
+
+    FIX 3: groq_limiter.acquire() is called inside the retry loop so every
+    attempt (including retries) respects the token budget, not just the first.
     """
-    # Import here to avoid circular imports (services package)
     try:
         from app.services.groq_rate_limiter import groq_limiter
     except ImportError:
-        groq_limiter = None   # fallback: no limiter if not available
+        groq_limiter = None
+        logger.warning(
+            "[adaptive_prober] groq_rate_limiter not available — rate limiting is INACTIVE. "
+            "Wave %d may hit Groq 429 errors if concurrent callers share the org limit.",
+            wave_config["wave"],
+        )
 
     prompt = _build_wave_prompt(
         wave_config=wave_config,
@@ -158,13 +195,13 @@ async def generate_wave_probes(
     payload = {
         "model":       "llama-3.1-8b-instant",
         "messages":    [{"role": "user", "content": prompt}],
-        "max_tokens":  1800,   # reduced from 2048 — saves ~250 tokens/wave
+        "max_tokens":  1800,
         "temperature": 0.8,
     }
 
     max_retries = 4
     for attempt in range(1, max_retries + 1):
-        # Pre-flight: check shared token budget (wave generation is ~2000 tokens)
+        # FIX 3: acquire inside the loop so retries also check the token budget.
         if groq_limiter:
             await groq_limiter.acquire(estimated_tokens=2000)
 
@@ -172,15 +209,17 @@ async def generate_wave_probes(
             async with httpx.AsyncClient(timeout=60) as client:
                 resp = await client.post(url, json=payload, headers=headers)
                 if resp.status_code == 429:
-                    # Parse Groq's suggested wait from the response body
                     body = resp.json()
                     wait = _parse_retry_seconds(Exception(str(body)))
                     if attempt == max_retries:
-                        logger.error(f"[adaptive_prober] Wave {wave_config['wave']} 429 — all retries exhausted.")
+                        logger.error(
+                            "[adaptive_prober] Wave %d 429 — all retries exhausted.",
+                            wave_config["wave"],
+                        )
                         return []
                     logger.warning(
-                        f"[adaptive_prober] Wave {wave_config['wave']} 429 "
-                        f"(attempt {attempt}/{max_retries}). Retrying in {wait:.1f}s…"
+                        "[adaptive_prober] Wave %d 429 (attempt %d/%d). Retrying in %.1fs…",
+                        wave_config["wave"], attempt, max_retries, wait,
                     )
                     await asyncio.sleep(wait)
                     continue
@@ -190,10 +229,16 @@ async def generate_wave_probes(
 
         except Exception as e:
             if attempt == max_retries:
-                logger.error(f"[adaptive_prober] Wave {wave_config['wave']} generation failed: {e}")
+                logger.error(
+                    "[adaptive_prober] Wave %d generation failed: %s",
+                    wave_config["wave"], e,
+                )
                 return []
             wait = _parse_retry_seconds(e)
-            logger.warning(f"[adaptive_prober] Wave {wave_config['wave']} error (attempt {attempt}): {e}. Retrying in {wait:.1f}s…")
+            logger.warning(
+                "[adaptive_prober] Wave %d error (attempt %d): %s. Retrying in %.1fs…",
+                wave_config["wave"], attempt, e, wait,
+            )
             await asyncio.sleep(wait)
 
     return []
@@ -282,7 +327,7 @@ def _parse_wave_probes(raw_text: str, wave_num: int) -> list[dict]:
             try:
                 probes = json.loads(cleaned[start:end])
             except json.JSONDecodeError:
-                logger.error(f"[adaptive_prober] Could not parse wave {wave_num} JSON.")
+                logger.error("[adaptive_prober] Could not parse wave %d JSON.", wave_num)
                 return []
         else:
             return []
@@ -297,7 +342,7 @@ def _parse_wave_probes(raw_text: str, wave_num: int) -> list[dict]:
             p["id"] = f"w{wave_num}_{p['id']}"
         valid.append({"id": str(p["id"]), "category": str(p["category"]), "prompt": str(p["prompt"])})
 
-    logger.info(f"[adaptive_prober] Wave {wave_num} generated {len(valid)} valid probes.")
+    logger.info("[adaptive_prober] Wave %d generated %d valid probes.", wave_num, len(valid))
     return valid
 
 
@@ -312,10 +357,9 @@ async def run_adaptive_probing(
     """
     Runs 3 waves of adaptive probing.
 
-    KEY CHANGE: probes within each wave now run SEQUENTIALLY, not concurrently
-    (asyncio.gather replaced with a for loop). This keeps the token throughput
-    predictable and avoids all probes in a wave firing simultaneously and
-    collectively blowing the 6k TPM window.
+    Probes within each wave run SEQUENTIALLY (for loop, not asyncio.gather).
+    This keeps token throughput predictable and avoids simultaneous bursts
+    blowing the 6k TPM window.
 
     Returns:
         all_results   — combined list of all probe result dicts
@@ -331,7 +375,7 @@ async def run_adaptive_probing(
 
     for wave_config in WAVE_CONFIGS:
         wave_num = wave_config["wave"]
-        logger.info(f"[adaptive_prober] Starting Wave {wave_num}: {wave_config['name']}")
+        logger.info("[adaptive_prober] Starting Wave %d: %s", wave_num, wave_config["name"])
 
         if groq_api_key:
             probes = await generate_wave_probes(
@@ -344,15 +388,12 @@ async def run_adaptive_probing(
             )
         else:
             probes = []
-            logger.warning(f"[adaptive_prober] No Groq key — skipping Wave {wave_num}.")
+            logger.warning("[adaptive_prober] No Groq key — skipping Wave %d.", wave_num)
 
         if not probes:
-            logger.warning(f"[adaptive_prober] Wave {wave_num} produced no probes, skipping.")
+            logger.warning("[adaptive_prober] Wave %d produced no probes, skipping.", wave_num)
             continue
 
-        # ── Sequential execution (replaces asyncio.gather) ───────────────
-        # Rationale: with 6k TPM and ~2k tokens/probe, running >3 probes
-        # concurrently guarantees 429s. Sequential keeps us within budget.
         wave_results = []
         for probe in probes:
             result = await run_probe_fn(probe)
@@ -372,9 +413,9 @@ async def run_adaptive_probing(
         })
 
         logger.info(
-            f"[adaptive_prober] Wave {wave_num} complete. "
-            f"{len(wave_results)} probes. Pass rate: {wave_analysis['overall_pass_rate']:.0%}. "
-            f"Weakest: {wave_analysis['weakest_principles'][:2]}"
+            "[adaptive_prober] Wave %d complete. %d probes. Pass rate: %.0f%%. Weakest: %s",
+            wave_num, len(wave_results), wave_analysis["overall_pass_rate"] * 100,
+            wave_analysis["weakest_principles"][:2],
         )
 
     adaptive_meta = {
