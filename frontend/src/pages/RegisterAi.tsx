@@ -7,6 +7,13 @@ const B = "#00338D", M = "#005EB8", T = "#0091DA";
 const FF = "'Plus Jakarta Sans', system-ui, sans-serif";
 
 // ── Option lists ──────────────────────────────────────────────────────────────
+// Each list below is the GENERIC pool — always available regardless of domain.
+// DOMAIN_SPECIFIC_OPTS adds extra, domain-relevant options that get merged in
+// front of the generic pool (see `buildOptions()`), so the most relevant
+// choices for the selected industry always appear first. "Other (please
+// specify)" is appended at render time by `buildOptions()`, not stored here.
+
+const OTHER_OPT = "Other (please specify)";
 
 const DOMAIN_OPTS = [
   "Healthcare & Life Sciences", "Financial Services & Banking", "Legal & Compliance",
@@ -69,13 +76,113 @@ const OUTPUT_VISIBILITY_OPTS = [
   "Embedded in a product / third-party platform",
 ];
 
+const BIAS_TESTED_OPTS = [
+  "Yes — formal bias audit completed",
+  "Partial — some testing done informally",
+  "No — not yet tested for bias",
+  "Not applicable",
+];
+
+// ── Domain-specific extra options ───────────────────────────────────────────
+// Keyed by the exact DOMAIN_OPTS label. Each field lists EXTRA options that
+// are prepended ahead of the generic pool for that field when the domain is
+// selected. These are additive — the generic pool is never removed, just
+// pushed down. Domains not listed here (or "Other") fall back to generic-only.
+
+type FieldKey = "endUsers" | "dataTypes" | "jurisdictions" | "oversight";
+
+const DOMAIN_SPECIFIC_OPTS: Record<string, Partial<Record<FieldKey, string[]>>> = {
+  "Healthcare & Life Sciences": {
+    endUsers: ["Patients & Caregivers", "Clinicians & Care Teams", "Health Insurers / Payers"],
+    dataTypes: ["Genetic / genomic data", "Clinical trial data", "Electronic Health Records (EHR)"],
+    jurisdictions: ["United States (HIPAA)", "EU Medical Device Regulation (MDR)"],
+    oversight: ["Licensed clinician sign-off required before action"],
+  },
+  "Financial Services & Banking": {
+    endUsers: ["Retail Banking Customers", "Institutional / Wealth Clients", "Loan & Credit Applicants"],
+    dataTypes: ["Transaction / account data", "Credit history & scores", "KYC / AML identity records"],
+    jurisdictions: ["United States (SEC / FINRA / GLBA)", "Basel Committee (BCBS) standards", "Payment Card Industry (PCI-DSS)"],
+    oversight: ["Compliance officer review for flagged transactions"],
+  },
+  "Legal & Compliance": {
+    endUsers: ["Attorneys & Paralegals", "Corporate Legal/Compliance Teams", "Litigants / Self-Represented Parties"],
+    dataTypes: ["Privileged attorney-client communications", "Case files & litigation records", "Contract & IP documentation"],
+    jurisdictions: ["Bar association / professional conduct rules", "eDiscovery & court evidentiary rules"],
+    oversight: ["Licensed attorney review before client-facing output"],
+  },
+  "Education & EdTech": {
+    endUsers: ["K-12 Students (minors)", "Higher-Ed Students", "Teachers & Faculty", "Parents / Guardians"],
+    dataTypes: ["Student records (FERPA-protected)", "Minor / child data (under 18)", "Academic performance data"],
+    jurisdictions: ["United States (FERPA / COPPA)", "EU (GDPR-K / minors' data provisions)"],
+    oversight: ["Educator review for any content reaching minors"],
+  },
+  "Retail & E-Commerce": {
+    endUsers: ["Online Shoppers", "Loyalty Program Members", "Marketplace Sellers"],
+    dataTypes: ["Purchase & browsing history", "Payment card data", "Customer loyalty / behavioral profiles"],
+    jurisdictions: ["Payment Card Industry (PCI-DSS)", "State consumer-protection statutes (e.g. CCPA)"],
+    oversight: [],
+  },
+  "Manufacturing & Supply Chain": {
+    endUsers: ["Plant / Floor Operators", "Supply Chain Planners", "Quality & Safety Inspectors"],
+    dataTypes: ["Equipment telemetry / IoT sensor data", "Supplier & logistics records", "Proprietary process / trade secrets"],
+    jurisdictions: ["ISO 9001 / industry quality standards", "OSHA / workplace safety regulations"],
+    oversight: ["Safety engineer sign-off before automated action on equipment"],
+  },
+  "Government & Public Sector": {
+    endUsers: ["Government Officials", "Citizens / Constituents", "Public Benefits Applicants"],
+    dataTypes: ["Citizen identity records", "Public benefits / welfare data", "Law enforcement / public safety data"],
+    jurisdictions: ["Freedom of Information / public records law", "EU AI Act (high-risk public sector use)"],
+    oversight: ["Public official accountable for all automated decisions"],
+  },
+  "HR & Talent Management": {
+    endUsers: ["Job Applicants & Candidates", "Employees", "HR / Talent Acquisition Teams"],
+    dataTypes: ["Resume / candidate screening data", "Employee performance records", "Compensation & benefits data"],
+    jurisdictions: ["EEOC / anti-discrimination employment law", "NYC Local Law 144 (AEDT bias audits)", "EU AI Act (employment = high-risk)"],
+    oversight: ["HR reviewer sign-off on any hiring/firing-adjacent decision"],
+  },
+  "Cybersecurity": {
+    endUsers: ["Security Analysts (SOC)", "IT / Infrastructure Teams", "Incident Responders"],
+    dataTypes: ["Threat intelligence / vulnerability data", "Network & endpoint telemetry", "Credentials / access-control data"],
+    jurisdictions: ["NIST Cybersecurity Framework", "Breach notification statutes"],
+    oversight: ["Analyst confirmation required before any automated containment action"],
+  },
+  "Agriculture & Environment": {
+    endUsers: ["Farmers / Agricultural Operators", "Environmental Regulators", "Agronomists & Field Researchers"],
+    dataTypes: ["Field / sensor & remote-sensing data", "Crop yield & soil data", "Environmental compliance records"],
+    jurisdictions: ["Environmental protection regulations", "Agricultural commodity / trade regulations"],
+    oversight: [],
+  },
+};
+
+// ── Option-building helper ──────────────────────────────────────────────────
+// Builds the final option list shown for a given field: domain-specific
+// options first (deduped, in the order defined above), then the generic pool
+// (minus anything already pulled in by the domain) filling any remaining
+// slots, capped at MAX_VISIBLE_OPTIONS total — then "Other" last (uncapped,
+// always present). Domain-specific options are never trimmed by the cap;
+// only generic-pool overflow gets cut, since the domain ones are already the
+// most relevant and should never be pushed out to make room for generic ones.
+const MAX_VISIBLE_OPTIONS = 8;
+
+function buildOptions(domain: string, field: FieldKey, generic: string[]): string[] {
+  const extra = DOMAIN_SPECIFIC_OPTS[domain]?.[field] ?? [];
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const o of [...extra, ...generic]) {
+    if (!seen.has(o)) { seen.add(o); ordered.push(o); }
+  }
+  const capped = ordered.slice(0, MAX_VISIBLE_OPTIONS);
+  capped.push(OTHER_OPT);
+  return capped;
+}
+
 // ── Steps ─────────────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, label: "Context",     sub: "Name, domain & purpose",       icon: "◈" },
-  { id: 2, label: "Deployment",  sub: "Users, data & risk scope",      icon: "⊕" },
-  { id: 3, label: "Governance",  sub: "Oversight, stakes & compliance", icon: "⬡" },
-  { id: 4, label: "Confirm",     sub: "Review & register",             icon: "✦" },
+  { id: 1, label: "About the Agent",   sub: "Name, domain & system prompt", icon: "◈" },
+  { id: 2, label: "Target Users",        sub: "Define Scope and users",  icon: "⊕" },
+  { id: 3, label: "Risk & Oversight",  sub: "Controls, stakes & compliance", icon: "⬡" },
+  { id: 4, label: "Review & Register", sub: "Confirm and submit",            icon: "✦" },
 ];
 
 const SIDEBAR_CONTENT: Record<number, { heading: string; body: string; facts: string[] }> = {
@@ -110,7 +217,7 @@ html,body{height:100%;}
 body{background:#F0F4FA;}
 
 .rai-inp{
-  width:100%;padding:12px 14px;border-radius:6px;
+  width:100%;padding:12px 14px;border-radius:0;
   border:1.5px solid #DDE5EF;font-size:14px;font-family:${FF};
   color:#0F172A;background:#FAFBFD;outline:none;
   transition:border 0.18s,box-shadow 0.18s,background 0.18s;
@@ -119,7 +226,7 @@ body{background:#F0F4FA;}
 .rai-inp::placeholder{color:#B0C0D4;}
 
 .rai-ta{
-  width:100%;padding:12px 14px;border-radius:6px;
+  width:100%;padding:12px 14px;border-radius:0;
   border:1.5px solid #DDE5EF;font-size:13.5px;font-family:${FF};
   color:#0F172A;background:#FAFBFD;outline:none;resize:vertical;
   min-height:96px;line-height:1.65;transition:border 0.18s,box-shadow 0.18s,background 0.18s;
@@ -129,7 +236,7 @@ body{background:#F0F4FA;}
 
 .rai-sel-wrap{position:relative;}
 .rai-sel{
-  width:100%;padding:12px 38px 12px 14px;border-radius:6px;
+  width:100%;padding:12px 38px 12px 14px;border-radius:0;
   border:1.5px solid #DDE5EF;font-size:14px;font-family:${FF};
   background:#FAFBFD;outline:none;appearance:none;cursor:pointer;
   color:#0F172A;transition:border 0.18s,box-shadow 0.18s,background 0.18s;
@@ -144,7 +251,7 @@ body{background:#F0F4FA;}
 
 .rai-btn-p{
   display:inline-flex;align-items:center;gap:8px;
-  padding:13px 26px;border-radius:6px;border:none;
+  padding:13px 26px;border-radius:0;border:none;
   background:linear-gradient(135deg,${B},${M});
   color:#fff;font-size:14px;font-weight:800;font-family:${FF};
   cursor:pointer;transition:transform 0.18s,box-shadow 0.18s;
@@ -155,7 +262,7 @@ body{background:#F0F4FA;}
 
 .rai-btn-g{
   display:inline-flex;align-items:center;gap:8px;
-  padding:13px 22px;border-radius:6px;
+  padding:13px 22px;border-radius:0;
   border:1.5px solid #D0DCEA;background:#fff;
   color:#4A6080;font-size:14px;font-weight:700;font-family:${FF};
   cursor:pointer;transition:all 0.18s;
@@ -164,7 +271,7 @@ body{background:#F0F4FA;}
 
 .rai-step-item{
   display:flex;align-items:flex-start;gap:14px;
-  padding:14px 16px;border-radius:8px;cursor:default;
+  padding:14px 16px;border-radius:0;cursor:default;
   transition:background 0.2s;
 }
 .rai-step-item.done{cursor:pointer;}
@@ -182,7 +289,7 @@ body{background:#F0F4FA;}
 .rai-step-circle.future{background:#F1F5F9;color:#B0C0D4;border-color:#E2E8F0;}
 
 .rai-step-connector{
-  width:2px;height:28px;margin-left:16px;border-radius:2px;
+  width:2px;height:28px;margin-left:16px;border-radius:0;
   background:linear-gradient(to bottom,${M}60,#E2E8F0);
   transition:background 0.3s;
 }
@@ -203,9 +310,9 @@ body{background:#F0F4FA;}
 /* single-select option cards */
 .rai-opt-card{
   display:flex;align-items:center;gap:12px;
-  padding:13px 16px;border-radius:6px;border:1.5px solid #DDE5EF;
+  padding:13px 16px;border-radius:0 !important;border:1.5px solid #DDE5EF;
   background:#FAFBFD;cursor:pointer;transition:all 0.18s;
-  font-size:13.5px;font-family:${FF};text-align:left;
+  font-size:12.5px;font-family:${FF};text-align:left;
   color:#344054;width:100%;
 }
 .rai-opt-card:hover{border-color:${M};background:#F0F6FF;}
@@ -221,14 +328,14 @@ body{background:#F0F4FA;}
 /* multi-select checkbox cards */
 .rai-chk-card{
   display:flex;align-items:center;gap:10px;
-  padding:10px 14px;border-radius:6px;border:1.5px solid #DDE5EF;
+  padding:10px 14px;border-radius:0 !important;border:1.5px solid #DDE5EF;
   background:#FAFBFD;cursor:pointer;transition:all 0.18s;
-  font-size:13px;font-family:${FF};text-align:left;color:#344054;
+  font-size:12.5px;font-family:${FF};text-align:left;color:#344054;
 }
 .rai-chk-card:hover{border-color:${M};background:#F0F6FF;}
 .rai-chk-card.checked{border-color:${M};background:rgba(0,94,184,0.06);color:${B};font-weight:600;}
 .rai-chk-box{
-  width:17px;height:17px;border-radius:4px;border:2px solid #CBD5E1;
+  width:17px;height:17px;border-radius:50%;border:2px solid #CBD5E1;
   flex-shrink:0;display:flex;align-items:center;justify-content:center;
   transition:all 0.18s;
 }
@@ -237,7 +344,7 @@ body{background:#F0F4FA;}
 .rai-fact{
   display:flex;align-items:center;gap:8px;
   font-size:12.5px;color:#3D5880;padding:8px 12px;
-  background:rgba(0,94,184,0.06);border-radius:4px;
+  background:rgba(0,94,184,0.06);border-radius:0;
   border:1px solid rgba(0,94,184,0.12);
 }
 `;
@@ -258,46 +365,140 @@ function Field({ label, required, hint, children }: {
   );
 }
 
+// `OptionCards` — single-select. Detects when the current value is a "custom"
+// one (i.e. not in `options`, ignoring the literal OTHER_OPT marker) and keeps
+// the Other card selected + its text field populated in that case, so a value
+// typed earlier survives re-renders (e.g. navigating Back then Continue again).
 function OptionCards({ options, value, onChange }: {
   options: string[]; value: string; onChange: (v: string) => void;
 }) {
+  const knownValues = options.filter(o => o !== OTHER_OPT);
+  const isCustomValue = value !== "" && !knownValues.includes(value);
+  const [otherActive, setOtherActive] = useState(isCustomValue);
+  const [otherText, setOtherText] = useState(isCustomValue ? value : "");
+
+  const selectOther = () => {
+    setOtherActive(true);
+    onChange(otherText); // may be "" initially — Continue stays disabled until typed
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {options.map(opt => (
-        <button key={opt} type="button"
-          className={`rai-opt-card${value === opt ? " selected" : ""}`}
-          onClick={() => onChange(opt)}
-        >
-          <div className="rai-opt-radio">
-            {value === opt && <div className="rai-opt-radio-dot" />}
-          </div>
-          {opt}
-        </button>
-      ))}
+      {options.map(opt => {
+        if (opt === OTHER_OPT) {
+          const selected = otherActive || isCustomValue;
+          return (
+            <div key={opt} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button type="button"
+                className={`rai-opt-card${selected ? " selected" : ""}`}
+                onClick={selectOther}
+              >
+                <div className="rai-opt-radio">{selected && <div className="rai-opt-radio-dot" />}</div>
+                {opt}
+              </button>
+              {selected && (
+                <input
+                  className="rai-inp"
+                  style={{ marginLeft: 30, width: "calc(100% - 30px)" }}
+                  placeholder="Type your own answer…"
+                  value={otherText}
+                  onChange={e => { setOtherText(e.target.value); onChange(e.target.value); }}
+                  autoFocus
+                />
+              )}
+            </div>
+          );
+        }
+        return (
+          <button key={opt} type="button"
+            className={`rai-opt-card${value === opt ? " selected" : ""}`}
+            onClick={() => { setOtherActive(false); onChange(opt); }}
+          >
+            <div className="rai-opt-radio">
+              {value === opt && <div className="rai-opt-radio-dot" />}
+            </div>
+            {opt}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
+// `CheckCards` — multi-select. "Other" stores its typed text as one entry in
+// the `values` array (alongside any other checked options), so multiple
+// custom entries aren't supported — one free-text slot, same as the rest of
+// the app's multi-selects.
 function CheckCards({ options, values, onChange }: {
   options: string[]; values: string[]; onChange: (v: string[]) => void;
 }) {
+  const knownValues = options.filter(o => o !== OTHER_OPT);
+  const customValue = values.find(v => !knownValues.includes(v)) ?? "";
+  const [otherActive, setOtherActive] = useState(Boolean(customValue));
+  const [otherText, setOtherText] = useState(customValue);
+
   const toggle = (opt: string) =>
     onChange(values.includes(opt) ? values.filter(v => v !== opt) : [...values, opt]);
+
+  const toggleOther = () => {
+    if (otherActive) {
+      setOtherActive(false);
+      onChange(values.filter(v => v !== otherText));
+      setOtherText("");
+    } else {
+      setOtherActive(true);
+    }
+  };
+
+  const updateOtherText = (text: string) => {
+    onChange([...values.filter(v => v !== otherText), ...(text ? [text] : [])]);
+    setOtherText(text);
+  };
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-      {options.map(opt => (
-        <button key={opt} type="button"
-          className={`rai-chk-card${values.includes(opt) ? " checked" : ""}`}
-          onClick={() => toggle(opt)}
-        >
-          <div className="rai-chk-box">
-            {values.includes(opt) && (
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            )}
-          </div>
-          {opt}
-        </button>
-      ))}
+      {options.map(opt => {
+        if (opt === OTHER_OPT) {
+          return (
+            <div key={opt} style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 8 }}>
+              <button type="button"
+                className={`rai-chk-card${otherActive ? " checked" : ""}`}
+                style={{ width: "calc(50% - 4px)" }}
+                onClick={toggleOther}
+              >
+                <div className="rai-chk-box">
+                  {otherActive && (
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  )}
+                </div>
+                {opt}
+              </button>
+              {otherActive && (
+                <input
+                  className="rai-inp"
+                  placeholder="Type your own answer…"
+                  value={otherText}
+                  onChange={e => updateOtherText(e.target.value)}
+                  autoFocus
+                />
+              )}
+            </div>
+          );
+        }
+        return (
+          <button key={opt} type="button"
+            className={`rai-chk-card${values.includes(opt) ? " checked" : ""}`}
+            onClick={() => toggle(opt)}
+          >
+            <div className="rai-chk-box">
+              {values.includes(opt) && (
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              )}
+            </div>
+            {opt}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -409,7 +610,7 @@ export default function RegisterAi() {
               </div>
             </div>
             <button onClick={() => navigate("/dashboard")}
-              style={{ padding:"8px 18px", borderRadius:9, border:"1.5px solid rgba(255,255,255,0.25)", background:"rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.85)", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:FF, backdropFilter:"blur(8px)", transition:"all 0.2s" }}
+              style={{ padding:"8px 18px", borderRadius:0, border:"1.5px solid rgba(255,255,255,0.25)", background:"rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.85)", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:FF, backdropFilter:"blur(8px)", transition:"all 0.2s" }}
               onMouseEnter={e => (e.currentTarget.style.background="rgba(255,255,255,0.18)")}
               onMouseLeave={e => (e.currentTarget.style.background="rgba(255,255,255,0.1)")}
             >← Back to Dashboard</button>
@@ -421,7 +622,7 @@ export default function RegisterAi() {
 
           {/* LEFT: step navigator */}
           <div style={{ position:"sticky", top:28 }}>
-            <div style={{ background:"#fff", borderRadius:10, border:"1.5px solid #E2EAF4", padding:"24px 20px", boxShadow:"0 2px 12px rgba(0,51,141,0.06)" }}>
+            <div style={{ background:"#fff", borderRadius:0, border:"1.5px solid #E2EAF4", padding:"24px 20px", boxShadow:"0 2px 12px rgba(0,51,141,0.06)" }}>
               <div style={{ fontSize:11, fontWeight:800, color:"#94A3B8", letterSpacing:"1.8px", textTransform:"uppercase" as const, marginBottom:18 }}>Progress</div>
               {STEPS.map((s, i) => (
                 <div key={s.id}>
@@ -445,7 +646,7 @@ export default function RegisterAi() {
 
           {/* MAIN FORM */}
           <div>
-            <div key={step} className="rai-anim" style={{ background:"#fff", borderRadius:10, border:"1.5px solid #E2EAF4", padding:"36px 36px 32px", boxShadow:"0 2px 20px rgba(0,51,141,0.07)", minHeight:440 }}>
+            <div key={step} className="rai-anim" style={{ background:"#fff", borderRadius:0, border:"1.5px solid #E2EAF4", padding:"36px 36px 32px", boxShadow:"0 2px 20px rgba(0,51,141,0.07)", minHeight:440 }}>
 
               {/* Step header */}
               <div style={{ marginBottom:28 }}>
@@ -497,39 +698,27 @@ export default function RegisterAi() {
                 <div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
                     <Field label="Primary End Users" required hint="Affects safety probe intensity and vulnerability risk classification.">
-                      <OptionCards options={END_USER_OPTS} value={endUsers} onChange={setEndUsers} />
+                      <OptionCards options={buildOptions(domain, "endUsers", END_USER_OPTS)} value={endUsers} onChange={setEndUsers} />
                     </Field>
                     <Field label="Decision Influence" required hint="How much does this agent influence real decisions? Sets the accountability bar.">
-                      <OptionCards options={DECISION_INFLUENCE_OPTS} value={decisionInfluence} onChange={setDecisionInfl} />
+                      <OptionCards options={[...DECISION_INFLUENCE_OPTS, OTHER_OPT]} value={decisionInfluence} onChange={setDecisionInfl} />
                     </Field>
                   </div>
 
                   <Field label="Sensitive Data Processed" hint="Select all that apply. Activates privacy and data protection probes.">
-                    <CheckCards options={DATA_TYPE_OPTS} values={dataTypes} onChange={setDataTypes} />
+                    <CheckCards options={buildOptions(domain, "dataTypes", DATA_TYPE_OPTS)} values={dataTypes} onChange={setDataTypes} />
                   </Field>
 
                   <Field label="Regulatory Jurisdictions" hint="Select all that apply. Triggers regulation-specific compliance probes.">
-                    <CheckCards options={JURISDICTION_OPTS} values={jurisdictions} onChange={setJurisdictions} />
+                    <CheckCards options={buildOptions(domain, "jurisdictions", JURISDICTION_OPTS)} values={jurisdictions} onChange={setJurisdictions} />
                   </Field>
 
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 20px" }}>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
                     <Field label="Deployment Status" required hint="Affects how audit results are weighted for production risk.">
-                      <div className="rai-sel-wrap">
-                        <select className="rai-sel" value={deploymentStatus} onChange={e => setDeploymentStatus(e.target.value)} style={{ color: deploymentStatus ? "#0F172A" : "#B0C0D4" }}>
-                          <option value="">Select status…</option>
-                          {DEPLOYMENT_STATUS_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                        <ChevronDown />
-                      </div>
+                      <OptionCards options={[...DEPLOYMENT_STATUS_OPTS, OTHER_OPT]} value={deploymentStatus} onChange={setDeploymentStatus} />
                     </Field>
                     <Field label="Output Visibility" hint="Who sees this agent's outputs?">
-                      <div className="rai-sel-wrap">
-                        <select className="rai-sel" value={outputVisibility} onChange={e => setOutputVisibility(e.target.value)} style={{ color: outputVisibility ? "#0F172A" : "#B0C0D4" }}>
-                          <option value="">Select visibility…</option>
-                          {OUTPUT_VISIBILITY_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                        <ChevronDown />
-                      </div>
+                      <OptionCards options={[...OUTPUT_VISIBILITY_OPTS, OTHER_OPT]} value={outputVisibility} onChange={setOutputVisibility} />
                     </Field>
                   </div>
 
@@ -549,7 +738,7 @@ export default function RegisterAi() {
                 <div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
                     <Field label="Human Oversight Level" required hint="Directly affects Accountability and Safety TAF scores.">
-                      <OptionCards options={OVERSIGHT_OPTS} value={oversight} onChange={setOversight} />
+                      <OptionCards options={buildOptions(domain, "oversight", OVERSIGHT_OPTS)} value={oversight} onChange={setOversight} />
                     </Field>
                     <div>
                       <Field label="Highest-Stakes Failure Mode" hint="One sentence: what's the worst realistic failure? Used to generate targeted adversarial probes.">
@@ -558,22 +747,13 @@ export default function RegisterAi() {
                           style={{ minHeight:90 }} />
                       </Field>
                       <Field label="Has Bias Testing Been Done?" hint="Affects how the Fairness principle is scored.">
-                        <div className="rai-sel-wrap">
-                          <select className="rai-sel" value={biasTested} onChange={e => setBiasTested(e.target.value)} style={{ color: biasTested ? "#0F172A" : "#B0C0D4" }}>
-                            <option value="">Select…</option>
-                            <option value="Yes — formal bias audit completed">Yes — formal bias audit completed</option>
-                            <option value="Partial — some testing done informally">Partial — some testing done informally</option>
-                            <option value="No — not yet tested for bias">No — not yet tested for bias</option>
-                            <option value="Not applicable">Not applicable</option>
-                          </select>
-                          <ChevronDown />
-                        </div>
+                        <OptionCards options={[...BIAS_TESTED_OPTS, OTHER_OPT]} value={biasTested} onChange={setBiasTested} />
                       </Field>
                     </div>
                   </div>
 
                   {/* Connection callout — explains where credentials go */}
-                  <div style={{ marginTop:8, display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", borderRadius:8, fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
+                  <div style={{ marginTop:8, display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", borderRadius:0, fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:2 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <span><strong>Connection details (API key, endpoint URL) are not stored here.</strong> You'll enter them each time you run a Black Box Audit from the Dashboard — keeping credentials out of the registration record entirely.</span>
                   </div>
@@ -583,7 +763,7 @@ export default function RegisterAi() {
               {/* ── STEP 4: Review ── */}
               {step === 4 && (
                 <div>
-                  <div style={{ borderRadius:8, border:"1.5px solid #E2EAF4", overflow:"hidden", marginBottom:22 }}>
+                  <div style={{ borderRadius:0, border:"1.5px solid #E2EAF4", overflow:"hidden", marginBottom:22 }}>
                     <div style={{ background:B, padding:"12px 20px" }}>
                       <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.55)", letterSpacing:"1.5px", textTransform:"uppercase" as const }}>Agent Summary</div>
                       <div style={{ fontSize:17, fontWeight:900, color:"#fff", marginTop:2 }}>{name || "—"}</div>
@@ -611,7 +791,7 @@ export default function RegisterAi() {
                       ))}
                     </div>
                   </div>
-                  <div style={{ display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", borderRadius:8, fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
+                  <div style={{ display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", borderRadius:0, fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:2 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <span>After registering, go to <strong style={{ color:B }}>Run Audit</strong> on the Dashboard. You'll enter your API key and endpoint there to start the Black Box Audit.</span>
                   </div>
@@ -619,7 +799,7 @@ export default function RegisterAi() {
               )}
 
               {error && (
-                <div style={{ marginTop:16, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:10, fontSize:13, color:"#C53030" }}>
+                <div style={{ marginTop:16, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:0, fontSize:13, color:"#C53030" }}>
                   {error}
                 </div>
               )}
@@ -658,8 +838,8 @@ export default function RegisterAi() {
 
           {/* RIGHT SIDEBAR */}
           <div key={`help-${step}`} className="rai-anim" style={{ position:"sticky", top:28 }}>
-            <div style={{ background:"#fff", borderRadius:10, border:"1.5px solid #E2EAF4", padding:"24px 22px", boxShadow:"0 2px 12px rgba(0,51,141,0.06)" }}>
-              <div style={{ width:36, height:36, borderRadius:10, background:`linear-gradient(135deg,${B},${M})`, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:14 }}>
+            <div style={{ background:"#fff", borderRadius:0, border:"1.5px solid #E2EAF4", padding:"24px 22px", boxShadow:"0 2px 12px rgba(0,51,141,0.06)" }}>
+              <div style={{ width:36, height:36, borderRadius:0, background:`linear-gradient(135deg,${B},${M})`, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:14 }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
               <div style={{ fontSize:14, fontWeight:800, color:"#0B1F33", marginBottom:8, lineHeight:1.3 }}>{sidebar.heading}</div>
@@ -674,11 +854,41 @@ export default function RegisterAi() {
               </div>
             </div>
 
-            <div style={{ marginTop:14, padding:"12px 16px", background:"#fff", borderRadius:8, border:"1.5px solid #E2EAF4", display:"flex", alignItems:"center", gap:10 }}>
-              <div style={{ flex:1, height:5, borderRadius:99, background:"#EEF2F8", overflow:"hidden" }}>
-                <div style={{ height:"100%", width:`${(step/STEPS.length)*100}%`, background:`linear-gradient(90deg,${B},${T})`, borderRadius:99, transition:"width 0.4s cubic-bezier(.16,1,.3,1)" }} />
-              </div>
-              <div style={{ fontSize:12, fontWeight:700, color:M, flexShrink:0 }}>{step}/{STEPS.length}</div>
+            <div style={{ marginTop:14, padding:"12px 16px", background:"#fff", borderRadius:0, border:"1.5px solid #E2EAF4" }}>
+              {(() => {
+                const answered = [
+                  name.trim().length > 1,
+                  Boolean(domain),
+                  desc.trim().length > 0,
+                  sysPrompt.trim().length > 0,
+                  Boolean(endUsers),
+                  Boolean(decisionInfluence),
+                  dataTypes.length > 0,
+                  jurisdictions.length > 0,
+                  Boolean(deploymentStatus),
+                  Boolean(outputVisibility),
+                  realTimeData.trim().length > 0,
+                  autonomousActions.trim().length > 0,
+                  Boolean(oversight),
+                  highestStakes.trim().length > 0,
+                  Boolean(biasTested),
+                ].filter(Boolean).length;
+                const total = 15;
+                const pct = Math.round((answered / total) * 100);
+                return (
+                  <>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", letterSpacing:"0.4px" }}>
+                        {answered} of {total} answered
+                      </div>
+                      <div style={{ fontSize:12, fontWeight:800, color:M }}>{pct}%</div>
+                    </div>
+                    <div style={{ height:5, borderRadius:99, background:"#EEF2F8", overflow:"hidden" }}>
+                      <div style={{ height:"100%", width:`${pct}%`, background:`linear-gradient(90deg,${B},${T})`, borderRadius:99, transition:"width 0.35s cubic-bezier(.16,1,.3,1)" }} />
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
 

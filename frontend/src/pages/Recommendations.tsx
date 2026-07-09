@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -180,21 +179,117 @@ export default function Recommendations() {
           <div style={{ padding:"16px 20px", background:`linear-gradient(135deg,${B}08,${M}05)`, border:`1.5px solid ${M}25`, borderRadius:14 }}>
             <p style={{ margin:0, color:"#1E293B", lineHeight:1.85, fontSize:14 }}>{overallRec}</p>
           </div>
-          {/* Remediation timeline */}
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:12, marginTop:16 }}>
-            {[
-              { label:"Immediate (0–30 days)",  items:sorted.filter(k=>(prn[k]?.score||0)<50).map(k=>k), color:"#64748B", bg:"#F1F5F9" },
-              { label:"Short-term (30–60 days)",items:sorted.filter(k=>(prn[k]?.score||0)>=50&&(prn[k]?.score||0)<75).map(k=>k), color:"#D97706", bg:"#FFF7ED" },
-              { label:"Ongoing monitoring",     items:sorted.filter(k=>(prn[k]?.score||0)>=75).map(k=>k), color:"#059669", bg:"#DCFCE7" },
-            ].map(t => (
-              <div key={t.label} style={{ padding:"14px 16px", borderRadius:12, background:t.bg, border:`1px solid ${t.color}25` }}>
-                <div style={{ fontSize:10, fontWeight:700, color:t.color, textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:8 }}>{t.label}</div>
-                {t.items.length === 0
-                  ? <div style={{ fontSize:11, color:"#94A3B8" }}>None</div>
-                  : t.items.map(k => <div key={k} style={{ fontSize:11.5, fontWeight:600, color:t.color, marginBottom:3 }}>• {k}</div>)
-                }
+          {/* Remediation timeline — Gantt chart */}
+          <div style={{ marginTop:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:16 }}>Remediation Timeline</div>
+
+            {/* Time axis */}
+            <div style={{ paddingLeft:168, marginBottom:6 }}>
+              <div style={{ position:"relative", height:18 }}>
+                {[
+                  { label:"Today",    pct:0   },
+                  { label:"2 weeks",  pct:20  },
+                  { label:"30 days",  pct:40  },
+                  { label:"45 days",  pct:60  },
+                  { label:"60 days",  pct:80  },
+                  { label:"Ongoing",  pct:100 },
+                ].map(t => (
+                  <span key={t.label} style={{ position:"absolute", left:`${t.pct}%`, transform:t.pct===100?"translateX(-100%)":t.pct===0?"none":"translateX(-50%)", fontSize:10, fontWeight:600, color:"#94A3B8", whiteSpace:"nowrap" as const }}>
+                    {t.label}
+                  </span>
+                ))}
               </div>
-            ))}
+              {/* tick line */}
+              <div style={{ position:"relative", height:6 }}>
+                {[0,20,40,60,80,100].map(p => (
+                  <div key={p} style={{ position:"absolute", left:`${p}%`, top:0, width:1, height:6, background:"#E2E8F0" }}/>
+                ))}
+                <div style={{ position:"absolute", top:5, left:0, right:0, height:1, background:"#E2E8F0" }}/>
+              </div>
+            </div>
+
+            {/* Phase background bands */}
+            <div style={{ position:"relative" }}>
+              <div style={{ paddingLeft:168, position:"absolute", inset:0, display:"flex", pointerEvents:"none", zIndex:0 }}>
+                <div style={{ width:"40%", background:"rgba(0,51,141,0.03)", borderRight:"1px dashed #E2E8F0" }}/>
+                <div style={{ width:"40%", background:"rgba(0,94,184,0.03)", borderRight:"1px dashed #E2E8F0" }}/>
+                <div style={{ flex:1, background:"rgba(0,145,218,0.03)" }}/>
+              </div>
+
+              {/* Rows */}
+              <div style={{ display:"flex", flexDirection:"column" as const, gap:3, position:"relative", zIndex:1 }}>
+                {sorted.map((k) => {
+                  const score = prn[k]?.score || 0;
+                  const rec = PRINCIPLE_RECS[k];
+                  const isImmediate = score < 50;
+                  const isWatch = score >= 50 && score < 75;
+                  const startPct = isImmediate ? 0   : isWatch ? 40  : 80;
+                  const widthPct = isImmediate ? 38  : isWatch ? 38  : 20;
+                  const barColor = isImmediate ? "#00338D" : isWatch ? "#005EB8" : "#0091DA";
+                  const action   = rec?.actions?.[0] || "Review and remediate.";
+                  const shortAction = action.length > 60 ? action.slice(0, 57) + "…" : action;
+
+                  return (
+                    <div key={k} style={{ display:"flex", alignItems:"stretch", minHeight:34 }}>
+                      {/* Principle name */}
+                      <div style={{ width:168, flexShrink:0, paddingRight:14, display:"flex", alignItems:"center" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                          <div style={{ width:3, height:22, background:barColor, flexShrink:0 }}/>
+                          <span style={{ fontSize:11.5, fontWeight:700, color:"#1E293B", lineHeight:1.3 }}>{k}</span>
+                        </div>
+                      </div>
+
+                      {/* Bar track */}
+                      <div style={{ flex:1, position:"relative", background:"#F8FAFC", borderTop:"1px solid #F1F5F9", borderBottom:"1px solid #F1F5F9" }}>
+                        <div style={{
+                          position:"absolute",
+                          left:`${startPct}%`,
+                          width:`${widthPct}%`,
+                          top:4,
+                          bottom:4,
+                          background:barColor,
+                          display:"flex",
+                          alignItems:"center",
+                          paddingLeft:8,
+                          paddingRight:8,
+                          gap:6,
+                          overflow:"hidden",
+                        }}>
+                          {/* Score badge */}
+                          <span style={{ fontSize:11, fontWeight:900, color:"white", flexShrink:0, opacity:0.95 }}>{score}</span>
+                          <span style={{ width:1, height:12, background:"rgba(255,255,255,0.3)", flexShrink:0 }}/>
+                          {/* Action text */}
+                          <span style={{ fontSize:10.5, color:"rgba(255,255,255,0.92)", fontWeight:500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const, flex:1 }}>
+                            {shortAction}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Phase label strip */}
+            <div style={{ paddingLeft:168, display:"flex", marginTop:8, fontSize:10, fontWeight:700, color:"#94A3B8" }}>
+              <div style={{ width:"40%", paddingLeft:4, color:"#00338D" }}>Phase 1 — Immediate (0–30 days)</div>
+              <div style={{ width:"40%", paddingLeft:4, color:"#005EB8" }}>Phase 2 — Short-Term (30–60 days)</div>
+              <div style={{ flex:1,      paddingLeft:4, color:"#0091DA" }}>Phase 3 — Ongoing</div>
+            </div>
+
+            {/* Legend */}
+            <div style={{ display:"flex", gap:20, marginTop:14, paddingTop:12, borderTop:"1px solid #F1F5F9" }}>
+              {[
+                { color:"#00338D", label:"Score < 50  —  Critical: must resolve before deployment" },
+                { color:"#005EB8", label:"Score 50–74  —  Watch: improve within 60 days" },
+                { color:"#0091DA", label:"Score ≥ 75  —  Strong: monitor quarterly" },
+              ].map(l => (
+                <div key={l.color} style={{ display:"flex", alignItems:"center", gap:7, fontSize:11, color:"#475569" }}>
+                  <div style={{ width:16, height:5, background:l.color, flexShrink:0 }}/>
+                  {l.label}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

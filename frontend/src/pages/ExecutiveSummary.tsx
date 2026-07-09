@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from "react";
 import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  ResponsiveContainer, Tooltip,
+} from "recharts";
 
 const B = "#00338D", M = "#005EB8", T = "#0091DA";
 const FF = "'Plus Jakarta Sans', system-ui, sans-serif";
@@ -503,6 +507,75 @@ export default function ExecutiveSummary() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* ── 8b. GOVERNANCE RADAR CHART ────────────────────────── */}
+            {pkeys.length > 0 && (
+              <div className="es-card" style={{ padding:"20px 24px" }}>
+                <div style={{ fontSize:13.5, fontWeight:800, color:"#0F172A", marginBottom:4 }}>Governance Radar</div>
+                <div style={{ fontSize:12, color:"#94A3B8", marginBottom:16 }}>Visual coverage across all {pkeys.length} KPMG principles — green dashed line marks the 75-point target</div>
+                <ResponsiveContainer width="100%" height={340}>
+                  <RadarChart
+                    data={pkeys.map(k => ({
+                      subject: k,
+                      score: prn[k]?.score || 0,
+                      target: 75,
+                    }))}
+                    margin={{ top:16, right:32, left:32, bottom:16 }}
+                  >
+                    <PolarGrid stroke="#E2E8F0" />
+                    <PolarAngleAxis
+                      dataKey="subject"
+                      tick={{ fontSize:11.5, fill:"#475569", fontWeight:600 }}
+                    />
+                    <PolarRadiusAxis
+                      angle={90}
+                      domain={[0, 100]}
+                      tick={{ fontSize:9.5, fill:"#CBD5E1" }}
+                      tickCount={5}
+                      axisLine={false}
+                    />
+                    {/* Target zone at 75 */}
+                    <Radar
+                      name="Target (75)"
+                      dataKey="target"
+                      stroke="#059669"
+                      fill="#059669"
+                      fillOpacity={0.07}
+                      strokeDasharray="5 3"
+                      strokeWidth={1.5}
+                    />
+                    {/* Current scores */}
+                    <Radar
+                      name="Current Score"
+                      dataKey="score"
+                      stroke={M}
+                      fill={M}
+                      fillOpacity={0.2}
+                      strokeWidth={2.5}
+                      dot={{ r: 3, fill: M, strokeWidth: 0 }}
+                    />
+                    <Tooltip
+                      contentStyle={{ background:"white", border:"1px solid #E2E8F0", borderRadius:8, fontSize:12 }}
+                      formatter={(v: any, name: string) => [
+                        name === "Current Score" ? `${v}/100` : `${v} (target)`,
+                        name,
+                      ]}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+                {/* Legend */}
+                <div style={{ display:"flex", gap:20, justifyContent:"center", marginTop:4, fontSize:12, fontWeight:600 }}>
+                  <span style={{ display:"flex", alignItems:"center", gap:6, color:M }}>
+                    <span style={{ width:20, height:3, background:M, borderRadius:2, display:"inline-block" }}/>
+                    Current Score
+                  </span>
+                  <span style={{ display:"flex", alignItems:"center", gap:6, color:"#059669" }}>
+                    <svg width="20" height="3" viewBox="0 0 20 3"><line x1="0" y1="1.5" x2="20" y2="1.5" stroke="#059669" strokeWidth="1.5" strokeDasharray="5 3"/></svg>
+                    Target (75)
+                  </span>
                 </div>
               </div>
             )}

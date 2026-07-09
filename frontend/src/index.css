@@ -130,8 +130,14 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- Aggressive cross-page overrides ----------
    These quietly normalize the inline <style> blocks scattered
-   across pages so the redesign sticks without editing each page. */
-[class*="card"], [class*="Card"] {
+   across pages so the redesign sticks without editing each page.
+   NOTE: scoped to the *.card utility class only (exact match,
+   plus BEM-style modifiers like .card--something). It used to be
+   `[class*="card"]`, which also matched unrelated classes that
+   merely contain the substring "card" (e.g. RegisterAi's
+   .rai-opt-card / .rai-chk-card option tiles), silently forcing
+   rounded corners onto pages that explicitly set border-radius:0. */
+.card, [class^="card-"], [class*=" card-"] {
   border-radius: var(--radius-lg) !important;
 }
 input, select, textarea {

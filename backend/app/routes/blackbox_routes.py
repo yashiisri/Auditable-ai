@@ -216,9 +216,8 @@ def get_all_blackbox_history(current_user=Depends(get_current_user)):
     records = list(
         blackbox_collection.find(
             {"owner_id": str(current_user["_id"])},
-            # exclude large/sensitive fields only — keep all delta + rerun fields
-            {"_id": 0, "probe_results": 0, "api_key": 0, "reconciliation": 0,
-             "resolved_findings": 0, "persisting_findings": 0, "new_findings": 0},
+            # exclude only large raw data — keep all delta/rerun fields for comparison view
+            {"_id": 0, "probe_results": 0, "api_key": 0, "reconciliation": 0},
         ).sort("created_at", -1).limit(100)
     )
     for r in records:
@@ -248,8 +247,10 @@ def get_audit_chain(audit_id: str, current_user=Depends(get_current_user)):
     chain = list(
         blackbox_collection.find(
             {"ai_name": ai_name, "owner_id": owner_id},
+            # Keep delta_summary + principle_deltas for timeline chart; strip only raw probe data
             {"_id": 0, "api_key": 0, "probe_results": 0, "reconciliation": 0,
-             "findings": 0, "resolved_findings": 0, "persisting_findings": 0, "new_findings": 0},
+             "findings": 0, "resolved_findings": 0, "persisting_findings": 0, "new_findings": 0,
+             "phase1_delta": 0},
         ).sort([("rerun_sequence", 1), ("created_at", 1)]).limit(50)
     )
     for r in chain:
@@ -272,7 +273,8 @@ def get_audit_chain_by_name(ai_name: str, current_user=Depends(get_current_user)
         blackbox_collection.find(
             {"ai_name": ai_name, "owner_id": owner_id},
             {"_id": 0, "api_key": 0, "probe_results": 0, "reconciliation": 0,
-             "findings": 0, "resolved_findings": 0, "persisting_findings": 0, "new_findings": 0},
+             "findings": 0, "resolved_findings": 0, "persisting_findings": 0, "new_findings": 0,
+             "phase1_delta": 0},
         ).sort([("rerun_sequence", 1), ("created_at", 1)]).limit(50)
     )
     for r in chain:

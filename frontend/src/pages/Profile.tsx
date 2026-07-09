@@ -1,623 +1,7 @@
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import axios from "axios";
-
-// /* ─────────────────────────────────────────────
-//    Types
-// ───────────────────────────────────────────── */
-// interface UserProfile {
-//   id: string;
-//   name: string;
-//   email: string;
-//   role: string;
-//   audit_count: number;
-//   created_at: string | null;
-//   last_login: string | null;
-// }
-
-// interface AuditRecord {
-//   audit_id: string;
-//   ai_name: string;
-//   overall_score: number;
-//   risk_level: string;
-//   status: string;
-//   created_at: string;
-//   probes_run?: number;
-//   mode?: string;
-//   findings?: any[];
-// }
-
-// const BASE_URL = "http://localhost:8000";
-
-// /* ─────────────────────────────────────────────
-//    Helpers
-// ───────────────────────────────────────────── */
-// const riskColor = (level: string) =>
-//   level === "Low" ? "#00C896" : level === "Moderate" ? "#ffb020" : "#ff4d4d";
-
-// const scoreGrade = (score: number) => {
-//   if (score >= 80) return { label: "Excellent", color: "#00C896" };
-//   if (score >= 65) return { label: "Good", color: "#4AACDF" };
-//   if (score >= 50) return { label: "Fair", color: "#ffb020" };
-//   return { label: "Poor", color: "#ff4d4d" };
-// };
-
-// const fmtDate = (d: string | null) => {
-//   if (!d) return "—";
-//   return new Date(d).toLocaleDateString("en-GB", {
-//     day: "2-digit", month: "short", year: "numeric",
-//   });
-// };
-
-// const fmtDateTime = (d: string | null) => {
-//   if (!d) return "—";
-//   return new Date(d).toLocaleString("en-GB", {
-//     day: "2-digit", month: "short", year: "numeric",
-//     hour: "2-digit", minute: "2-digit",
-//   });
-// };
-
-// const getInitials = (name: string) =>
-//   name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-
-// /* ─────────────────────────────────────────────
-//    SVG Score Ring
-// ───────────────────────────────────────────── */
-// function ScoreRing({ score, size = 56 }: { score: number; size?: number }) {
-//   const r = size * 0.38;
-//   const circ = 2 * Math.PI * r;
-//   const dash = (score / 100) * circ;
-//   const { color } = scoreGrade(score);
-//   return (
-//     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
-//       <circle cx={size/2} cy={size/2} r={r} fill="none"
-//         stroke="rgba(255,255,255,0.07)" strokeWidth={size * 0.1} />
-//       <circle cx={size/2} cy={size/2} r={r} fill="none"
-//         stroke={color} strokeWidth={size * 0.1}
-//         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-//         transform={`rotate(-90 ${size/2} ${size/2})`}
-//         style={{ transition: "stroke-dasharray 1.2s ease" }} />
-//       <text x={size/2} y={size/2 + 5} textAnchor="middle"
-//         fill="white" fontSize={size * 0.26} fontWeight="800"
-//         fontFamily="'IBM Plex Sans',sans-serif">
-//         {score}
-//       </text>
-//     </svg>
-//   );
-// }
-
-// /* ─────────────────────────────────────────────
-//    Component
-// ───────────────────────────────────────────── */
-// export default function Profile() {
-//   const navigate = useNavigate();
-
-//   const [profile, setProfile]       = useState<UserProfile | null>(null);
-//   const [audits, setAudits]         = useState<AuditRecord[]>([]);
-//   const [loading, setLoading]       = useState(true);
-//   const [auditsLoading, setAuditsLoading] = useState(true);
-//   const [profileError, setProfileError]   = useState("");
-
-//   const [editMode, setEditMode]     = useState(false);
-//   const [editName, setEditName]     = useState("");
-//   const [saveLoading, setSaveLoading] = useState(false);
-//   const [saveMsg, setSaveMsg]       = useState<{ text: string; ok: boolean } | null>(null);
-
-//   const [mounted, setMounted]       = useState(false);
-
-//   useEffect(() => {
-//     setTimeout(() => setMounted(true), 60);
-//     loadProfile();
-//     loadAuditHistory();
-//   }, []);
-
-//   const authHeader = () => {
-//     const token = localStorage.getItem("token");
-//     return token ? { Authorization: `Bearer ${token}` } : {};
-//   };
-
-//   const loadProfile = async () => {
-//     try {
-//       const res = await axios.get(`${BASE_URL}/api/auth/me`, { headers: authHeader() });
-//       setProfile(res.data);
-//       setEditName(res.data.name);
-//     } catch {
-//       setProfileError("Could not load profile. Please log in again.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const loadAuditHistory = async () => {
-//     try {
-//       const [bbRes, repRes] = await Promise.allSettled([
-//         axios.get(`${BASE_URL}/blackbox/history-all`, { headers: authHeader() }),
-//         axios.get(`${BASE_URL}/reports`,              { headers: authHeader() }),
-//       ]);
-
-//       const bbList: AuditRecord[] =
-//         bbRes.status === "fulfilled" ? (bbRes.value.data.history || []) : [];
-
-//       // Normalise evaluate-pipeline reports → AuditRecord shape
-//       const rawReports: any[] =
-//         repRes.status === "fulfilled" ? (repRes.value.data.reports || []) : [];
-
-//       const repList: AuditRecord[] = rawReports.map((r) => ({
-//         audit_id:      r.report_id,
-//         ai_name:       r.ai_name,
-//         overall_score: r.overall_score ?? 0,
-//         risk_level:    r.risk_level    ?? "Unknown",
-//         status:        "completed",
-//         created_at:    r.evaluated_at  ?? r.created_at ?? new Date().toISOString(),
-//         mode:          "evaluate",
-//         findings:      r.findings,
-//       }));
-
-//       // Merge and sort newest-first
-//       const merged = [...bbList, ...repList].sort(
-//         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-//       );
-//       setAudits(merged);
-//     } catch {
-//       setAudits([]);
-//     } finally {
-//       setAuditsLoading(false);
-//     }
-//   };
-
-//   const handleSave = async () => {
-//     if (!editName.trim()) return;
-//     setSaveLoading(true);
-//     setSaveMsg(null);
-//     try {
-//       await axios.patch(
-//         `${BASE_URL}/api/auth/me`,
-//         { name: editName.trim() },
-//         { headers: authHeader() }
-//       );
-//       setProfile((p) => p ? { ...p, name: editName.trim() } : p);
-//       setEditMode(false);
-//       setSaveMsg({ text: "Name updated successfully.", ok: true });
-//       setTimeout(() => setSaveMsg(null), 3000);
-//     } catch {
-//       setSaveMsg({ text: "Failed to update. Try again.", ok: false });
-//     } finally {
-//       setSaveLoading(false);
-//     }
-//   };
-
-//   const handleAuditClick = async (audit: AuditRecord) => {
-//     // Evaluate-pipeline reports — fetch full report doc and open in /report
-//     if (audit.mode === "evaluate") {
-//       try {
-//         const res = await axios.get(
-//           `${BASE_URL}/reports/${audit.audit_id}`,
-//           { headers: authHeader() },
-//         );
-//         navigate("/report", { state: { data: res.data } });
-//       } catch {
-//         // Fallback: pass whatever we have and let Report normalise it
-//         navigate("/report", { state: { data: audit } });
-//       }
-//       return;
-//     }
-
-//     // Black-box audits — existing logic unchanged
-//     try {
-//       const res = await axios.get(
-//         `${BASE_URL}/blackbox/audit/${audit.audit_id}`,
-//         { headers: authHeader() },
-//       );
-//       navigate("/report", { state: { data: res.data } });
-//     } catch {
-//       navigate("/report", { state: { data: audit } });
-//     }
-//   };
-
-//   const handleLogout = () => {
-//     localStorage.removeItem("token");
-//     localStorage.removeItem("activeAI");
-//     navigate("/login");
-//   };
-
-//   /* Derived stats */
-//   const completedAudits = audits.filter((a) => a.status === "completed");
-//   const avgScore =
-//     completedAudits.length > 0
-//       ? Math.round(completedAudits.reduce((s, a) => s + (a.overall_score || 0), 0) / completedAudits.length)
-//       : null;
-//   const highRiskCount = audits.filter((a) => a.risk_level === "High").length;
-
-//   const fade = (delay: number): React.CSSProperties => ({
-//     opacity: mounted ? 1 : 0,
-//     transform: mounted ? "translateY(0)" : "translateY(18px)",
-//     transition: `opacity 0.65s ease ${delay}s, transform 0.65s ease ${delay}s`,
-//   });
-
-//   /* ── Loading screen ── */
-//   if (loading) {
-//     return (
-//       <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", background:"#030C1E" }}>
-//         <div style={{ textAlign:"center" }}>
-//           <div style={{ width:38, height:38, border:"3px solid rgba(0,145,218,0.2)", borderTop:"3px solid #0091DA", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 14px" }} />
-//           <p style={{ color:"#9DBFE0", fontSize:13, fontFamily:"'IBM Plex Sans',sans-serif" }}>Loading profile…</p>
-//           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   /* ── Error screen ── */
-//   if (profileError) {
-//     return (
-//       <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100vh", background:"#030C1E", gap:18, fontFamily:"'IBM Plex Sans',sans-serif" }}>
-//         <div style={{ fontSize:38 }}></div>
-//         <p style={{ color:"#ff8787", fontSize:14 }}>{profileError}</p>
-//         <button onClick={() => navigate("/login")} style={{ padding:"11px 26px", background:"linear-gradient(135deg,#0091DA,#00C896)", border:"none", borderRadius:10, color:"white", fontWeight:600, cursor:"pointer", fontSize:13 }}>
-//           Back to Login
-//         </button>
-//       </div>
-//     );
-//   }
-
-//   const initials = profile ? getInitials(profile.name) : "??";
-
-//   return (
-//     <div style={{
-//       minHeight: "100vh",
-//       background: "radial-gradient(circle at 15% 15%, rgba(0,51,141,0.55) 0%, transparent 45%), radial-gradient(circle at 85% 80%, rgba(0,200,150,0.18) 0%, transparent 45%), #030C1E",
-//       color: "#D8E8F5",
-//       fontFamily: "'IBM Plex Sans', sans-serif",
-//       padding: "36px 40px 80px",
-//     }}>
-
-//       <style>{`
-//         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
-//         * { box-sizing: border-box; }
-//         ::-webkit-scrollbar { width: 5px; }
-//         ::-webkit-scrollbar-thumb { background: rgba(0,145,218,0.3); border-radius: 3px; }
-
-//         .p-panel {
-//           background: rgba(8,22,52,0.75);
-//           border: 1px solid rgba(0,145,218,0.22);
-//           border-radius: 18px;
-//           padding: 28px 30px;
-//           backdrop-filter: blur(18px);
-//           box-shadow: 0 8px 32px rgba(0,0,0,0.28);
-//         }
-//         .p-input {
-//           padding: 11px 15px;
-//           border-radius: 10px;
-//           border: 1px solid rgba(0,145,218,0.35);
-//           background: rgba(3,12,30,0.7);
-//           color: #EAF2FB;
-//           font-size: 14px;
-//           font-family: 'IBM Plex Sans', sans-serif;
-//           transition: border-color 0.2s, box-shadow 0.2s;
-//           outline: none;
-//         }
-//         .p-input:focus {
-//           border-color: #00C896;
-//           box-shadow: 0 0 0 3px rgba(0,200,150,0.15);
-//         }
-//         .p-input::placeholder { color: rgba(255,255,255,0.3); }
-
-//         .btn-primary {
-//           padding: 10px 20px; border-radius: 9px; border: none;
-//           background: linear-gradient(135deg, #0091DA, #00C896);
-//           color: white; font-weight: 600; font-size: 13px; cursor: pointer;
-//           font-family: 'IBM Plex Sans', sans-serif;
-//           transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-//         }
-//         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,200,150,0.3); }
-//         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-//         .btn-ghost {
-//           padding: 10px 20px; border-radius: 9px;
-//           border: 1px solid rgba(255,255,255,0.18);
-//           background: transparent; color: rgba(255,255,255,0.65);
-//           font-weight: 600; font-size: 13px; cursor: pointer;
-//           font-family: 'IBM Plex Sans', sans-serif;
-//           transition: background 0.2s, border-color 0.2s, color 0.2s;
-//         }
-//         .btn-ghost:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.3); color: white; }
-
-//         .btn-danger {
-//           padding: 10px 20px; border-radius: 9px;
-//           border: 1px solid rgba(255,77,77,0.3); background: rgba(255,77,77,0.07);
-//           color: #ff8787; font-weight: 600; font-size: 13px; cursor: pointer;
-//           font-family: 'IBM Plex Sans', sans-serif; transition: background 0.2s, transform 0.2s;
-//         }
-//         .btn-danger:hover { background: rgba(255,77,77,0.16); transform: translateY(-1px); }
-
-//         .audit-item {
-//           display: flex; align-items: center; gap: 14px;
-//           padding: 14px 18px; border-radius: 12px;
-//           border: 1px solid rgba(0,145,218,0.14);
-//           background: rgba(255,255,255,0.03);
-//           cursor: pointer;
-//           transition: background 0.22s, border-color 0.22s, transform 0.22s;
-//           flex-wrap: wrap;
-//         }
-//         .audit-item:hover {
-//           background: rgba(0,145,218,0.09);
-//           border-color: rgba(0,145,218,0.3);
-//           transform: translateX(5px);
-//         }
-
-//         .stat-pill {
-//           text-align: center; padding: 16px 18px;
-//           border-radius: 14px; background: rgba(255,255,255,0.04);
-//           border: 1px solid rgba(0,145,218,0.18);
-//           flex: 1; min-width: 80px;
-//         }
-
-//         .info-row {
-//           display: flex; flex-direction: column; gap: 4px;
-//           padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
-//         }
-//         .info-row:last-child { border-bottom: none; }
-//         .info-label {
-//           font-size: 10px; font-weight: 600; color: #4AACDF;
-//           text-transform: uppercase; letter-spacing: 0.7px;
-//         }
-//         .info-value { font-size: 13px; color: #D8E8F5; font-weight: 500; }
-
-//         .sec-heading {
-//           font-size: 15px; font-weight: 700; color: #EAF2FB;
-//           margin: 0 0 18px; display: flex; align-items: center; gap: 8px;
-//         }
-
-//         .avatar {
-//           width: 78px; height: 78px; border-radius: 50%;
-//           background: linear-gradient(135deg, #00338D 0%, #0091DA 60%, #00C896 100%);
-//           display: flex; align-items: center; justify-content: center;
-//           font-size: 26px; font-weight: 800; color: white;
-//           letter-spacing: -1px; flex-shrink: 0;
-//           box-shadow: 0 0 0 3px rgba(0,200,150,0.35), 0 4px 20px rgba(0,0,0,0.3);
-//         }
-
-//         .tag {
-//           display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
-//         }
-
-//         .quick-action-btn {
-//           padding: 14px 16px; border-radius: 12px;
-//           border: 1px solid rgba(0,145,218,0.2);
-//           background: rgba(255,255,255,0.03);
-//           color: #D8E8F5; font-size: 13px; font-weight: 600;
-//           cursor: pointer; text-align: left; font-family: inherit;
-//           transition: background 0.22s, border-color 0.22s, transform 0.22s;
-//           display: flex; align-items: center; gap: 10px;
-//         }
-//         .quick-action-btn:hover {
-//           background: rgba(0,145,218,0.1);
-//           border-color: rgba(0,145,218,0.35);
-//           transform: translateY(-2px);
-//         }
-
-//         @keyframes spin { to { transform: rotate(360deg); } }
-//       `}</style>
-
-//       {/* ── TOP BAR ── */}
-//       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:32, paddingBottom:18, borderBottom:"1px solid rgba(0,145,218,0.18)", ...fade(0) }}>
-//         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-//           <span style={{ fontSize:22, fontWeight:800, background:"linear-gradient(90deg,#00C896,#0091DA)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
-//             Auditable AI™
-//           </span>
-//           <span style={{ fontSize:11, color:"#4AACDF", background:"rgba(0,145,218,0.1)", border:"1px solid rgba(0,145,218,0.25)", borderRadius:20, padding:"3px 12px" }}>
-//             Profile
-//           </span>
-//         </div>
-//         <button className="btn-danger" onClick={handleLogout}>Sign Out →</button>
-//       </div>
-
-//       <div style={{ maxWidth:1060, margin:"0 auto", display:"flex", flexDirection:"column", gap:22 }}>
-
-//         {/* ── IDENTITY HERO ── */}
-//         <div className="p-panel" style={{ ...fade(0.06), display:"flex", gap:26, alignItems:"center", flexWrap:"wrap" }}>
-
-//           <div className="avatar">{initials}</div>
-
-//           <div style={{ flex:1, minWidth:200 }}>
-//             {editMode ? (
-//               <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
-//                 <input
-//                   className="p-input"
-//                   value={editName}
-//                   onChange={(e) => setEditName(e.target.value)}
-//                   placeholder="Full name"
-//                   style={{ width:210 }}
-//                   onKeyDown={(e) => e.key === "Enter" && handleSave()}
-//                   autoFocus
-//                 />
-//                 <button className="btn-primary" onClick={handleSave} disabled={saveLoading}>
-//                   {saveLoading ? "Saving…" : "Save"}
-//                 </button>
-//                 <button className="btn-ghost" onClick={() => { setEditMode(false); setEditName(profile?.name || ""); }}>
-//                   Cancel
-//                 </button>
-//               </div>
-//             ) : (
-//               <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
-//                 <h1 style={{ margin:0, fontSize:24, fontWeight:700, color:"#EAF2FB" }}>{profile?.name}</h1>
-//                 <button
-//                   onClick={() => setEditMode(true)}
-//                   style={{ background:"none", border:"none", color:"#4AACDF", fontSize:13, cursor:"pointer", fontFamily:"inherit", padding:"4px 8px", borderRadius:6 }}
-//                 >
-//                    Edit
-//                 </button>
-//               </div>
-//             )}
-
-//             <div style={{ display:"flex", gap:8, marginTop:10, flexWrap:"wrap" }}>
-//               <span className="tag" style={{ background:"rgba(0,200,150,0.12)", border:"1px solid rgba(0,200,150,0.3)", color:"#00C896" }}>
-//                  Active
-//               </span>
-//               <span className="tag" style={{ background:"rgba(0,145,218,0.12)", border:"1px solid rgba(0,145,218,0.3)", color:"#4AACDF", textTransform:"capitalize" }}>
-//                 {profile?.role || "Auditor"}
-//               </span>
-//             </div>
-
-//             {saveMsg && (
-//               <p style={{ margin:"10px 0 0", fontSize:12, color: saveMsg.ok ? "#00C896" : "#ff8787" }}>
-//                 {saveMsg.ok ? "" : ""} {saveMsg.text}
-//               </p>
-//             )}
-//           </div>
-
-//           {/* Stats */}
-//           <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-//             {[
-//               { val: profile?.audit_count ?? 0,   label: "Total Audits",  color: "#00C896" },
-//               { val: completedAudits.length,        label: "Completed",     color: "#0091DA" },
-//               { val: avgScore ?? "—",               label: "Avg Score",     color: avgScore !== null ? scoreGrade(avgScore).color : "#9DBFE0" },
-//               { val: highRiskCount,                 label: "High Risk",     color: highRiskCount > 0 ? "#ff4d4d" : "#00C896" },
-//             ].map((s) => (
-//               <div key={s.label} className="stat-pill">
-//                 <div style={{ fontSize:26, fontWeight:800, color: s.color as string }}>{s.val}</div>
-//                 <div style={{ fontSize:10, color:"#9DBFE0", marginTop:3 }}>{s.label}</div>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-
-//         {/* ── TWO COLUMN ── */}
-//         <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:22, alignItems:"start", ...fade(0.12) }}>
-
-//           {/* LEFT – Account info */}
-//           <div className="p-panel" style={{ margin:0 }}>
-//             <p className="sec-heading"> Account Details</p>
-
-//             {[
-//               { label:"Email",        value: profile?.email },
-//               { label:"Role",         value: profile?.role, capitalize: true },
-//               { label:"Organisation", value: "KPMG Assurance and Consulting Services LLP" },
-//               { label:"Member Since", value: fmtDate(profile?.created_at ?? null) },
-//               { label:"Last Login",   value: fmtDateTime(profile?.last_login ?? null) },
-//             ].map((row) => (
-//               <div key={row.label} className="info-row">
-//                 <span className="info-label">{row.label}</span>
-//                 <span className="info-value" style={row.capitalize ? { textTransform:"capitalize" } : undefined}>
-//                   {row.value ?? "—"}
-//                 </span>
-//               </div>
-//             ))}
-
-//             <div className="info-row">
-//               <span className="info-label">Platform Access</span>
-//               <div style={{ display:"flex", flexDirection:"column", gap:5, marginTop:5 }}>
-//                 {["Black Box Audit", "SDCC Pipeline", "Report Generation"].map((f) => (
-//                   <span key={f} style={{ fontSize:12, color:"#00C896", display:"flex", alignItems:"center", gap:6 }}>
-//                     <span style={{ width:5, height:5, borderRadius:"50%", background:"#00C896", display:"inline-block", flexShrink:0 }} />
-//                     {f}
-//                   </span>
-//                 ))}
-//               </div>
-//             </div>
-
-//             <button className="btn-primary" style={{ width:"100%", marginTop:20 }} onClick={() => navigate("/dashboard")}>
-//               ← Back to Dashboard
-//             </button>
-//           </div>
-
-//           {/* RIGHT – Audit history */}
-//           <div className="p-panel" style={{ margin:0 }}>
-//             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-//               <p className="sec-heading" style={{ margin:0 }}> My Projects</p>
-//               <button className="btn-ghost" style={{ fontSize:12, padding:"7px 14px" }} onClick={() => navigate("/dashboard")}>
-//                 + New Audit
-//               </button>
-//             </div>
-
-//             {auditsLoading ? (
-//               <div style={{ textAlign:"center", padding:"48px 0" }}>
-//                 <div style={{ width:30, height:30, border:"3px solid rgba(0,145,218,0.15)", borderTop:"3px solid #0091DA", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 14px" }} />
-//                 <p style={{ color:"#9DBFE0", fontSize:13 }}>Loading audits…</p>
-//               </div>
-//             ) : audits.length === 0 ? (
-//               <div style={{ textAlign:"center", padding:"52px 20px" }}>
-//                 <div style={{ fontSize:42, marginBottom:14 }}></div>
-//                 <p style={{ color:"#9DBFE0", fontSize:13, margin:"0 0 14px" }}>No audits run yet.</p>
-//                 <button className="btn-primary" onClick={() => navigate("/dashboard")}>Run your first audit →</button>
-//               </div>
-//             ) : (
-//               <div style={{ display:"flex", flexDirection:"column", gap:9, maxHeight:430, overflowY:"auto", paddingRight:2 }}>
-//                 {audits.map((audit) => {
-//                   const rc = riskColor(audit.risk_level);
-//                   const { color: sc, label: grade } = scoreGrade(audit.overall_score ?? 0);
-//                   return (
-//                     <div key={audit.audit_id} className="audit-item" onClick={() => handleAuditClick(audit)}>
-
-//                       <ScoreRing score={audit.overall_score ?? 0} size={52} />
-
-//                       <div style={{ flex:1, minWidth:110 }}>
-//                         <div style={{ fontWeight:700, fontSize:14, color:"#EAF2FB", marginBottom:3 }}>
-//                           {audit.ai_name}
-//                         </div>
-//                         <div style={{ fontSize:11, color:"#9DBFE0" }}>
-//                           {fmtDate(audit.created_at)}
-//                           {audit.probes_run ? ` · ${audit.probes_run} probes` : ""}
-//                           {audit.mode ? ` · ${audit.mode === "evaluate" ? "Evaluate" : audit.mode.toUpperCase()}` : ""}
-//                         </div>
-//                       </div>
-
-//                       <span style={{ fontSize:11, fontWeight:700, color:sc, background:`${sc}15`, border:`1px solid ${sc}40`, padding:"3px 9px", borderRadius:20, flexShrink:0 }}>
-//                         {grade}
-//                       </span>
-
-//                       <span style={{ fontSize:11, fontWeight:600, color:rc, background:`${rc}12`, border:`1px solid ${rc}40`, padding:"3px 9px", borderRadius:20, flexShrink:0 }}>
-//                         {audit.risk_level}
-//                       </span>
-
-//                       <span style={{ fontSize:11, color: audit.status === "completed" ? "#00C896" : "#ffb020", fontWeight:600, flexShrink:0 }}>
-//                         {audit.status === "completed" ? " Done" : "⏳ " + audit.status}
-//                       </span>
-
-//                       <span style={{ color:"#4AACDF", fontSize:18, flexShrink:0 }}>›</span>
-//                     </div>
-//                   );
-//                 })}
-//               </div>
-//             )}
-
-//             {audits.length > 0 && (
-//               <p style={{ margin:"12px 0 0", fontSize:11, color:"#4AACDF", textAlign:"center", fontStyle:"italic" }}>
-//                 Click any row to open its full report →
-//               </p>
-//             )}
-//           </div>
-//         </div>
-
-//         {/* ── QUICK ACTIONS ── */}
-//         <div className="p-panel" style={{ ...fade(0.18) }}>
-//           <p className="sec-heading"> Quick Actions</p>
-//           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(185px, 1fr))", gap:10 }}>
-//             {[
-//               { icon:"", label:"New Black Box Audit",  path:"/dashboard"    },
-//               { icon:"", label:"Upload Logs (SDCC)",   path:"/dashboard"    },
-//               { icon:"", label:"Report Generation",    path:"/report"       },
-//               { icon:"", label:"Register AI System",   path:"/register-ai"  },
-//             ].map((a) => (
-//               <button key={a.label} className="quick-action-btn" onClick={() => navigate(a.path)}>
-//                 <span style={{ fontSize:18 }}>{a.icon}</span>
-//                 {a.label}
-//               </button>
-//             ))}
-//           </div>
-//         </div>
-
-//       </div>
-//     </div>
-//   );
-// }
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+ 
 /* ─────────────────────────────────────────────
    Types
 ───────────────────────────────────────────── */
@@ -630,7 +14,7 @@ interface UserProfile {
   created_at: string | null;
   last_login: string | null;
 }
-
+ 
 interface AuditRecord {
   audit_id: string;
   ai_name: string;
@@ -657,44 +41,51 @@ interface AuditRecord {
     principles_improved: string[];
     principles_regressed: string[];
   };
+  principle_deltas?: any[];
+  resolved_findings?: any[];
+  persisting_findings?: any[];
+  new_findings?: any[];
+  phase1_delta?: any;
+  started_at?: string;
+  completed_at?: string;
 }
-
+ 
 const KPMG_PRINCIPLES = [
   "Safety","Security","Privacy","Fairness","Reliability",
   "Transparency","Accountability","Explainability","Data Integrity","Sustainability",
 ];
-
+ 
 const BASE_URL = "http://localhost:8000";
-
+ 
 /* ─────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────── */
 const riskColor = (level: string) =>
-  level === "Low" ? "#059669" : level === "Moderate" ? "#D97706" : "#DC2626";
-
+  level === "Low" ? "#059669" : level === "Moderate" ? "#D97706" : "#64748B";
+ 
 const riskBg = (level: string) =>
-  level === "Low" ? "#DCFCE7" : level === "Moderate" ? "#FEF3C7" : "#FEE2E2";
-
+  level === "Low" ? "#DCFCE7" : level === "Moderate" ? "#FEF3C7" : "#F1F5F9";
+ 
 const scoreGrade = (score: number) => {
   if (score >= 80) return { label: "Excellent", color: "#059669", bg: "#DCFCE7" };
   if (score >= 65) return { label: "Good",      color: "#2563EB", bg: "#EFF6FF" };
   if (score >= 50) return { label: "Fair",      color: "#D97706", bg: "#FEF3C7" };
-  return              { label: "Poor",      color: "#DC2626", bg: "#FEE2E2" };
+  return              { label: "Poor",      color: "#64748B", bg: "#F1F5F9" };
 };
-
+ 
 const fmtDate = (d: string | null) => {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 };
-
+ 
 const fmtDateTime = (d: string | null) => {
   if (!d) return "—";
   return new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 };
-
+ 
 const getInitials = (name: string) =>
   name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-
+ 
 /* ─────────────────────────────────────────────
    SVG Score Ring
 ───────────────────────────────────────────── */
@@ -718,26 +109,26 @@ function ScoreRing({ score, size = 56 }: { score: number; size?: number }) {
     </svg>
   );
 }
-
+ 
 /* ─────────────────────────────────────────────
    Component
 ───────────────────────────────────────────── */
 export default function Profile() {
   const navigate = useNavigate();
-
+ 
   const [profile, setProfile]             = useState<UserProfile | null>(null);
   const [audits, setAudits]               = useState<AuditRecord[]>([]);
   const [loading, setLoading]             = useState(true);
   const [auditsLoading, setAuditsLoading] = useState(true);
   const [profileError, setProfileError]   = useState("");
-
+ 
   const [editMode, setEditMode]     = useState(false);
   const [editName, setEditName]     = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveMsg, setSaveMsg]       = useState<{ text: string; ok: boolean } | null>(null);
-
+ 
   const [mounted, setMounted] = useState(false);
-
+ 
   // ── Re-run state ──────────────────────────────────────────────────────────
   const [rerunTarget, setRerunTarget]   = useState<AuditRecord | null>(null);
   const [rerunContext, setRerunContext] = useState("");
@@ -751,18 +142,18 @@ export default function Profile() {
   // Which AI system groups are expanded in the project list
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const dialogRef = useRef<HTMLDivElement>(null);
-
+ 
   useEffect(() => {
     setTimeout(() => setMounted(true), 60);
     loadProfile();
     loadAuditHistory();
   }, []);
-
+ 
   const authHeader = () => {
     const token = localStorage.getItem("token");
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
-
+ 
   const loadProfile = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/auth/me`, { headers: authHeader() });
@@ -774,7 +165,7 @@ export default function Profile() {
       setLoading(false);
     }
   };
-
+ 
   const loadAuditHistory = async () => {
     try {
       const [bbRes, repRes] = await Promise.allSettled([
@@ -785,7 +176,7 @@ export default function Profile() {
         bbRes.status === "fulfilled" ? (bbRes.value.data.history || []) : [];
       const rawReports: any[] =
         repRes.status === "fulfilled" ? (repRes.value.data.reports || []) : [];
-
+ 
       // Map SDCC reports — only include if NOT already covered by a blackbox record
       // (same ai_name + same date window) to avoid duplicates in the list
       const bbAiNames = new Set(bbList.map(b => b.ai_name));
@@ -801,7 +192,7 @@ export default function Profile() {
           mode:          "evaluate",
           findings:      r.findings,
         }));
-
+ 
       // Merge and sort: within each AI, order by rerun_sequence asc then created_at asc
       const merged = [...bbList, ...repList].sort((a, b) => {
         // Primary: group by ai_name alphabetically
@@ -820,7 +211,7 @@ export default function Profile() {
       setAuditsLoading(false);
     }
   };
-
+ 
   const handleSave = async () => {
     if (!editName.trim()) return;
     setSaveLoading(true);
@@ -837,7 +228,7 @@ export default function Profile() {
       setSaveLoading(false);
     }
   };
-
+ 
   const handleAuditClick = async (audit: AuditRecord) => {
     if (audit.mode === "evaluate") {
       try {
@@ -850,12 +241,23 @@ export default function Profile() {
     }
     try {
       const res = await axios.get(`${BASE_URL}/blackbox/audit/${audit.audit_id}`, { headers: authHeader() });
-      navigate("/report", { state: { data: res.data } });
+      // Merge delta fields: GET response wins, fall back to list-item fields
+      // (history-all now includes these, so this covers both paths)
+      const fullData = {
+        ...res.data,
+        delta_summary:       res.data.delta_summary       ?? audit.delta_summary,
+        principle_deltas:    res.data.principle_deltas     ?? audit.principle_deltas,
+        resolved_findings:   res.data.resolved_findings    ?? audit.resolved_findings,
+        persisting_findings: res.data.persisting_findings  ?? audit.persisting_findings,
+        new_findings:        res.data.new_findings         ?? audit.new_findings,
+        phase1_delta:        res.data.phase1_delta         ?? audit.phase1_delta,
+      };
+      navigate("/report", { state: { data: fullData } });
     } catch {
       navigate("/report", { state: { data: audit } });
     }
   };
-
+ 
   // ── Re-run handlers ──────────────────────────────────────────────────────
   const handleStartRerun = (e: React.MouseEvent, audit: AuditRecord) => {
     e.stopPropagation();
@@ -868,7 +270,7 @@ export default function Profile() {
     setRerunEndpoint("");
     setRerunStep(1);
   };
-
+ 
   const handleSubmitRerun = async () => {
     if (!rerunTarget) return;
     if (!rerunContext.trim()) { setRerunError("Please describe what changed."); return; }
@@ -902,28 +304,28 @@ export default function Profile() {
       setRerunLoading(false);
     }
   };
-
+ 
   const handleLogout = () => {
     localStorage.removeItem("activeAI");
     navigate("/login");
   };
-
+ 
   const completedAudits = audits.filter((a) => a.status === "completed");
   const avgScore = completedAudits.length > 0
     ? Math.round(completedAudits.reduce((s, a) => s + (a.overall_score || 0), 0) / completedAudits.length)
     : null;
   const highRiskCount = audits.filter((a) => a.risk_level === "High").length;
-
+ 
   const fade = (delay: number): React.CSSProperties => ({
     opacity: mounted ? 1 : 0,
     transform: mounted ? "translateY(0)" : "translateY(18px)",
     transition: `opacity 0.65s ease ${delay}s, transform 0.65s ease ${delay}s`,
   });
-
+ 
   /* ── Loading ── */
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F1F5F9" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F8FAFC" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ width: 38, height: 38, border: "3px solid #E2E8F0", borderTop: "3px solid #2563EB", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 14px" }} />
           <p style={{ color: "#94A3B8", fontSize: 13, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Loading profile…</p>
@@ -932,38 +334,38 @@ export default function Profile() {
       </div>
     );
   }
-
+ 
   /* ── Error ── */
   if (profileError) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F1F5F9", gap: 18, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F8FAFC", gap: 18, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div style={{ fontSize: 38 }}></div>
         <p style={{ color: "#DC2626", fontSize: 14 }}>{profileError}</p>
-        <button onClick={() => navigate("/login")} style={{ padding: "11px 26px", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", border: "none", borderRadius: 10, color: "white", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
+        <button onClick={() => navigate("/login")} style={{ padding: "11px 26px", background: "linear-gradient(135deg, #00338D, #005EB8)", border: "none", borderRadius: 10, color: "white", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
           Back to Login
         </button>
       </div>
     );
   }
-
+ 
   const initials = profile ? getInitials(profile.name) : "??";
-
+ 
   return (
-    <div style={{ minHeight: "100vh", background: "#F1F5F9", color: "#1E293B", fontFamily: "'Plus Jakarta Sans', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
-
+    <div style={{ minHeight: "100vh", background: "#F8FAFC", color: "#1E293B", fontFamily: "'Plus Jakarta Sans', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
+ 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
-
+ 
         .card {
           background: white;
           border: 1px solid #E2E8F0;
-          border-radius: 20px;
+          border-radius: 14px;
           box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
         }
-
+ 
         .p-input {
           padding: 10px 14px; border-radius: 10px;
           border: 1.5px solid #E2E8F0;
@@ -973,7 +375,7 @@ export default function Profile() {
         }
         .p-input:focus { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
         .p-input::placeholder { color: #94A3B8; }
-
+ 
         .btn-primary {
           padding: 10px 20px; border-radius: 10px; border: none;
           background: linear-gradient(135deg, #1E3A8A, #2563EB);
@@ -984,7 +386,7 @@ export default function Profile() {
         }
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,99,235,0.35); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
+ 
         .btn-ghost {
           padding: 10px 20px; border-radius: 10px;
           border: 1.5px solid #E2E8F0; background: white;
@@ -993,7 +395,7 @@ export default function Profile() {
           transition: border-color 0.2s, color 0.2s, background 0.2s;
         }
         .btn-ghost:hover { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
-
+ 
         .btn-danger {
           padding: 10px 20px; border-radius: 10px;
           border: 1.5px solid #FECACA; background: #FEF2F2;
@@ -1002,7 +404,7 @@ export default function Profile() {
           transition: background 0.2s, transform 0.2s;
         }
         .btn-danger:hover { background: #FEE2E2; transform: translateY(-1px); }
-
+ 
         .audit-item {
           display: flex; align-items: center; gap: 14px;
           padding: 14px 16px; border-radius: 14px;
@@ -1015,33 +417,33 @@ export default function Profile() {
           transform: translateX(4px);
           box-shadow: 0 4px 14px rgba(37,99,235,0.08);
         }
-
+ 
         .stat-card {
           text-align: center; padding: 18px 16px;
           border-radius: 14px; background: white;
           border: 1px solid #E2E8F0;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+          box-shadow: 0 1px 2px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.04);
           flex: 1; min-width: 80px;
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-
+ 
         .info-row {
           display: flex; flex-direction: column; gap: 4px;
           padding: 13px 0; border-bottom: 1px solid #F1F5F9;
         }
         .info-row:last-child { border-bottom: none; }
         .info-label {
-          font-size: 10px; font-weight: 700; color: #2563EB;
+          font-size: 10px; font-weight: 700; color: #005EB8;
           text-transform: uppercase; letter-spacing: 0.07em;
         }
         .info-value { font-size: 13px; color: #374151; font-weight: 500; }
-
+ 
         .sec-heading {
           font-size: 15px; font-weight: 800; color: #1E293B;
           display: flex; align-items: center; gap: 8px;
         }
-
+ 
         .quick-action-btn {
           padding: 16px; border-radius: 14px;
           border: 1.5px solid #E2E8F0; background: white;
@@ -1055,14 +457,14 @@ export default function Profile() {
           background: #EFF6FF; border-color: #BFDBFE; color: #2563EB;
           transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,0.1);
         }
-
+ 
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
-
+ 
       {/* ── TOP NAVBAR removed — sidebar handles navigation ── */}
-
+ 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px", display: "flex", flexDirection: "column", gap: 22 }}>
-
+ 
         {/* ── IDENTITY HERO ── */}
         <div className="card" style={{
           padding: "0", overflow: "hidden",
@@ -1071,18 +473,18 @@ export default function Profile() {
           {/* Blue gradient banner */}
           <div style={{
             height: 80,
-            background: "linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 50%, #2563EB 100%)",
+            background: "linear-gradient(135deg, #00338D 0%, #005EB8 60%, #0091DA 100%)",
           }} />
           <div style={{ padding: "0 32px 28px", display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
             {/* Avatar overlapping banner */}
             <div style={{
               width: 80, height: 80, borderRadius: "50%", marginTop: -40, flexShrink: 0,
-              background: "linear-gradient(135deg, #1E3A8A, #2563EB, #0284C7)",
+              background: "linear-gradient(135deg, #00338D, #005EB8, #0091DA)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 26, fontWeight: 900, color: "white", letterSpacing: "-1px",
               border: "4px solid white", boxShadow: "0 4px 16px rgba(37,99,235,0.3)",
             }}>{initials}</div>
-
+ 
             {/* Name + edit + tags */}
             <div style={{ flex: 1, minWidth: 200, paddingTop: 16 }}>
               {editMode ? (
@@ -1111,13 +513,13 @@ export default function Profile() {
                 </div>
               )}
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#DCFCE7", border: "1px solid #86EFAC", color: "#059669" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 14, fontSize: 11, fontWeight: 700, background: "#DCFCE7", border: "1px solid #86EFAC", color: "#059669" }}>
                    Active
                 </span>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", textTransform: "capitalize" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 14, fontSize: 11, fontWeight: 700, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", textTransform: "capitalize" }}>
                   {profile?.role || "Auditor"}
                 </span>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 14, fontSize: 11, fontWeight: 700, background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED" }}>
                   ⬡ KPMG TAF
                 </span>
               </div>
@@ -1127,14 +529,14 @@ export default function Profile() {
                 </p>
               )}
             </div>
-
+ 
             {/* Stats row */}
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", paddingTop: 16 }}>
               {[
                 { val: profile?.audit_count ?? 0, label: "Total Audits",  color: "#2563EB",  bg: "#EFF6FF" },
                 { val: completedAudits.length,      label: "Completed",     color: "#059669",  bg: "#DCFCE7" },
                 { val: avgScore ?? "—",             label: "Avg Score",     color: avgScore !== null ? scoreGrade(avgScore).color : "#94A3B8", bg: avgScore !== null ? scoreGrade(avgScore).bg : "#F8FAFC" },
-                { val: highRiskCount,               label: "High Risk",     color: highRiskCount > 0 ? "#DC2626" : "#059669", bg: highRiskCount > 0 ? "#FEE2E2" : "#DCFCE7" },
+                { val: highRiskCount,               label: "High Risk",     color: highRiskCount > 0 ? "#64748B" : "#059669", bg: highRiskCount > 0 ? "#F1F5F9" : "#DCFCE7" },
               ].map((s) => (
                 <div key={s.label} className="stat-card" style={{ background: s.bg, border: `1px solid ${s.color}20` }}>
                   <div style={{ fontSize: 26, fontWeight: 900, color: s.color as string, lineHeight: 1 }}>{s.val}</div>
@@ -1144,14 +546,14 @@ export default function Profile() {
             </div>
           </div>
         </div>
-
+ 
         {/* ── TWO COLUMN: Account Info + Audit History ── */}
         <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 22, alignItems: "start", ...fade(0.12) }}>
-
+ 
           {/* LEFT – Account Details */}
           <div className="card" style={{ padding: "26px 28px" }}>
             <p className="sec-heading" style={{ marginBottom: 18 }}> Account Details</p>
-
+ 
             {[
               { label: "Email",        value: profile?.email },
               { label: "Role",         value: profile?.role, capitalize: true },
@@ -1166,7 +568,7 @@ export default function Profile() {
                 </span>
               </div>
             ))}
-
+ 
             {/* Platform Access */}
             <div className="info-row">
               <span className="info-label">Platform Access</span>
@@ -1179,14 +581,14 @@ export default function Profile() {
                 ))}
               </div>
             </div>
-
+ 
             <button className="btn-primary" style={{ width: "100%", marginTop: 22, textAlign: "center" }} onClick={() => navigate("/dashboard")}>
               ← Back to Dashboard
             </button>
           </div>
-
+ 
           {/* RIGHT – Audit History */}
-          <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", padding: "26px 28px" }}>
+          <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", padding: "26px 28px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <p style={{ fontSize: 15, fontWeight: 800, color: "#1E293B", margin: 0 }}>My Projects</p>
               <button
@@ -1196,7 +598,7 @@ export default function Profile() {
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#64748B"; }}
               >+ New Audit</button>
             </div>
-
+ 
             {auditsLoading ? (
               <div style={{ textAlign: "center", padding: "48px 0" }}>
                 <div style={{ width: 32, height: 32, border: "3px solid #E2E8F0", borderTop: "3px solid #2563EB", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 14px" }} />
@@ -1208,7 +610,7 @@ export default function Profile() {
                 <p style={{ color: "#94A3B8", fontSize: 13, marginBottom: 16 }}>No audits run yet.</p>
                 <button
                   onClick={() => navigate("/dashboard")}
-                  style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                  style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #00338D, #005EB8)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
                 >Run your first audit →</button>
               </div>
             ) : (() => {
@@ -1225,7 +627,7 @@ export default function Profile() {
                 const latestB = Math.max(...groups[b].map(r => new Date(r.created_at).getTime()));
                 return latestB - latestA;
               });
-
+ 
               return (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 540, overflowY: "auto" }}>
                   {groupKeys.map(aiName => {
@@ -1238,7 +640,7 @@ export default function Profile() {
                     const rc  = riskColor(latest.risk_level);
                     const rbg = riskBg(latest.risk_level);
                     const scoreDelta = hasReruns ? (latest.overall_score ?? 0) - (baseline.overall_score ?? 0) : null;
-
+ 
                     return (
                       <div key={aiName} style={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "white" }}>
                         {/* Header row */}
@@ -1258,7 +660,7 @@ export default function Profile() {
                           <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${sc}15`, border: `2px solid ${sc}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             <span style={{ fontSize: 14, fontWeight: 900, color: sc }}>{latest.overall_score ?? 0}</span>
                           </div>
-
+ 
                           {/* Name + date */}
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13.5, fontWeight: 700, color: "#1E293B", marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
@@ -1275,21 +677,21 @@ export default function Profile() {
                               {latest.mode ? ` · ${latest.mode === "evaluate" ? "Evaluate" : latest.mode.toUpperCase()}` : ""}
                             </div>
                           </div>
-
+ 
                           {/* Delta */}
                           {scoreDelta !== null && (
-                            <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 20, color: scoreDelta > 0 ? "#059669" : scoreDelta < 0 ? "#DC2626" : "#94A3B8", background: scoreDelta > 0 ? "#DCFCE7" : scoreDelta < 0 ? "#FEE2E2" : "#F8FAFC", border: `1px solid ${scoreDelta > 0 ? "#86EFAC" : scoreDelta < 0 ? "#FECACA" : "#E2E8F0"}`, flexShrink: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 14, color: scoreDelta > 0 ? "#059669" : scoreDelta < 0 ? "#64748B" : "#94A3B8", background: scoreDelta > 0 ? "#DCFCE7" : scoreDelta < 0 ? "#F1F5F9" : "#F8FAFC", border: `1px solid ${scoreDelta > 0 ? "#86EFAC" : scoreDelta < 0 ? "#CBD5E1" : "#E2E8F0"}`, flexShrink: 0 }}>
                               {scoreDelta > 0 ? "+" : ""}{scoreDelta}
                             </span>
                           )}
-
+ 
                           {/* Grade + Risk */}
-                          <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: sgbg, border: `1px solid ${sc}20`, padding: "2px 8px", borderRadius: 20, flexShrink: 0 }}>{grade}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rbg, border: `1px solid ${rc}20`, padding: "2px 8px", borderRadius: 20, flexShrink: 0 }}>{latest.risk_level}</span>
-
+                          <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: sgbg, border: `1px solid ${sc}20`, padding: "2px 8px", borderRadius: 14, flexShrink: 0 }}>{grade}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rbg, border: `1px solid ${rc}20`, padding: "2px 8px", borderRadius: 14, flexShrink: 0 }}>{latest.risk_level}</span>
+ 
                           <span style={{ color: hasReruns ? "#94A3B8" : "#2563EB", fontSize: 16, fontWeight: 700, flexShrink: 0, transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "none", display: "inline-block" }}>›</span>
                         </div>
-
+ 
                         {/* Expanded chain */}
                         {isExpanded && (
                           <div style={{ padding: "10px 14px 12px" }}>
@@ -1314,12 +716,12 @@ export default function Profile() {
                                     <div style={{ flex: 1 }}>
                                       <div style={{ fontSize: 11, fontWeight: 700, color: isBase ? "#2563EB" : "#7C3AED", marginBottom: 1 }}>
                                         {isBase ? "Baseline" : `Re-run #${audit.rerun_sequence ?? 1}`}
-                                        <span style={{ fontSize: 10, fontWeight: 700, color: arc, background: arbg, padding: "0 5px", borderRadius: 20, marginLeft: 6 }}>{audit.risk_level}</span>
+                                        <span style={{ fontSize: 10, fontWeight: 700, color: arc, background: arbg, padding: "0 5px", borderRadius: 14, marginLeft: 6 }}>{audit.risk_level}</span>
                                       </div>
                                       <div style={{ fontSize: 10, color: "#94A3B8" }}>{fmtDate(audit.created_at)}{audit.probes_run ? ` · ${audit.probes_run} probes` : ""}</div>
                                     </div>
                                     {ds && !isBase && (
-                                      <span style={{ fontSize: 10, fontWeight: 800, color: ds.overall_score_change >= 0 ? "#059669" : "#DC2626", background: ds.overall_score_change >= 0 ? "#DCFCE7" : "#FEE2E2", padding: "1px 6px", borderRadius: 20, flexShrink: 0 }}>
+                                      <span style={{ fontSize: 10, fontWeight: 800, color: ds.overall_score_change >= 0 ? "#059669" : "#DC2626", background: ds.overall_score_change >= 0 ? "#DCFCE7" : "#FEE2E2", padding: "1px 6px", borderRadius: 14, flexShrink: 0 }}>
                                         {ds.overall_score_change >= 0 ? "+" : ""}{Math.round(ds.overall_score_change)} pts
                                       </span>
                                     )}
@@ -1342,7 +744,7 @@ export default function Profile() {
                 </div>
               );
             })()}
-
+ 
             {audits.length > 0 && (
               <p style={{ margin: "14px 0 0", fontSize: 11, color: "#94A3B8", textAlign: "center" }}>
                 Click any row to open its full report →
@@ -1350,7 +752,7 @@ export default function Profile() {
             )}
           </div>
         </div>
-
+ 
         {/* ── QUICK ACTIONS ── */}
         <div className="card" style={{ padding: "26px 28px", ...fade(0.18) }}>
           <p className="sec-heading" style={{ marginBottom: 16 }}> Quick Actions</p>
@@ -1384,7 +786,7 @@ export default function Profile() {
             ))}
           </div>
         </div>
-
+ 
         {/* ── FOOTER ── */}
         <div style={{ textAlign: "center", fontSize: 12, color: "#94A3B8", letterSpacing: "0.03em", ...fade(0.22) }}>
           <div style={{ display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}>
@@ -1394,9 +796,9 @@ export default function Profile() {
             {profile && <><span>·</span><span>ID: {profile.id?.slice(0, 12)}…</span></>}
           </div>
         </div>
-
+ 
       </div>
-
+ 
       {/* ── RE-RUN CHANGE DIALOG ──────────────────────────────────────────────── */}
       {rerunTarget && (
         <div
@@ -1405,7 +807,7 @@ export default function Profile() {
         >
           <div
             ref={dialogRef}
-            style={{ background: "white", borderRadius: 20, padding: "32px 36px", width: "100%", maxWidth: 560, boxShadow: "0 28px 70px rgba(0,0,0,0.22)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}
+            style={{ background: "white", borderRadius: 14, padding: "32px 36px", width: "100%", maxWidth: 560, boxShadow: "0 28px 70px rgba(0,0,0,0.22)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}
           >
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -1422,17 +824,17 @@ export default function Profile() {
               </div>
               <button onClick={() => setRerunTarget(null)} style={{ background: "none", border: "none", color: "#94A3B8", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
             </div>
-
+ 
             {/* Step progress bar */}
             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
               {[1, 2].map(s => (
                 <div key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: rerunStep >= s ? "#2563EB" : "#E2E8F0", transition: "background 0.3s" }} />
               ))}
             </div>
-
+ 
             {/* ── STEP 1 ── */}
             {rerunStep === 1 && (<>
-
+ 
               {/* Prior baseline snapshot */}
               <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, marginBottom: 16 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "1px", marginBottom: 8 }}>Prior audit baseline</div>
@@ -1447,7 +849,7 @@ export default function Profile() {
                   </div>
                   {(rerunTarget.findings?.length ?? 0) > 0 && (
                     <div style={{ textAlign: "center" as const }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: "#DC2626" }}>{rerunTarget.findings!.length}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "#64748B" }}>{rerunTarget.findings!.length}</div>
                       <div style={{ fontSize: 9.5, color: "#94A3B8" }}>Findings</div>
                     </div>
                   )}
@@ -1456,7 +858,7 @@ export default function Profile() {
                   Phase 1 behavioral fingerprinting always re-runs first. Significant drift → full re-audit. Stable → targeted re-probe of failing principles only.
                 </div>
               </div>
-
+ 
               {/* What changed */}
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
@@ -1475,7 +877,7 @@ export default function Profile() {
                   Injected into every probe wave — makes re-probing adversarially targeted at your claimed fixes.
                 </div>
               </div>
-
+ 
               {/* Change type */}
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>Change type</label>
@@ -1490,7 +892,7 @@ export default function Profile() {
                   <option value="other">Other</option>
                 </select>
               </div>
-
+ 
               {/* Claimed fixed principles */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 8 }}>
@@ -1503,40 +905,40 @@ export default function Profile() {
                     return (
                       <button key={p} type="button"
                         onClick={() => setRerunPrinciples(prev => selected ? prev.filter(x => x !== p) : [...prev, p])}
-                        style={{ padding: "4px 11px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}>
+                        style={{ padding: "4px 11px", borderRadius: 14, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}>
                         {selected ? "✓ " : ""}{p}
                       </button>
                     );
                   })}
                 </div>
               </div>
-
+ 
               {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
-
+ 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                 <button onClick={() => setRerunTarget(null)} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
                 <button
                   onClick={() => { if (!rerunContext.trim()) { setRerunError("Please describe what changed."); return; } setRerunError(""); setRerunStep(2); }}
-                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
+                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #00338D, #005EB8)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
                   Next →
                 </button>
               </div>
             </>)}
-
+ 
             {/* ── STEP 2 ── */}
             {rerunStep === 2 && (<>
-
+ 
               {/* What will happen */}
               <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 12, marginBottom: 14, fontSize: 12, color: "#1D4ED8", lineHeight: 1.65 }}>
                 <strong>What happens next:</strong> Phase 1 fingerprinting re-runs first. If drift is detected a full re-audit triggers automatically. Otherwise only failing/weak principles are re-probed — seeded adversarially with your change context.
               </div>
-
+ 
               {/* Change context preview */}
               <div style={{ padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 10, marginBottom: 16, fontSize: 12, color: "#166534" }}>
                 <strong>Change context:</strong> {rerunContext.trim().slice(0, 120)}{rerunContext.length > 120 ? "…" : ""}
                 {rerunPrinciples.length > 0 && <div style={{ marginTop: 3 }}><strong>Claimed fixes:</strong> {rerunPrinciples.join(", ")}</div>}
               </div>
-
+ 
               {/* Endpoint (optional) */}
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
@@ -1548,7 +950,7 @@ export default function Profile() {
                   onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }} />
               </div>
-
+ 
               {/* API key */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>API key *</label>
@@ -1559,9 +961,9 @@ export default function Profile() {
                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }} />
                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>Keys are never stored — used for this request only.</p>
               </div>
-
+ 
               {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
-
+ 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                 <button onClick={() => { setRerunStep(1); setRerunError(""); }} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
                 <button onClick={handleSubmitRerun} disabled={rerunLoading}
@@ -1572,7 +974,7 @@ export default function Profile() {
                 </button>
               </div>
             </>)}
-
+ 
           </div>
         </div>
       )}

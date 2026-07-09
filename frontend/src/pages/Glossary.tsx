@@ -611,12 +611,6 @@ export default function Glossary() {
           <img src="/kpmg-logo.png" alt="KPMG" />
           <span className="gl-footer-copy">© 2026 TrustShield AI. All rights reserved.</span>
         </div>
-        <div className="gl-footer-links">
-          {([["how","How It Works"],["principles","TAF Principles"],["features","Features"],["frameworks","Frameworks"],["glossary","Glossary"]] as [string,string][]).map(([id,label]) => (
-            <button key={id} className="gl-footer-link" onClick={() => scrollTo(id)}>{label}</button>
-          ))}
-          <button className="gl-footer-link" onClick={() => navigate("/login")}>Sign In</button>
-        </div>
       </footer>
     </div>
   );
