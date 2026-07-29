@@ -341,7 +341,7 @@ export default function Profile() {
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F8FAFC", gap: 18, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div style={{ fontSize: 38 }}></div>
         <p style={{ color: "#DC2626", fontSize: 14 }}>{profileError}</p>
-        <button onClick={() => navigate("/login")} style={{ padding: "11px 26px", background: "linear-gradient(135deg, #00338D, #005EB8)", border: "none", borderRadius: 10, color: "white", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
+        <button onClick={() => navigate("/login")} style={{ padding: "11px 26px", background: "linear-gradient(135deg, #00338D, #005EB8)", border: "none", borderRadius: 0, color: "white", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
           Back to Login
         </button>
       </div>
@@ -357,17 +357,17 @@ export default function Profile() {
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 0px; }
  
         .card {
           background: white;
           border: 1px solid #E2E8F0;
-          border-radius: 14px;
+          border-radius: 0px;
           box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
         }
  
         .p-input {
-          padding: 10px 14px; border-radius: 10px;
+          padding: 10px 14px; border-radius: 0px;
           border: 1.5px solid #E2E8F0;
           background: #F8FAFC; color: #1E293B;
           font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif;
@@ -377,7 +377,7 @@ export default function Profile() {
         .p-input::placeholder { color: #94A3B8; }
  
         .btn-primary {
-          padding: 10px 20px; border-radius: 10px; border: none;
+          padding: 10px 20px; border-radius: 0px; border: none;
           background: linear-gradient(135deg, #1E3A8A, #2563EB);
           color: white; font-weight: 700; font-size: 13px; cursor: pointer;
           font-family: 'Plus Jakarta Sans', sans-serif;
@@ -388,7 +388,7 @@ export default function Profile() {
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
  
         .btn-ghost {
-          padding: 10px 20px; border-radius: 10px;
+          padding: 10px 20px; border-radius: 0px;
           border: 1.5px solid #E2E8F0; background: white;
           color: #64748B; font-weight: 600; font-size: 13px; cursor: pointer;
           font-family: 'Plus Jakarta Sans', sans-serif;
@@ -397,7 +397,7 @@ export default function Profile() {
         .btn-ghost:hover { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
  
         .btn-danger {
-          padding: 10px 20px; border-radius: 10px;
+          padding: 10px 20px; border-radius: 0px;
           border: 1.5px solid #FECACA; background: #FEF2F2;
           color: #DC2626; font-weight: 700; font-size: 13px; cursor: pointer;
           font-family: 'Plus Jakarta Sans', sans-serif;
@@ -407,7 +407,7 @@ export default function Profile() {
  
         .audit-item {
           display: flex; align-items: center; gap: 14px;
-          padding: 14px 16px; border-radius: 14px;
+          padding: 14px 16px; border-radius: 0px;
           border: 1px solid #E2E8F0; background: white;
           cursor: pointer; flex-wrap: wrap;
           transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
@@ -420,7 +420,7 @@ export default function Profile() {
  
         .stat-card {
           text-align: center; padding: 18px 16px;
-          border-radius: 14px; background: white;
+          border-radius: 0px; background: white;
           border: 1px solid #E2E8F0;
           box-shadow: 0 1px 2px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.04);
           flex: 1; min-width: 80px;
@@ -445,7 +445,7 @@ export default function Profile() {
         }
  
         .quick-action-btn {
-          padding: 16px; border-radius: 14px;
+          padding: 16px; border-radius: 0px;
           border: 1.5px solid #E2E8F0; background: white;
           color: #374151; font-size: 13px; font-weight: 600;
           cursor: pointer; text-align: left; font-family: 'Plus Jakarta Sans', sans-serif;
@@ -508,18 +508,18 @@ export default function Profile() {
                   <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1E293B" }}>{profile?.name}</h1>
                   <button
                     onClick={() => setEditMode(true)}
-                    style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: "4px 10px", borderRadius: 8, fontWeight: 600 }}
+                    style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: "4px 10px", borderRadius: 0, fontWeight: 600 }}
                   > Edit</button>
                 </div>
               )}
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 14, fontSize: 11, fontWeight: 700, background: "#DCFCE7", border: "1px solid #86EFAC", color: "#059669" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 0, fontSize: 11, fontWeight: 700, background: "#DCFCE7", border: "1px solid #86EFAC", color: "#059669" }}>
                    Active
                 </span>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 14, fontSize: 11, fontWeight: 700, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", textTransform: "capitalize" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 0, fontSize: 11, fontWeight: 700, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", textTransform: "capitalize" }}>
                   {profile?.role || "Auditor"}
                 </span>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 14, fontSize: 11, fontWeight: 700, background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 0, fontSize: 11, fontWeight: 700, background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED" }}>
                   ⬡ KPMG TAF
                 </span>
               </div>
@@ -588,12 +588,12 @@ export default function Profile() {
           </div>
  
           {/* RIGHT – Audit History */}
-          <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", padding: "26px 28px" }}>
+          <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", padding: "26px 28px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <p style={{ fontSize: 15, fontWeight: 800, color: "#1E293B", margin: 0 }}>My Projects</p>
               <button
                 onClick={() => navigate("/dashboard")}
-                style={{ padding: "7px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                style={{ padding: "7px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#2563EB"; (e.currentTarget as HTMLButtonElement).style.color = "#2563EB"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#64748B"; }}
               >+ New Audit</button>
@@ -610,7 +610,7 @@ export default function Profile() {
                 <p style={{ color: "#94A3B8", fontSize: 13, marginBottom: 16 }}>No audits run yet.</p>
                 <button
                   onClick={() => navigate("/dashboard")}
-                  style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #00338D, #005EB8)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                  style={{ padding: "10px 20px", borderRadius: 0, border: "none", background: "linear-gradient(135deg, #00338D, #005EB8)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
                 >Run your first audit →</button>
               </div>
             ) : (() => {
@@ -642,7 +642,7 @@ export default function Profile() {
                     const scoreDelta = hasReruns ? (latest.overall_score ?? 0) - (baseline.overall_score ?? 0) : null;
  
                     return (
-                      <div key={aiName} style={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "white" }}>
+                      <div key={aiName} style={{ border: "1px solid #E2E8F0", borderRadius: 0, background: "white" }}>
                         {/* Header row */}
                         <div
                           onClick={() => {
@@ -666,7 +666,7 @@ export default function Profile() {
                             <div style={{ fontSize: 13.5, fontWeight: 700, color: "#1E293B", marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
                               {aiName}
                               {hasReruns && (
-                                <span style={{ fontSize: 10, fontWeight: 700, background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED", padding: "1px 6px", borderRadius: 20 }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED", padding: "1px 6px", borderRadius: 0 }}>
                                   {chain.length} runs
                                 </span>
                               )}
@@ -680,14 +680,14 @@ export default function Profile() {
  
                           {/* Delta */}
                           {scoreDelta !== null && (
-                            <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 14, color: scoreDelta > 0 ? "#059669" : scoreDelta < 0 ? "#64748B" : "#94A3B8", background: scoreDelta > 0 ? "#DCFCE7" : scoreDelta < 0 ? "#F1F5F9" : "#F8FAFC", border: `1px solid ${scoreDelta > 0 ? "#86EFAC" : scoreDelta < 0 ? "#CBD5E1" : "#E2E8F0"}`, flexShrink: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 0, color: scoreDelta > 0 ? "#059669" : scoreDelta < 0 ? "#64748B" : "#94A3B8", background: scoreDelta > 0 ? "#DCFCE7" : scoreDelta < 0 ? "#F1F5F9" : "#F8FAFC", border: `1px solid ${scoreDelta > 0 ? "#86EFAC" : scoreDelta < 0 ? "#CBD5E1" : "#E2E8F0"}`, flexShrink: 0 }}>
                               {scoreDelta > 0 ? "+" : ""}{scoreDelta}
                             </span>
                           )}
  
                           {/* Grade + Risk */}
-                          <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: sgbg, border: `1px solid ${sc}20`, padding: "2px 8px", borderRadius: 14, flexShrink: 0 }}>{grade}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rbg, border: `1px solid ${rc}20`, padding: "2px 8px", borderRadius: 14, flexShrink: 0 }}>{latest.risk_level}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: sgbg, border: `1px solid ${sc}20`, padding: "2px 8px", borderRadius: 0, flexShrink: 0 }}>{grade}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rbg, border: `1px solid ${rc}20`, padding: "2px 8px", borderRadius: 0, flexShrink: 0 }}>{latest.risk_level}</span>
  
                           <span style={{ color: hasReruns ? "#94A3B8" : "#2563EB", fontSize: 16, fontWeight: 700, flexShrink: 0, transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "none", display: "inline-block" }}>›</span>
                         </div>
@@ -704,7 +704,7 @@ export default function Profile() {
                                 const arc = riskColor(audit.risk_level);
                                 const arbg = riskBg(audit.risk_level);
                                 return (
-                                  <div key={audit.audit_id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 10px", borderRadius: 8, background: "#F8FAFC", border: "1px solid #E2E8F0", cursor: "pointer" }}
+                                  <div key={audit.audit_id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 10px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0", cursor: "pointer" }}
                                     onClick={() => handleAuditClick(audit)}
                                     onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#EFF6FF"; (e.currentTarget as HTMLDivElement).style.borderColor = "#BFDBFE"; }}
                                     onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "#F8FAFC"; (e.currentTarget as HTMLDivElement).style.borderColor = "#E2E8F0"; }}
@@ -716,18 +716,18 @@ export default function Profile() {
                                     <div style={{ flex: 1 }}>
                                       <div style={{ fontSize: 11, fontWeight: 700, color: isBase ? "#2563EB" : "#7C3AED", marginBottom: 1 }}>
                                         {isBase ? "Baseline" : `Re-run #${audit.rerun_sequence ?? 1}`}
-                                        <span style={{ fontSize: 10, fontWeight: 700, color: arc, background: arbg, padding: "0 5px", borderRadius: 14, marginLeft: 6 }}>{audit.risk_level}</span>
+                                        <span style={{ fontSize: 10, fontWeight: 700, color: arc, background: arbg, padding: "0 5px", borderRadius: 0, marginLeft: 6 }}>{audit.risk_level}</span>
                                       </div>
                                       <div style={{ fontSize: 10, color: "#94A3B8" }}>{fmtDate(audit.created_at)}{audit.probes_run ? ` · ${audit.probes_run} probes` : ""}</div>
                                     </div>
                                     {ds && !isBase && (
-                                      <span style={{ fontSize: 10, fontWeight: 800, color: ds.overall_score_change >= 0 ? "#059669" : "#DC2626", background: ds.overall_score_change >= 0 ? "#DCFCE7" : "#FEE2E2", padding: "1px 6px", borderRadius: 14, flexShrink: 0 }}>
+                                      <span style={{ fontSize: 10, fontWeight: 800, color: ds.overall_score_change >= 0 ? "#059669" : "#DC2626", background: ds.overall_score_change >= 0 ? "#DCFCE7" : "#FEE2E2", padding: "1px 6px", borderRadius: 0, flexShrink: 0 }}>
                                         {ds.overall_score_change >= 0 ? "+" : ""}{Math.round(ds.overall_score_change)} pts
                                       </span>
                                     )}
                                     {idx === chain.length - 1 && audit.status === "completed" && audit.mode !== "evaluate" && (
                                       <button onClick={e => handleStartRerun(e, audit)}
-                                        style={{ padding: "3px 8px", borderRadius: 6, border: "1.5px solid #BFDBFE", background: "#EFF6FF", color: "#2563EB", fontSize: 10, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                                        style={{ padding: "3px 8px", borderRadius: 0, border: "1.5px solid #BFDBFE", background: "#EFF6FF", color: "#2563EB", fontSize: 10, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
                                         ↺ Re-run
                                       </button>
                                     )}
@@ -778,7 +778,7 @@ export default function Profile() {
                   (e.currentTarget as HTMLButtonElement).style.color = "#374151";
                 }}
               >
-                <span style={{ width: 36, height: 36, borderRadius: 10, background: `${a.accent}10`, border: `1px solid ${a.accent}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                <span style={{ width: 36, height: 36, borderRadius: 0, background: `${a.accent}10`, border: `1px solid ${a.accent}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                   {a.icon}
                 </span>
                 <span>{a.label}</span>
@@ -807,7 +807,7 @@ export default function Profile() {
         >
           <div
             ref={dialogRef}
-            style={{ background: "white", borderRadius: 14, padding: "32px 36px", width: "100%", maxWidth: 560, boxShadow: "0 28px 70px rgba(0,0,0,0.22)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}
+            style={{ background: "white", borderRadius: 0, padding: "32px 36px", width: "100%", maxWidth: 560, boxShadow: "0 28px 70px rgba(0,0,0,0.22)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}
           >
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -828,7 +828,7 @@ export default function Profile() {
             {/* Step progress bar */}
             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
               {[1, 2].map(s => (
-                <div key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: rerunStep >= s ? "#2563EB" : "#E2E8F0", transition: "background 0.3s" }} />
+                <div key={s} style={{ flex: 1, height: 4, borderRadius: 0, background: rerunStep >= s ? "#2563EB" : "#E2E8F0", transition: "background 0.3s" }} />
               ))}
             </div>
  
@@ -836,7 +836,7 @@ export default function Profile() {
             {rerunStep === 1 && (<>
  
               {/* Prior baseline snapshot */}
-              <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, marginBottom: 16 }}>
+              <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 0, marginBottom: 16 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "1px", marginBottom: 8 }}>Prior audit baseline</div>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap" as const }}>
                   <div style={{ textAlign: "center" as const }}>
@@ -869,7 +869,7 @@ export default function Profile() {
                   onChange={(e) => setRerunContext(e.target.value)}
                   placeholder="e.g. Updated system prompt to restrict legal advice, patched safety filters, re-trained on bias dataset…"
                   rows={3}
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, background: "#F8FAFC" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, background: "#F8FAFC" }}
                   onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.boxShadow = "none"; }}
                 />
@@ -882,7 +882,7 @@ export default function Profile() {
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>Change type</label>
                 <select value={rerunChangeType} onChange={(e) => setRerunChangeType(e.target.value)}
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", cursor: "pointer", boxSizing: "border-box" as const }}>
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", cursor: "pointer", boxSizing: "border-box" as const }}>
                   <option value="model_update">Model update / version change</option>
                   <option value="system_prompt">System prompt change</option>
                   <option value="fine_tuning">Fine-tuning / retraining</option>
@@ -905,7 +905,7 @@ export default function Profile() {
                     return (
                       <button key={p} type="button"
                         onClick={() => setRerunPrinciples(prev => selected ? prev.filter(x => x !== p) : [...prev, p])}
-                        style={{ padding: "4px 11px", borderRadius: 14, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}>
+                        style={{ padding: "4px 11px", borderRadius: 0, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}>
                         {selected ? "✓ " : ""}{p}
                       </button>
                     );
@@ -913,13 +913,13 @@ export default function Profile() {
                 </div>
               </div>
  
-              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
+              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 0, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
  
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <button onClick={() => setRerunTarget(null)} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+                <button onClick={() => setRerunTarget(null)} style={{ padding: "10px 20px", borderRadius: 0, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
                 <button
                   onClick={() => { if (!rerunContext.trim()) { setRerunError("Please describe what changed."); return; } setRerunError(""); setRerunStep(2); }}
-                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #00338D, #005EB8)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
+                  style={{ padding: "10px 24px", borderRadius: 0, border: "none", background: "linear-gradient(135deg, #00338D, #005EB8)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
                   Next →
                 </button>
               </div>
@@ -929,12 +929,12 @@ export default function Profile() {
             {rerunStep === 2 && (<>
  
               {/* What will happen */}
-              <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 12, marginBottom: 14, fontSize: 12, color: "#1D4ED8", lineHeight: 1.65 }}>
+              <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 0, marginBottom: 14, fontSize: 12, color: "#1D4ED8", lineHeight: 1.65 }}>
                 <strong>What happens next:</strong> Phase 1 fingerprinting re-runs first. If drift is detected a full re-audit triggers automatically. Otherwise only failing/weak principles are re-probed — seeded adversarially with your change context.
               </div>
  
               {/* Change context preview */}
-              <div style={{ padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 10, marginBottom: 16, fontSize: 12, color: "#166534" }}>
+              <div style={{ padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 0, marginBottom: 16, fontSize: 12, color: "#166534" }}>
                 <strong>Change context:</strong> {rerunContext.trim().slice(0, 120)}{rerunContext.length > 120 ? "…" : ""}
                 {rerunPrinciples.length > 0 && <div style={{ marginTop: 3 }}><strong>Claimed fixes:</strong> {rerunPrinciples.join(", ")}</div>}
               </div>
@@ -946,7 +946,7 @@ export default function Profile() {
                 </label>
                 <input type="text" value={rerunEndpoint} onChange={(e) => setRerunEndpoint(e.target.value)}
                   placeholder="https://api.example.com/v1/chat/completions"
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
                   onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }} />
               </div>
@@ -956,18 +956,18 @@ export default function Profile() {
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>API key *</label>
                 <input type="password" value={rerunApiKey} onChange={(e) => setRerunApiKey(e.target.value)}
                   placeholder="Your AI endpoint API key"
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
                   onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }} />
                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>Keys are never stored — used for this request only.</p>
               </div>
  
-              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
+              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 0, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
  
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <button onClick={() => { setRerunStep(1); setRerunError(""); }} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
+                <button onClick={() => { setRerunStep(1); setRerunError(""); }} style={{ padding: "10px 20px", borderRadius: 0, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
                 <button onClick={handleSubmitRerun} disabled={rerunLoading}
-                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: rerunLoading ? "#93C5FD" : "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: rerunLoading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, boxShadow: rerunLoading ? "none" : "0 4px 12px rgba(37,99,235,0.3)" }}>
+                  style={{ padding: "10px 24px", borderRadius: 0, border: "none", background: rerunLoading ? "#93C5FD" : "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: rerunLoading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, boxShadow: rerunLoading ? "none" : "0 4px 12px rgba(37,99,235,0.3)" }}>
                   {rerunLoading ? (
                     <><div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Running re-audit…</>
                   ) : "↺ Start Re-run"}

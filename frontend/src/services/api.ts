@@ -47,6 +47,10 @@ export const registerAI = (data: {
     output_visibility?:      string;
     highest_stakes_failure?: string;
     bias_tested?:            string;
+    // Build provenance — gates the Code & Build Risk tab
+    ai_generated?:           string;
+    ai_codegen_tools?:       string;
+    human_review_gate?:      string;
   };
 }) => api.post("/register-ai", data);
 
@@ -116,5 +120,9 @@ export const runRerunAudit = (data: {
 
 export const getRerunHistory = (aiName: string) =>
   api.get(`/blackbox/rerun-history/${aiName}`);
+
+// ── Report Audit ───────────────────────────────────────────────────────────────
+export const getAuditResult = (auditId: string) =>
+  api.get(`/audit/result/${auditId}`);
 
 export default api;

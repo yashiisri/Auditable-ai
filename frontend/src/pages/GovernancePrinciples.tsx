@@ -122,7 +122,7 @@ export default function GovernancePrinciples() {
 
   if (!raw) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:10, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
+      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:0, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
     </div>
   );
 
@@ -138,7 +138,7 @@ export default function GovernancePrinciples() {
 
   return (
     <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.gp-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}.param-row{transition:all 0.18s ease;}.param-row:hover{background:rgba(0,94,184,0.06)!important;border-color:rgba(0,94,184,0.3)!important;}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.gp-card{background:white;border-radius: 0px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}.param-row{transition:all 0.18s ease;}.param-row:hover{background:rgba(0,94,184,0.06)!important;border-color:rgba(0,94,184,0.3)!important;}`}</style>
 
       <AuditContextBar data={raw} />
 
@@ -153,7 +153,7 @@ export default function GovernancePrinciples() {
             { label:"Watch (50–74)",       val:`${pkeys.filter(k=>prn[k].score>=50&&prn[k].score<75).length}`, color:"#D97706" },
             { label:"Critical (<50)",      val:`${pkeys.filter(k=>prn[k].score<50).length}`, color:"#64748B" },
           ].map((t,i) => (
-            <div key={i} style={{ background:"white", borderRadius:14, border:"1px solid #E2E8F0", padding:"18px 16px", borderTop:`3px solid ${t.color}` }}>
+            <div key={i} style={{ background:"white", borderRadius:0, border:"1px solid #E2E8F0", padding:"18px 16px", borderTop:`3px solid ${t.color}` }}>
               <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.6px", marginBottom:8 }}>{t.label}</div>
               <div style={{ fontSize:26, fontWeight:900, color:t.color }}>{t.val}</div>
             </div>
@@ -177,7 +177,7 @@ export default function GovernancePrinciples() {
               <CartesianGrid strokeDasharray="5 5" stroke="rgba(0,0,0,0.06)" horizontal={false}/>
               <XAxis type="number" domain={[0,100]} tick={{ fill:"#94A3B8", fontSize:12 }}/>
               <YAxis type="category" dataKey="name" tick={{ fill:"#374151", fontSize:12.5, fontWeight:500 }} width={145} axisLine={false} tickLine={false}/>
-              <Tooltip cursor={{ fill:"rgba(0,51,141,0.05)" }} contentStyle={{ background:"white", border:"1px solid #E2E8F0", borderRadius:12, padding:"12px 16px" }} formatter={(v: any) => [`${v}/100`,"Score"]}/>
+              <Tooltip cursor={{ fill:"rgba(0,51,141,0.05)" }} contentStyle={{ background:"white", border:"1px solid #E2E8F0", borderRadius:0, padding:"12px 16px" }} formatter={(v: any) => [`${v}/100`,"Score"]}/>
               <Bar dataKey="score" radius={[0,10,10,0]} barSize={24} animationDuration={1400}>
                 {barData.map((e,i) => <Cell key={i} fill={e.color} fillOpacity={0.85}/>)}
               </Bar>
@@ -194,22 +194,22 @@ export default function GovernancePrinciples() {
               {pkeys.map(k => {
                 const c = COLORS[k]||M; const s = prn[k].score;
                 return (
-                  <div key={k} onClick={() => setSel(k)} style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderRadius:14, background:"white", border:"1px solid #E2E8F0", cursor:"pointer", transition:"all 0.15s" }}
+                  <div key={k} onClick={() => setSel(k)} style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderRadius:0, background:"white", border:"1px solid #E2E8F0", cursor:"pointer", transition:"all 0.15s" }}
                     onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform="translateY(-2px)"; (e.currentTarget as HTMLDivElement).style.boxShadow=`0 6px 20px ${c}18`; (e.currentTarget as HTMLDivElement).style.borderColor=`${c}40`; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform="translateY(0)"; (e.currentTarget as HTMLDivElement).style.boxShadow="none"; (e.currentTarget as HTMLDivElement).style.borderColor="#E2E8F0"; }}
                   >
-                    <div style={{ width:40, height:40, borderRadius:12, flexShrink:0, background:`${c}15`, border:`1px solid ${c}30`, display:"grid", placeItems:"center", color:c }}>
+                    <div style={{ width:40, height:40, borderRadius:0, flexShrink:0, background:`${c}15`, border:`1px solid ${c}30`, display:"grid", placeItems:"center", color:c }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontSize:13, fontWeight:700, color:"#0F172A", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{k}</div>
-                      <div style={{ height:5, background:"#F1F5F9", borderRadius:99, marginTop:6 }}>
-                        <div style={{ width:`${s}%`, height:"100%", background:sc(s), borderRadius:99, transition:"width 0.8s ease" }}/>
+                      <div style={{ height:5, background:"#F1F5F9", borderRadius:0, marginTop:6 }}>
+                        <div style={{ width:`${s}%`, height:"100%", background:sc(s), borderRadius:0, transition:"width 0.8s ease" }}/>
                       </div>
                     </div>
                     <div style={{ textAlign:"right", flexShrink:0 }}>
                       <div style={{ fontSize:20, fontWeight:900, color:sc(s) }}>{s}</div>
-                      <div style={{ fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:6, background:sb(s), color:sc(s), textTransform:"uppercase" as const }}>{band(s)}</div>
+                      <div style={{ fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:0, background:sb(s), color:sc(s), textTransform:"uppercase" as const }}>{band(s)}</div>
                     </div>
                   </div>
                 );
@@ -219,27 +219,27 @@ export default function GovernancePrinciples() {
         ) : selData ? (
           <div className="gp-card" style={{ padding:"28px 32px" }}>
             {/* Principle header */}
-            <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16, padding:"18px 22px", borderRadius:16, background:`linear-gradient(135deg,${(COLORS[sel]||M)}10,${(COLORS[sel]||M)}05)`, border:`1.5px solid ${(COLORS[sel]||M)}30` }}>
+            <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16, padding:"18px 22px", borderRadius:0, background:`linear-gradient(135deg,${(COLORS[sel]||M)}10,${(COLORS[sel]||M)}05)`, border:`1.5px solid ${(COLORS[sel]||M)}30` }}>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:18, fontWeight:800, color:"#0F172A" }}>{sel}</div>
                 {PRINCIPLE_CONTEXT[sel] && <div style={{ fontSize:12, color:"#64748B", marginTop:4, lineHeight:1.6 }}>{PRINCIPLE_CONTEXT[sel]}</div>}
               </div>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontSize:40, fontWeight:900, color:COLORS[sel]||M, lineHeight:1 }}>{selData.score}</div>
-                <div style={{ fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:8, background:sb(selData.score), color:sc(selData.score), marginTop:6, textTransform:"uppercase" as const }}>{band(selData.score)}</div>
+                <div style={{ fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:0, background:sb(selData.score), color:sc(selData.score), marginTop:6, textTransform:"uppercase" as const }}>{band(selData.score)}</div>
               </div>
             </div>
-            <button onClick={() => setSel(null)} style={{ marginBottom:20, padding:"8px 16px", background:"#EEF4FF", border:`1px solid ${M}30`, borderRadius:9, color:M, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>← All Principles</button>
+            <button onClick={() => setSel(null)} style={{ marginBottom:20, padding:"8px 16px", background:"#EEF4FF", border:`1px solid ${M}30`, borderRadius:0, color:M, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>← All Principles</button>
 
             {/* Sub-params + insight */}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, alignItems:"start" }}>
               <div>
-                <div style={{ fontSize:11, fontWeight:700, color:M, textTransform:"uppercase" as const, letterSpacing:"0.08em", marginBottom:12, padding:"8px 12px", background:"#EEF4FF", borderRadius:8 }}>Sub-parameters — hover to inspect</div>
+                <div style={{ fontSize:11, fontWeight:700, color:M, textTransform:"uppercase" as const, letterSpacing:"0.08em", marginBottom:12, padding:"8px 12px", background:"#EEF4FF", borderRadius:0 }}>Sub-parameters — hover to inspect</div>
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {params.map(([param, val]) => {
                     const v = val as number; const c = COLORS[sel]||M; const isAct = activeParam===param;
                     return (
-                      <div key={param} className="param-row" style={{ padding:"14px 16px", borderRadius:12, background:isAct?`${c}08`:"#F8FAFC", border:isAct?`2px solid ${c}50`:"1.5px solid #E2E8F0", cursor:"pointer" }}
+                      <div key={param} className="param-row" style={{ padding:"14px 16px", borderRadius:0, background:isAct?`${c}08`:"#F8FAFC", border:isAct?`2px solid ${c}50`:"1.5px solid #E2E8F0", cursor:"pointer" }}
                         onMouseEnter={() => setHovered(param)} onMouseLeave={() => setHovered(null)}>
                         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
                           <div style={{ flex:1, marginRight:8 }}>
@@ -248,23 +248,23 @@ export default function GovernancePrinciples() {
                           </div>
                           <div style={{ textAlign:"right", flexShrink:0 }}>
                             <div style={{ fontSize:20, fontWeight:900, color:sc(v) }}>{v}</div>
-                            <div style={{ fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:6, background:sb(v), color:sc(v), textTransform:"uppercase" as const }}>{band(v)}</div>
+                            <div style={{ fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:0, background:sb(v), color:sc(v), textTransform:"uppercase" as const }}>{band(v)}</div>
                           </div>
                         </div>
-                        <div style={{ height:6, background:"#E2E8F0", borderRadius:99 }}>
-                          <div style={{ width:`${v}%`, height:"100%", borderRadius:99, background:`linear-gradient(90deg,${c},${sc(v)})`, transition:"width 0.5s ease" }}/>
+                        <div style={{ height:6, background:"#E2E8F0", borderRadius:0 }}>
+                          <div style={{ width:`${v}%`, height:"100%", borderRadius:0, background:`linear-gradient(90deg,${c},${sc(v)})`, transition:"width 0.5s ease" }}/>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-              <div style={{ position:"sticky", top:80, padding:"24px", borderRadius:18, background:"white", border:`2px solid ${(COLORS[sel]||M)}20`, minHeight:280, boxShadow:"0 4px 24px rgba(0,0,0,0.06)" }}>
+              <div style={{ position:"sticky", top:80, padding:"24px", borderRadius:0, background:"white", border:`2px solid ${(COLORS[sel]||M)}20`, minHeight:280, boxShadow:"0 4px 24px rgba(0,0,0,0.06)" }}>
                 {activeParam && selData.parameters[activeParam] !== undefined ? (
                   <>
                     <div style={{ fontSize:14, fontWeight:800, color:"#0F172A", marginBottom:4, lineHeight:1.3 }}>{SUB_META[activeParam] || activeParam}</div>
                     <div style={{ fontSize:10.5, color:"#94A3B8", marginBottom:14, fontFamily:"monospace" }}>{activeParam}</div>
-                    <div style={{ padding:"12px 14px", borderRadius:12, background:sb(selData.parameters[activeParam] as number), border:`1px solid ${sc(selData.parameters[activeParam] as number)}18`, marginBottom:12 }}>
+                    <div style={{ padding:"12px 14px", borderRadius:0, background:sb(selData.parameters[activeParam] as number), border:`1px solid ${sc(selData.parameters[activeParam] as number)}18`, marginBottom:12 }}>
                       <div style={{ fontSize:10, fontWeight:700, color:sc(selData.parameters[activeParam] as number), textTransform:"uppercase" as const, letterSpacing:"0.08em", marginBottom:6 }}>
                         {(selData.parameters[activeParam] as number)>=75?"Strong posture":(selData.parameters[activeParam] as number)>=50?"Watch posture":"Needs attention"}
                       </div>
@@ -276,11 +276,11 @@ export default function GovernancePrinciples() {
                           : `${SUB_META[activeParam] || activeParam} scored ${selData.parameters[activeParam]}/100. This dimension could not be computed or is critically low. Add the relevant log columns to enable this signal.`}
                       </div>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderRadius:10, background:"#F8FAFC", border:"1px solid #F1F5F9" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderRadius:0, background:"#F8FAFC", border:"1px solid #F1F5F9" }}>
                       <div style={{ fontSize:26, fontWeight:900, color:sc(selData.parameters[activeParam] as number) }}>{selData.parameters[activeParam]}</div>
                       <div style={{ fontSize:12, color:"#94A3B8" }}>/ 100</div>
-                      <div style={{ marginLeft:"auto", height:6, flex:1, background:"#E2E8F0", borderRadius:99, overflow:"hidden" }}>
-                        <div style={{ height:"100%", width:`${selData.parameters[activeParam]}%`, background:`linear-gradient(90deg,${COLORS[sel]||M},${sc(selData.parameters[activeParam] as number)})`, borderRadius:99, transition:"width 0.6s ease" }}/>
+                      <div style={{ marginLeft:"auto", height:6, flex:1, background:"#E2E8F0", borderRadius:0, overflow:"hidden" }}>
+                        <div style={{ height:"100%", width:`${selData.parameters[activeParam]}%`, background:`linear-gradient(90deg,${COLORS[sel]||M},${sc(selData.parameters[activeParam] as number)})`, borderRadius:0, transition:"width 0.6s ease" }}/>
                       </div>
                     </div>
                   </>

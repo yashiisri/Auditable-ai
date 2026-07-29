@@ -1412,7 +1412,7 @@
 //           />
 //           <Tooltip
 //             cursor={{ fill: "rgba(0,51,141,0.05)" }}
-//             contentStyle={{ background: "white", border: "1px solid rgba(0,51,141,0.2)", borderRadius: 12, padding: "14px 18px", color: "#1E293B", boxShadow: "0 10px 30px rgba(0,0,0,0.12)" }}
+//             contentStyle={{ background: "white", border: "1px solid rgba(0,51,141,0.2)", borderRadius: 0, padding: "14px 18px", color: "#1E293B", boxShadow: "0 10px 30px rgba(0,0,0,0.12)" }}
 //             formatter={(value: any) => [`${value}/100`, "Score"]}
 //           />
 //           <Bar dataKey="score" radius={[0, 10, 10, 0]} barSize={28} animationDuration={1600} animationEasing="ease-out">
@@ -1503,7 +1503,7 @@
 //   const allPassed = failedProbes.length === 0;
 
 //   return (
-//     <div style={{ borderRadius: 12, background: "white", border: "1px solid #E2E8F0", overflow: "hidden" }}>
+//     <div style={{ borderRadius: 0, background: "white", border: "1px solid #E2E8F0", overflow: "hidden" }}>
 //       {/* Single compact row */}
 //       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
 //         {/* Pass/fail dot */}
@@ -1521,13 +1521,13 @@
 //         )}
 
 //         {/* Severity badge */}
-//         <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: allPassed ? "#DCFCE7" : sc === "#DC2626" ? "#FEE2E2" : sc === KPMG_MID ? "#EFF6FF" : "#DCFCE7", color: allPassed ? "#059669" : sc }}>
+//         <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 0, background: allPassed ? "#DCFCE7" : sc === "#DC2626" ? "#FEE2E2" : sc === KPMG_MID ? "#EFF6FF" : "#DCFCE7", color: allPassed ? "#059669" : sc }}>
 //           {allPassed ? "Pass" : worst}
 //         </span>
 
 //         {/* Expand button */}
 //         {catProbes.length > 0 && (
-//           <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 8, border: "1px solid #E2E8F0", background: open ? "#F1F5F9" : "white", cursor: "pointer", fontSize: 11, fontWeight: 600, color: "#64748B" }}>
+//           <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 0, border: "1px solid #E2E8F0", background: open ? "#F1F5F9" : "white", cursor: "pointer", fontSize: 11, fontWeight: 600, color: "#64748B" }}>
 //             {catProbes.length} probes <span style={{ fontSize: 9, display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>▼</span>
 //           </button>
 //         )}
@@ -1557,14 +1557,14 @@
 //                   <p style={{ margin: "0 0 3px", fontSize: 12, color: "#64748B", lineHeight: 1.5 }}>{p.prompt}</p>
 //                   <p style={{ margin: 0, fontSize: 11, color: psc, lineHeight: 1.4 }}>{p.note}</p>
 //                   {!p.passed && p.response && p.response.length > 5 && !p.response.startsWith("[HTTP") && (
-//                     <p style={{ margin: "4px 0 0", fontSize: 11, color: "#94A3B8", fontFamily: "monospace", background: "white", padding: "4px 8px", borderRadius: 6, border: "1px solid #E2E8F0", wordBreak: "break-word" as const }}>
+//                     <p style={{ margin: "4px 0 0", fontSize: 11, color: "#94A3B8", fontFamily: "monospace", background: "white", padding: "4px 8px", borderRadius: 0, border: "1px solid #E2E8F0", wordBreak: "break-word" as const }}>
 //                       {p.response.length > 160 ? p.response.slice(0, 160) + "…" : p.response}
 //                     </p>
 //                   )}
 //                 </div>
 //                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
 //                   {p.latency_ms !== undefined && <span style={{ fontSize: 10, color: "#CBD5E1" }}>{p.latency_ms}ms</span>}
-//                   <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 8, background: p.passed ? "#DCFCE7" : "#FEE2E2", color: psc }}>{p.passed ? "✓" : "✗"}</span>
+//                   <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 0, background: p.passed ? "#DCFCE7" : "#FEE2E2", color: psc }}>{p.passed ? "✓" : "✗"}</span>
 //                 </div>
 //               </div>
 //             );
@@ -1654,7 +1654,7 @@
 //   return (
 //     <div className="card" style={{ padding: "32px", marginBottom: 24 }}>
 //       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-//         <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgDb /></div>
+//         <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgDb /></div>
 //         <div>
 //           <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Data Structural Integrity</h2>
 //           <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>
@@ -1672,7 +1672,7 @@
 //           { label: "Duplicates", value: String(d.duplicates), color: d.duplicates === 0 ? "#059669" : "#DC2626", bg: d.duplicates === 0 ? "#DCFCE7" : "#FEE2E2" },
 //           { label: "Schema", value: `${s.schemaScore}%`, color: bandColor(s.schemaScore), bg: bandBg(s.schemaScore) },
 //         ].map(item => (
-//           <div key={item.label} style={{ padding: "16px", borderRadius: 14, background: item.bg, border: `1px solid ${item.color}20`, textAlign: "center" }}>
+//           <div key={item.label} style={{ padding: "16px", borderRadius: 0, background: item.bg, border: `1px solid ${item.color}20`, textAlign: "center" }}>
 //             <div style={{ fontSize: 11, fontWeight: 700, color: item.color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{item.label}</div>
 //             <div style={{ fontSize: 22, fontWeight: 900, color: item.color }}>{item.value}</div>
 //           </div>
@@ -1683,27 +1683,27 @@
 //       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 //         {metricRows.map((row, i) => (
 //           <div key={i} style={{
-//             padding: "18px 20px", borderRadius: 14, background: "#F8FAFC",
+//             padding: "18px 20px", borderRadius: 0, background: "#F8FAFC",
 //             border: `1.5px solid ${row.score >= 75 ? "rgba(5,150,105,0.2)" : row.score >= 50 ? "rgba(0,94,184,0.2)" : "rgba(220,38,38,0.2)"}`,
 //           }}>
 //             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
 //               <div>
 //                 <div style={{ fontSize: 14, fontWeight: 700, color: "#1E293B", marginBottom: 3 }}>{row.label}</div>
-//                 <div style={{ fontSize: 11, fontFamily: "monospace", background: "white", border: "1px solid #E2E8F0", borderRadius: 6, padding: "3px 8px", display: "inline-block", color: "#64748B", marginBottom: 8 }}>
+//                 <div style={{ fontSize: 11, fontFamily: "monospace", background: "white", border: "1px solid #E2E8F0", borderRadius: 0, padding: "3px 8px", display: "inline-block", color: "#64748B", marginBottom: 8 }}>
 //                   {row.formula}
 //                 </div>
 //               </div>
 //               <div style={{ textAlign: "right", flexShrink: 0 }}>
 //                 <div style={{ fontSize: 22, fontWeight: 900, color: bandColor(row.score), lineHeight: 1 }}>{row.value}</div>
-//                 <div style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: bandBg(row.score), color: bandColor(row.score), marginTop: 4, display: "inline-block", textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(row.score)}</div>
+//                 <div style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 0, background: bandBg(row.score), color: bandColor(row.score), marginTop: 4, display: "inline-block", textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(row.score)}</div>
 //               </div>
 //             </div>
 //             {/* Progress bar */}
-//             <div style={{ height: 5, background: "#E2E8F0", borderRadius: 99, marginBottom: 12 }}>
-//               <div style={{ width: `${Math.min(row.score, 100)}%`, height: "100%", borderRadius: 99, background: `linear-gradient(90deg, ${bandColor(row.score)}80, ${bandColor(row.score)})`, transition: "width 0.8s ease" }} />
+//             <div style={{ height: 5, background: "#E2E8F0", borderRadius: 0, marginBottom: 12 }}>
+//               <div style={{ width: `${Math.min(row.score, 100)}%`, height: "100%", borderRadius: 0, background: `linear-gradient(90deg, ${bandColor(row.score)}80, ${bandColor(row.score)})`, transition: "width 0.8s ease" }} />
 //             </div>
 //             {/* Explanation */}
-//             <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, padding: "10px 14px", background: "white", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+//             <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, padding: "10px 14px", background: "white", borderRadius: 0, border: "1px solid #E2E8F0" }}>
 //               {row.why}
 //             </div>
 //           </div>
@@ -1712,7 +1712,7 @@
 
 //       {/* Column list */}
 //       {d.column_names && d.column_names.length > 0 && (
-//         <div style={{ marginTop: 20, padding: "16px 18px", borderRadius: 12, background: "white", border: "1px solid #E2E8F0" }}>
+//         <div style={{ marginTop: 20, padding: "16px 18px", borderRadius: 0, background: "white", border: "1px solid #E2E8F0" }}>
 //           <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
 //             Detected Columns ({d.column_names.length})
 //           </div>
@@ -1721,7 +1721,7 @@
 //               const isRequired = ["task_id", "input", "output", "latency"].some(req => col.toLowerCase().includes(req));
 //               return (
 //                 <span key={col} style={{
-//                   padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500,
+//                   padding: "4px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500,
 //                   background: isRequired ? "#DCFCE7" : "#F1F5F9",
 //                   color: isRequired ? "#065F46" : "#475569",
 //                   border: isRequired ? "1px solid rgba(5,150,105,0.3)" : "1px solid #E2E8F0",
@@ -1788,7 +1788,7 @@
 
 //       {/* Header */}
 //       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-//         <div style={{ width: 36, height: 36, borderRadius: 10, background: "#EDE9FE", display: "grid", placeItems: "center", color: "#7C3AED" }}>
+//         <div style={{ width: 36, height: 36, borderRadius: 0, background: "#EDE9FE", display: "grid", placeItems: "center", color: "#7C3AED" }}>
 //           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
 //         </div>
 //         <div>
@@ -1800,14 +1800,14 @@
 //       </div>
 
 //       {/* Explainer callout */}
-//       <div style={{ margin: "16px 0", padding: "14px 18px", borderRadius: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", borderLeft: "4px solid #3B82F6" }}>
+//       <div style={{ margin: "16px 0", padding: "14px 18px", borderRadius: 0, background: "#EFF6FF", border: "1px solid #BFDBFE", borderLeft: "4px solid #3B82F6" }}>
 //         <p style={{ margin: 0, fontSize: 13, color: "#1E3A5F", lineHeight: 1.7 }}>
 //           <strong>Why three judges?</strong> Any single LLM can be wrong or biased. By running three architecturally different models from three different providers simultaneously — with no shared weights, fine-tuning, or failure modes — the panel achieves cross-provider independence. A correct verdict from ≥ 2/3 judges is far more reliable than any single model's assessment. Rows where judges cannot reach majority are flagged as <em>Disputed</em> and excluded from accuracy.
 //         </p>
 //       </div>
 
 //       {hasError ? (
-//         <div style={{ padding: "18px 20px", borderRadius: 14, background: "#FFF7ED", border: "1px solid #FED7AA", color: "#92400E", fontSize: 13, lineHeight: 1.6 }}>
+//         <div style={{ padding: "18px 20px", borderRadius: 0, background: "#FFF7ED", border: "1px solid #FED7AA", color: "#92400E", fontSize: 13, lineHeight: 1.6 }}>
 //           <strong>Judge Panel Unavailable.</strong> The accuracy evaluation panel could not be initialised. Please contact your administrator.
 //         </div>
 //       ) : (
@@ -1825,10 +1825,10 @@
 //               ].map((j, idx) => {
 //                 const active = panelSize > 0 ? idx < panelSize : llmJudge.rows_judged > 0;
 //                 return (
-//                   <div key={j.shortName} style={{ padding: "16px", borderRadius: 14, background: active ? j.bg : "#F8FAFC", border: `1.5px solid ${active ? j.color : "#E2E8F0"}30`, opacity: active ? 1 : 0.45 }}>
+//                   <div key={j.shortName} style={{ padding: "16px", borderRadius: 0, background: active ? j.bg : "#F8FAFC", border: `1.5px solid ${active ? j.color : "#E2E8F0"}30`, opacity: active ? 1 : 0.45 }}>
 //                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
 //                       <span style={{ fontSize: 10, fontWeight: 700, color: active ? j.color : "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em" }}>{j.shortName}</span>
-//                       <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: active ? j.color : "#94A3B8", color: "white", fontWeight: 700 }}>{active ? "Active" : "Offline"}</span>
+//                       <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 0, background: active ? j.color : "#94A3B8", color: "white", fontWeight: 700 }}>{active ? "Active" : "Offline"}</span>
 //                     </div>
 //                     <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.5, fontStyle: "italic" }}>{j.specialty}</div>
 //                   </div>
@@ -1840,7 +1840,7 @@
 //           {/* ── Workflow steps ── */}
 //           <div style={{ marginBottom: 20 }}>
 //             <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>Evaluation Workflow — Per Log Row</div>
-//             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 0, border: "1px solid #E2E8F0", borderRadius: 14, overflow: "hidden" }}>
+//             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 0, border: "1px solid #E2E8F0", borderRadius: 0, overflow: "hidden" }}>
 //               {[
 //                 { step: "1A", title: "KB Lookup",      subtitle: kbGrounded ? "Used this audit" : "Not used — no KB provided", color: kbGrounded ? "#059669" : "#94A3B8", bg: kbGrounded ? "#DCFCE7" : "#F8FAFC", desc: "Question matched against knowledge base using Jaccard similarity (≥ 0.12). If found, KB chunk becomes the ground-truth reference." },
 //                 { step: "1B", title: "LLM Generation", subtitle: kbGrounded ? "Skipped (KB used)" : "Used this audit",          color: kbGrounded ? "#94A3B8" : KPMG_MID, bg: kbGrounded ? "#F8FAFC" : "#E6F2FB", desc: "All 3 judges independently generate a reference answer. Their answers are compared for agreement (Jaccard ≥ 0.15) to form a consensus reference." },
@@ -1852,7 +1852,7 @@
 //                       <div style={{ fontSize: 10, fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: "0.07em" }}>Stage {s.step}</div>
 //                       <div style={{ fontWeight: 700, fontSize: 13, color: "#1E293B" }}>{s.title}</div>
 //                     </div>
-//                     <span style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: s.color, color: "white", fontWeight: 700, whiteSpace: "nowrap" }}>{s.subtitle}</span>
+//                     <span style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 0, background: s.color, color: "white", fontWeight: 700, whiteSpace: "nowrap" }}>{s.subtitle}</span>
 //                   </div>
 //                   <p style={{ margin: 0, fontSize: 12, color: "#475569", lineHeight: 1.6 }}>{s.desc}</p>
 //                 </div>
@@ -1862,19 +1862,19 @@
 
 //           {/* ── Accuracy Score + Interpretation ── */}
 //           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 24, alignItems: "start", marginBottom: 20 }}>
-//             <div style={{ padding: "28px 36px", borderRadius: 20, background: accuracyBg, border: `1.5px solid ${accuracyColor}30`, textAlign: "center", minWidth: 160 }}>
+//             <div style={{ padding: "28px 36px", borderRadius: 0, background: accuracyBg, border: `1.5px solid ${accuracyColor}30`, textAlign: "center", minWidth: 160 }}>
 //               <div style={{ fontSize: 11, fontWeight: 700, color: accuracyColor, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Majority Vote Accuracy</div>
 //               <div style={{ fontSize: 60, fontWeight: 900, color: accuracyColor, lineHeight: 1, letterSpacing: "-0.04em" }}>
 //                 {accuracyPct !== null ? `${accuracyPct}%` : "—"}
 //               </div>
-//               <div style={{ marginTop: 10, padding: "5px 16px", borderRadius: 20, background: "white", border: `1px solid ${accuracyColor}30`, display: "inline-block" }}>
+//               <div style={{ marginTop: 10, padding: "5px 16px", borderRadius: 0, background: "white", border: `1px solid ${accuracyColor}30`, display: "inline-block" }}>
 //                 <span style={{ fontSize: 12, fontWeight: 700, color: accuracyColor }}>{interp.label}</span>
 //               </div>
 //               <div style={{ marginTop: 8, fontSize: 11, color: "#64748B" }}>correct rows ÷ (judged − disputed)</div>
 //             </div>
 
 //             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-//               <div style={{ padding: "16px 18px", borderRadius: 14, background: accuracyBg, border: `1px solid ${accuracyColor}20`, fontSize: 13.5, color: "#1E293B", lineHeight: 1.75 }}>
+//               <div style={{ padding: "16px 18px", borderRadius: 0, background: accuracyBg, border: `1px solid ${accuracyColor}20`, fontSize: 13.5, color: "#1E293B", lineHeight: 1.75 }}>
 //                 {interp.desc}
 //               </div>
 //               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
@@ -1885,7 +1885,7 @@
 //                   { label: "KB-Grounded",    value: String(kbUsedCount),            color: kbUsedCount > 0 ? "#059669" : "#94A3B8",            bg: kbUsedCount > 0 ? "#DCFCE7" : "#F8FAFC" },
 //                   { label: "Active Judges",  value: String(panelSize > 0 ? panelSize : llmJudge.rows_judged > 0 ? 3 : 0), color: "#7C3AED", bg: "#EDE9FE" },
 //                 ].map(item => (
-//                   <div key={item.label} style={{ padding: "12px 14px", borderRadius: 12, background: item.bg, textAlign: "center" }}>
+//                   <div key={item.label} style={{ padding: "12px 14px", borderRadius: 0, background: item.bg, textAlign: "center" }}>
 //                     <div style={{ fontSize: 10, fontWeight: 700, color: item.color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>{item.label}</div>
 //                     <div style={{ fontSize: 20, fontWeight: 900, color: item.color }}>{item.value}</div>
 //                   </div>
@@ -1906,12 +1906,12 @@
 //                 ].map(c => {
 //                   const pct = confs.length > 0 ? Math.round((c.count / confs.length) * 100) : 0;
 //                   return (
-//                     <div key={c.label} style={{ padding: "16px", borderRadius: 14, background: c.bg, border: `1px solid ${c.color}30` }}>
+//                     <div key={c.label} style={{ padding: "16px", borderRadius: 0, background: c.bg, border: `1px solid ${c.color}30` }}>
 //                       <div style={{ fontSize: 10, fontWeight: 700, color: c.color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{c.label}</div>
 //                       <div style={{ fontSize: 28, fontWeight: 900, color: c.color, marginBottom: 2 }}>{c.count}</div>
 //                       <div style={{ fontSize: 11, color: "#64748B", marginBottom: 8 }}>rows ({pct}%) · {c.vote}</div>
-//                       <div style={{ height: 6, background: "white", borderRadius: 99, overflow: "hidden" }}>
-//                         <div style={{ height: "100%", width: `${pct}%`, background: c.color, borderRadius: 99, transition: "width 0.8s ease" }} />
+//                       <div style={{ height: 6, background: "white", borderRadius: 0, overflow: "hidden" }}>
+//                         <div style={{ height: "100%", width: `${pct}%`, background: c.color, borderRadius: 0, transition: "width 0.8s ease" }} />
 //                       </div>
 //                       <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 6, fontStyle: "italic" }}>{c.tip}</div>
 //                     </div>
@@ -1931,7 +1931,7 @@
 //                 <span style={{ color: "#059669" }}>Good (80%+)</span>
 //                 <span>100%</span>
 //               </div>
-//               <div style={{ height: 12, background: "linear-gradient(90deg, #FEE2E2 0%, #FEE2E2 60%, #E6F2FB 60%, #E6F2FB 80%, #DCFCE7 80%, #DCFCE7 100%)", borderRadius: 99, position: "relative", border: "1px solid #E2E8F0" }}>
+//               <div style={{ height: 12, background: "linear-gradient(90deg, #FEE2E2 0%, #FEE2E2 60%, #E6F2FB 60%, #E6F2FB 80%, #DCFCE7 80%, #DCFCE7 100%)", borderRadius: 0, position: "relative", border: "1px solid #E2E8F0" }}>
 //                 <div style={{ position: "absolute", left: `${Math.min(accuracyPct, 98)}%`, top: "50%", transform: "translate(-50%, -50%)", width: 20, height: 20, background: accuracyColor, borderRadius: "50%", border: "3px solid white", boxShadow: `0 0 0 2px ${accuracyColor}`, transition: "left 0.8s ease" }} />
 //               </div>
 //               <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, fontWeight: 700, color: accuracyColor }}>
@@ -1941,7 +1941,7 @@
 //           )}
 
 //           {/* ── Methodology note ── */}
-//           <div style={{ padding: "16px 18px", borderRadius: 12, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+//           <div style={{ padding: "16px 18px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
 //             <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Methodology</div>
 //             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
 //               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Reference Source</div>
@@ -1949,7 +1949,7 @@
 //               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Verdict Rule</div>
 //                 <div>Majority vote (≥ 2 of {panelSize > 0 ? panelSize : 3} judges). 3/3 = High confidence. 2/3 = Medium. Tie = Disputed &amp; excluded.</div></div>
 //               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Accuracy Formula</div>
-//                 <div style={{ fontFamily: "monospace", background: "white", padding: "6px 10px", borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12, display: "inline-block" }}>correct_rows ÷ (judged_rows − disputed_rows)</div></div>
+//                 <div style={{ fontFamily: "monospace", background: "white", padding: "6px 10px", borderRadius: 0, border: "1px solid #E2E8F0", fontSize: 12, display: "inline-block" }}>correct_rows ÷ (judged_rows − disputed_rows)</div></div>
 //               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Parallelism</div>
 //                 <div>All three judges run concurrently via ThreadPoolExecutor — no sequential bottleneck. Each judge is called once per row per stage.</div></div>
 //             </div>
@@ -1957,7 +1957,7 @@
 
 //           {/* ── Warnings ── */}
 //           {(llmJudge.warnings ?? []).length > 0 && (
-//             <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 12, background: "#FFF7ED", border: "1px solid #FED7AA" }}>
+//             <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 0, background: "#FFF7ED", border: "1px solid #FED7AA" }}>
 //               <div style={{ fontSize: 11, fontWeight: 700, color: "#D97706", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Evaluation Warnings</div>
 //               {(llmJudge.warnings ?? []).map((w, i) => (
 //                 <div key={i} style={{ fontSize: 12, color: "#92400E", lineHeight: 1.6, marginBottom: 4 }}>• {w}</div>
@@ -2023,7 +2023,7 @@
 //     return (
 //       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F8FAFC", gap: 20 }}>
 //         <p style={{ color: "#64748B", fontSize: 18 }}>No report data found.</p>
-//         <button style={{ padding: "14px 32px", background: "white", border: "1px solid #E2E8F0", color: "#374151", borderRadius: 12, cursor: "pointer", fontSize: 15, fontWeight: 600 }} onClick={() => navigate("/dashboard")}>
+//         <button style={{ padding: "14px 32px", background: "white", border: "1px solid #E2E8F0", color: "#374151", borderRadius: 0, cursor: "pointer", fontSize: 15, fontWeight: 600 }} onClick={() => navigate("/dashboard")}>
 //           ← Back to Dashboard
 //         </button>
 //       </div>
@@ -2228,7 +2228,7 @@
 //       <style>{`
 //         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 //         * { box-sizing: border-box; margin: 0; padding: 0; }
-//         .card { background: white; border-radius: 20px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
+//         .card { background: white; border-radius: 0px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
 //         .hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
 //         .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important; }
 //         .param-row { transition: all 0.18s ease; }
@@ -2244,11 +2244,11 @@
 //           {/* Re-run button — always visible; backend validates audit eligibility */}
 //           <button
 //             onClick={() => { setShowRerunDialog(true); setRerunError(""); setRerunContext(""); setRerunApiKey(""); setRerunEndpoint(""); setRerunPrinciples([]); setRerunStep(1); }}
-//             style={{ padding: "8px 18px", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", border: "none", color: "white", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
+//             style={{ padding: "8px 18px", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", border: "none", color: "white", borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
 //           >
 //             ↺ Re-run Audit
 //           </button>
-//           <button style={{ padding: "8px 20px", background: "white", border: "1px solid #E2E8F0", color: "#64748B", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+//           <button style={{ padding: "8px 20px", background: "white", border: "1px solid #E2E8F0", color: "#64748B", borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 600 }}
 //             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = KPMG_MID; (e.currentTarget as HTMLButtonElement).style.color = KPMG_MID; }}
 //             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#64748B"; }}
 //             onClick={() => navigate("/dashboard")}>← Dashboard</button>
@@ -2280,10 +2280,10 @@
 //             <div style={{ textAlign: "center" }}>
 //               <div style={{ fontSize: 56, fontWeight: 900, lineHeight: 1, color: "white", letterSpacing: "-0.04em" }}>{r.overall_score}</div>
 //               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>/ 100 Overall</div>
-//               <div style={{ marginTop: 10, display: "inline-block", padding: "5px 16px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: rcBg, color: rc, border: `1px solid ${rc}40` }}>{r.risk_level} Risk</div>
+//               <div style={{ marginTop: 10, display: "inline-block", padding: "5px 16px", borderRadius: 0, fontSize: 12, fontWeight: 700, background: rcBg, color: rc, border: `1px solid ${rc}40` }}>{r.risk_level} Risk</div>
 //               {/* Re-run badge in header */}
 //               {isRerun && rerunSequence && (
-//                 <div style={{ marginTop: 8, display: "inline-block", padding: "4px 14px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.2)", color: "white", border: "1px solid rgba(255,255,255,0.35)" }}>
+//                 <div style={{ marginTop: 8, display: "inline-block", padding: "4px 14px", borderRadius: 0, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.2)", color: "white", border: "1px solid rgba(255,255,255,0.35)" }}>
 //                   ↺ Re-run #{rerunSequence}
 //                 </div>
 //               )}
@@ -2308,7 +2308,7 @@
 //             {/* Delta score cards */}
 //             <div style={{ padding: "20px 28px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
 //               {/* Overall score change */}
-//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 14, background: deltaSummary.overall_score_change >= 0 ? "#DCFCE7" : "#FEE2E2", border: `1px solid ${deltaSummary.overall_score_change >= 0 ? "#86EFAC" : "#FCA5A5"}` }}>
+//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 0, background: deltaSummary.overall_score_change >= 0 ? "#DCFCE7" : "#FEE2E2", border: `1px solid ${deltaSummary.overall_score_change >= 0 ? "#86EFAC" : "#FCA5A5"}` }}>
 //                 <div style={{ fontSize: 28, fontWeight: 900, color: deltaSummary.overall_score_change >= 0 ? "#059669" : "#DC2626", lineHeight: 1 }}>
 //                   {deltaSummary.overall_score_change >= 0 ? "+" : ""}{deltaSummary.overall_score_change}
 //                 </div>
@@ -2316,26 +2316,26 @@
 //               </div>
 
 //               {/* Resolved */}
-//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 14, background: "#DCFCE7", border: "1px solid #86EFAC" }}>
+//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 0, background: "#DCFCE7", border: "1px solid #86EFAC" }}>
 //                 <div style={{ fontSize: 28, fontWeight: 900, color: "#059669", lineHeight: 1 }}>{deltaSummary.resolved_count ?? 0}</div>
 //                 <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Resolved</div>
 //               </div>
 
 //               {/* Regressed */}
-//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 14, background: deltaSummary.regressed_count > 0 ? "#FEE2E2" : "#F8FAFC", border: `1px solid ${deltaSummary.regressed_count > 0 ? "#FCA5A5" : "#E2E8F0"}` }}>
+//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 0, background: deltaSummary.regressed_count > 0 ? "#FEE2E2" : "#F8FAFC", border: `1px solid ${deltaSummary.regressed_count > 0 ? "#FCA5A5" : "#E2E8F0"}` }}>
 //                 <div style={{ fontSize: 28, fontWeight: 900, color: deltaSummary.regressed_count > 0 ? "#DC2626" : "#94A3B8", lineHeight: 1 }}>{deltaSummary.regressed_count ?? 0}</div>
 //                 <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Regressed</div>
 //               </div>
 
 //               {/* New findings */}
-//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 14, background: (deltaSummary.new_finding_count ?? 0) > 0 ? "#FEF3C7" : "#F8FAFC", border: `1px solid ${(deltaSummary.new_finding_count ?? 0) > 0 ? "#FCD34D" : "#E2E8F0"}` }}>
+//               <div style={{ textAlign: "center", padding: "16px", borderRadius: 0, background: (deltaSummary.new_finding_count ?? 0) > 0 ? "#FEF3C7" : "#F8FAFC", border: `1px solid ${(deltaSummary.new_finding_count ?? 0) > 0 ? "#FCD34D" : "#E2E8F0"}` }}>
 //                 <div style={{ fontSize: 28, fontWeight: 900, color: (deltaSummary.new_finding_count ?? 0) > 0 ? "#D97706" : "#94A3B8", lineHeight: 1 }}>{deltaSummary.new_finding_count ?? 0}</div>
 //                 <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>New Findings</div>
 //               </div>
 
 //               {/* Improving */}
 //               {(deltaSummary.improving_count ?? 0) > 0 && (
-//                 <div style={{ textAlign: "center", padding: "16px", borderRadius: 14, background: "#ECFDF5", border: "1px solid #6EE7B7" }}>
+//                 <div style={{ textAlign: "center", padding: "16px", borderRadius: 0, background: "#ECFDF5", border: "1px solid #6EE7B7" }}>
 //                   <div style={{ fontSize: 28, fontWeight: 900, color: "#059669", lineHeight: 1 }}>{deltaSummary.improving_count}</div>
 //                   <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Improving</div>
 //                 </div>
@@ -2359,10 +2359,10 @@
 //                     };
 //                     const ml = mlColors[pd.movement_label || "UNCHANGED"] || mlColors.UNCHANGED;
 //                     return (
-//                       <div key={pd.principle} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+//                       <div key={pd.principle} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
 //                         <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#1E293B" }}>{pd.principle}</span>
 //                         <span style={{ fontSize: 12, color: "#64748B" }}>{pd.prior_score} → {pd.current_score}</span>
-//                         <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 20, background: ml.bg, color: ml.color, border: `1px solid ${ml.color}30`, whiteSpace: "nowrap" }}>
+//                         <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 0, background: ml.bg, color: ml.color, border: `1px solid ${ml.color}30`, whiteSpace: "nowrap" }}>
 //                           {ml.label}
 //                         </span>
 //                       </div>
@@ -2377,13 +2377,13 @@
 //               <div style={{ padding: "0 28px 20px" }}>
 //                 <button
 //                   onClick={() => setShowPhase1Delta(v => !v)}
-//                   style={{ width: "100%", textAlign: "left", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: "10px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: "#2563EB", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+//                   style={{ width: "100%", textAlign: "left", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 0, padding: "10px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: "#2563EB", display: "flex", justifyContent: "space-between", alignItems: "center" }}
 //                 >
 //                   <span>Phase 1 Fingerprint Delta — {phase1Delta.per_dimension_changes?.length ?? 0} dimension(s) changed</span>
 //                   <span style={{ transform: showPhase1Delta ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}>▾</span>
 //                 </button>
 //                 {showPhase1Delta && phase1Delta.per_dimension_changes?.length > 0 && (
-//                   <div style={{ marginTop: 8, borderRadius: 10, overflow: "hidden", border: "1px solid #E2E8F0" }}>
+//                   <div style={{ marginTop: 8, borderRadius: 0, overflow: "hidden", border: "1px solid #E2E8F0" }}>
 //                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
 //                       <thead>
 //                         <tr style={{ background: "#F1F5F9" }}>
@@ -2397,12 +2397,12 @@
 //                           <tr key={i} style={{ borderTop: "1px solid #E2E8F0", background: i % 2 === 0 ? "white" : "#FAFAFA" }}>
 //                             <td style={{ padding: "8px 12px", color: "#374151", fontWeight: 600 }}>{ch.dimension}</td>
 //                             <td style={{ padding: "8px 12px" }}>
-//                               <span style={{ padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: ch.prior_status === "CONFLICT" ? "#FEE2E2" : "#F1F5F9", color: ch.prior_status === "CONFLICT" ? "#DC2626" : "#64748B" }}>
+//                               <span style={{ padding: "2px 8px", borderRadius: 0, fontSize: 11, fontWeight: 700, background: ch.prior_status === "CONFLICT" ? "#FEE2E2" : "#F1F5F9", color: ch.prior_status === "CONFLICT" ? "#DC2626" : "#64748B" }}>
 //                                 {ch.prior_status || "—"}
 //                               </span>
 //                             </td>
 //                             <td style={{ padding: "8px 12px" }}>
-//                               <span style={{ padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: ch.current_status === "AGREE" ? "#DCFCE7" : ch.current_status === "CONFLICT" ? "#FEE2E2" : "#F1F5F9", color: ch.current_status === "AGREE" ? "#059669" : ch.current_status === "CONFLICT" ? "#DC2626" : "#64748B" }}>
+//                               <span style={{ padding: "2px 8px", borderRadius: 0, fontSize: 11, fontWeight: 700, background: ch.current_status === "AGREE" ? "#DCFCE7" : ch.current_status === "CONFLICT" ? "#FEE2E2" : "#F1F5F9", color: ch.current_status === "AGREE" ? "#059669" : ch.current_status === "CONFLICT" ? "#DC2626" : "#64748B" }}>
 //                                 {ch.current_status || "—"}
 //                               </span>
 //                             </td>
@@ -2423,17 +2423,17 @@
 //             {isRerun && (resolvedFindings.length + persistingFindings.length + newFindings.length) > 0 && (
 //               <div style={{ padding: "0 28px 20px", display: "flex", gap: 10, flexWrap: "wrap" }}>
 //                 {resolvedFindings.length > 0 && (
-//                   <span style={{ padding: "5px 14px", borderRadius: 20, background: "#DCFCE7", color: "#059669", fontSize: 12, fontWeight: 700, border: "1px solid #86EFAC" }}>
+//                   <span style={{ padding: "5px 14px", borderRadius: 0, background: "#DCFCE7", color: "#059669", fontSize: 12, fontWeight: 700, border: "1px solid #86EFAC" }}>
 //                     ✓ {resolvedFindings.length} Resolved
 //                   </span>
 //                 )}
 //                 {persistingFindings.length > 0 && (
-//                   <span style={{ padding: "5px 14px", borderRadius: 20, background: "#F1F5F9", color: "#64748B", fontSize: 12, fontWeight: 700, border: "1px solid #CBD5E1" }}>
+//                   <span style={{ padding: "5px 14px", borderRadius: 0, background: "#F1F5F9", color: "#64748B", fontSize: 12, fontWeight: 700, border: "1px solid #CBD5E1" }}>
 //                     ○ {persistingFindings.length} Persisting
 //                   </span>
 //                 )}
 //                 {newFindings.length > 0 && (
-//                   <span style={{ padding: "5px 14px", borderRadius: 20, background: "#FEF3C7", color: "#D97706", fontSize: 12, fontWeight: 700, border: "1px solid #FCD34D" }}>
+//                   <span style={{ padding: "5px 14px", borderRadius: 0, background: "#FEF3C7", color: "#D97706", fontSize: 12, fontWeight: 700, border: "1px solid #FCD34D" }}>
 //                     ⚡ {newFindings.length} New
 //                   </span>
 //                 )}
@@ -2494,7 +2494,7 @@
 //                           {i < auditChain.length - 1 && (
 //                             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 6px", gap: 3, minWidth: 52 }}>
 //                               {change !== undefined && change !== null && (
-//                                 <div style={{ fontSize: 9, fontWeight: 800, color: change > 0 ? "#059669" : change < 0 ? "#DC2626" : "#94A3B8", background: change > 0 ? "#DCFCE7" : change < 0 ? "#FEE2E2" : "#F8FAFC", padding: "1px 6px", borderRadius: 20, border: `1px solid ${change > 0 ? "#86EFAC" : change < 0 ? "#FECACA" : "#E2E8F0"}`, whiteSpace: "nowrap" }}>
+//                                 <div style={{ fontSize: 9, fontWeight: 800, color: change > 0 ? "#059669" : change < 0 ? "#DC2626" : "#94A3B8", background: change > 0 ? "#DCFCE7" : change < 0 ? "#FEE2E2" : "#F8FAFC", padding: "1px 6px", borderRadius: 0, border: `1px solid ${change > 0 ? "#86EFAC" : change < 0 ? "#FECACA" : "#E2E8F0"}`, whiteSpace: "nowrap" }}>
 //                                   {change > 0 ? "+" : ""}{Math.round(change)}
 //                                 </div>
 //                               )}
@@ -2511,7 +2511,7 @@
 //                 </div>
 //                 {/* Chain tooltip */}
 //                 {chainTooltip && (
-//                   <div style={{ position: "fixed", left: Math.min(chainTooltip.x, window.innerWidth - 260), top: chainTooltip.y, zIndex: 3000, background: "white", border: "1px solid #E2E8F0", borderRadius: 12, padding: "12px 14px", width: 240, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+//                   <div style={{ position: "fixed", left: Math.min(chainTooltip.x, window.innerWidth - 260), top: chainTooltip.y, zIndex: 3000, background: "white", border: "1px solid #E2E8F0", borderRadius: 0, padding: "12px 14px", width: 240, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
 //                     onClick={e => e.stopPropagation()}>
 //                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
 //                       <span style={{ fontSize: 12, fontWeight: 800, color: "#1E293B" }}>
@@ -2528,7 +2528,7 @@
 //                         <div>Change: <strong style={{ color: chainTooltip.node.delta_summary.overall_score_change > 0 ? "#059669" : "#DC2626" }}>{chainTooltip.node.delta_summary.overall_score_change > 0 ? "+" : ""}{Math.round(chainTooltip.node.delta_summary.overall_score_change)}</strong> · Resolved: <strong>{chainTooltip.node.delta_summary.resolved_count}</strong></div>
 //                       )}
 //                       {chainTooltip.node.operator_change_context && (
-//                         <div style={{ marginTop: 5, padding: "5px 7px", background: "#F8FAFC", borderRadius: 6, fontSize: 10, lineHeight: 1.5, color: "#64748B" }}>
+//                         <div style={{ marginTop: 5, padding: "5px 7px", background: "#F8FAFC", borderRadius: 0, fontSize: 10, lineHeight: 1.5, color: "#64748B" }}>
 //                           {chainTooltip.node.operator_change_context.slice(0, 110)}{chainTooltip.node.operator_change_context.length > 110 ? "…" : ""}
 //                         </div>
 //                       )}
@@ -2542,7 +2542,7 @@
 //                               .then(d => { if (d) navigate("/report", { state: { data: d } }); })
 //                               .catch(() => {});
 //                           }}
-//                           style={{ marginTop: 8, width: "100%", padding: "6px", borderRadius: 8, border: "1px solid #BFDBFE", background: "#EFF6FF", color: "#2563EB", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+//                           style={{ marginTop: 8, width: "100%", padding: "6px", borderRadius: 0, border: "1px solid #BFDBFE", background: "#EFF6FF", color: "#2563EB", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
 //                         >
 //                           Open this run →
 //                         </button>
@@ -2608,7 +2608,7 @@
 
 //         {/* COLUMN WARNINGS */}
 //         {r.column_warnings && r.column_warnings.length > 0 && (
-//           <div style={{ marginBottom: 24, padding: "14px 20px", borderRadius: 14, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, display: "flex", flexDirection: "column", gap: 6, ...fade(0.12) }}>
+//           <div style={{ marginBottom: 24, padding: "14px 20px", borderRadius: 0, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, display: "flex", flexDirection: "column", gap: 6, ...fade(0.12) }}>
 //             {r.column_warnings.map((w, i) => (
 //               <div key={i} style={{ display: "flex", gap: 10, fontSize: 13, color: KPMG_BLUE, lineHeight: 1.5 }}><span>ℹ</span><span>{w}</span></div>
 //             ))}
@@ -2618,7 +2618,7 @@
 //         {/* FRAMEWORK ALIGNMENT */}
 //         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.15) }}>
 //           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBuilding /></div>
+//             <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBuilding /></div>
 //             <div>
 //               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Regulatory &amp; Framework Alignment</h2>
 //               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Alignment with major AI governance standards — based on overall audit score</p>
@@ -2638,11 +2638,11 @@
 //                   KPMG_TAF:    "10-principle assessment across all governance dimensions",
 //                 };
 //                 return (
-//                   <div key={key} className="hover-lift" style={{ padding: "20px 24px", borderRadius: 16, minWidth: 190, flex: "1 1 190px", maxWidth: 260, background: "#EFF6FF", border: `1.5px solid ${KPMG_MID}22`, textAlign: "center", boxShadow: "0 2px 8px rgba(0,51,141,0.06)" }}>
+//                   <div key={key} className="hover-lift" style={{ padding: "20px 24px", borderRadius: 0, minWidth: 190, flex: "1 1 190px", maxWidth: 260, background: "#EFF6FF", border: `1.5px solid ${KPMG_MID}22`, textAlign: "center", boxShadow: "0 2px 8px rgba(0,51,141,0.06)" }}>
 //                     <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, color: KPMG_MID }}><FwIcon /></div>
 //                     <div style={{ fontWeight: 800, fontSize: 14, color: "#1E293B", marginBottom: 3 }}>{fw.label}</div>
 //                     <div style={{ fontSize: 10, color: "#64748B", marginBottom: 12, lineHeight: 1.4 }}>{FW_FOCUS[key] || fw.desc}</div>
-//                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 16px", borderRadius: 20, fontSize: 13, fontWeight: 800, color: KPMG_MID, background: "white", border: `1.5px solid ${KPMG_MID}40` }}>
+//                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 16px", borderRadius: 0, fontSize: 13, fontWeight: 800, color: KPMG_MID, background: "white", border: `1.5px solid ${KPMG_MID}40` }}>
 //                       <span style={{ width: 8, height: 8, borderRadius: "50%", background: KPMG_MID, flexShrink: 0 }} />
 //                       {displayLabel}
 //                     </div>
@@ -2664,7 +2664,7 @@
 //         {hasPrn && (
 //           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.2) }}>
 //             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-//               <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgWeb /></div>
+//               <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgWeb /></div>
 //               <div>
 //                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Trusted AI Principles Assessment</h2>
 //                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Click any principle to drill into sub-parameters and see exactly what was calculated</p>
@@ -2677,7 +2677,7 @@
 //                 { label: "Strong Principles", value: `${Object.values(prn).filter(v => v.score >= 75).length}/${pkeys.length}`, color: "#059669", bg: "#DCFCE7" },
 //                 { label: "Needs Attention", value: `${Object.values(prn).filter(v => v.score < 60).length}`, color: "#DC2626", bg: "#FEE2E2" },
 //               ].map(item => (
-//                 <div key={item.label} style={{ padding: "16px 18px", borderRadius: 14, background: item.bg, border: `1px solid ${item.color}20` }}>
+//                 <div key={item.label} style={{ padding: "16px 18px", borderRadius: 0, background: item.bg, border: `1px solid ${item.color}20` }}>
 //                   <div style={{ fontSize: 11, fontWeight: 700, color: item.color, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>{item.label}</div>
 //                   <div style={{ fontSize: 28, fontWeight: 900, color: item.color }}>{item.value}</div>
 //                 </div>
@@ -2694,7 +2694,7 @@
 //             <div style={{ borderTop: "1px solid #F1F5F9", paddingTop: 24 }}>
 //               {!sel ? (
 //                 <div>
-//                   <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 16, padding: "10px 14px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #E2E8F0", textAlign: "center" }}>
+//                   <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 16, padding: "10px 14px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0", textAlign: "center" }}>
 //                     Click any principle above to inspect sub-parameters and see what was calculated
 //                   </div>
 //                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
@@ -2710,23 +2710,23 @@
 //                         UNCHANGED: { color: "#94A3B8", bg: "#F1F5F9", label: "— UNCHANGED" },
 //                       };
 //                       return (
-//                         <div key={k} className="hover-lift" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 14, background: "white", border: "1px solid #E2E8F0", cursor: "pointer" }} onClick={() => setSel(k)}>
-//                           <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: `${c}15`, border: `1px solid ${c}30`, display: "grid", placeItems: "center", color: c }}>{ (() => { const IC = ICONS[k]; return IC ? <IC /> : <SvgClip />; })() }</div>
+//                         <div key={k} className="hover-lift" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 0, background: "white", border: "1px solid #E2E8F0", cursor: "pointer" }} onClick={() => setSel(k)}>
+//                           <div style={{ width: 40, height: 40, borderRadius: 0, flexShrink: 0, background: `${c}15`, border: `1px solid ${c}30`, display: "grid", placeItems: "center", color: c }}>{ (() => { const IC = ICONS[k]; return IC ? <IC /> : <SvgClip />; })() }</div>
 //                           <div style={{ flex: 1, minWidth: 0 }}>
 //                             <div style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k}</div>
-//                             <div style={{ height: 5, background: "#F1F5F9", borderRadius: 99, marginTop: 7 }}>
-//                               <div style={{ width: `${sc}%`, height: "100%", background: bandColor(sc), borderRadius: 99, transition: "width 0.8s ease", opacity: 0.8 }} />
+//                             <div style={{ height: 5, background: "#F1F5F9", borderRadius: 0, marginTop: 7 }}>
+//                               <div style={{ width: `${sc}%`, height: "100%", background: bandColor(sc), borderRadius: 0, transition: "width 0.8s ease", opacity: 0.8 }} />
 //                             </div>
 //                             {/* Movement badge — only on re-run audits */}
 //                             {isRerun && ml && mlStyle[ml] && (
-//                               <div style={{ marginTop: 5, display: "inline-block", padding: "2px 7px", borderRadius: 20, fontSize: 9, fontWeight: 800, background: mlStyle[ml].bg, color: mlStyle[ml].color, border: `1px solid ${mlStyle[ml].color}30`, letterSpacing: "0.04em" }}>
+//                               <div style={{ marginTop: 5, display: "inline-block", padding: "2px 7px", borderRadius: 0, fontSize: 9, fontWeight: 800, background: mlStyle[ml].bg, color: mlStyle[ml].color, border: `1px solid ${mlStyle[ml].color}30`, letterSpacing: "0.04em" }}>
 //                                 {mlStyle[ml].label}
 //                               </div>
 //                             )}
 //                           </div>
 //                           <div style={{ textAlign: "right", flexShrink: 0 }}>
 //                             <div style={{ fontSize: 20, fontWeight: 900, color: bandColor(sc), lineHeight: 1 }}>{sc}</div>
-//                             <div style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6, background: bandBg(sc), color: bandColor(sc), marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(sc)}</div>
+//                             <div style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 0, background: bandBg(sc), color: bandColor(sc), marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(sc)}</div>
 //                           </div>
 //                         </div>
 //                       );
@@ -2736,15 +2736,15 @@
 //               ) : selData ? (
 //                 <div>
 //                   {/* ── PRINCIPLE HEADER ── */}
-//                   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, padding: "20px 22px", borderRadius: 16, background: `linear-gradient(135deg, ${(COLORS[sel] || KPMG_MID)}10, ${(COLORS[sel] || KPMG_MID)}05)`, border: `1.5px solid ${(COLORS[sel] || KPMG_MID)}30` }}>
-//                     <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, display: "grid", placeItems: "center", background: `${COLORS[sel] || KPMG_MID}15`, border: `1px solid ${(COLORS[sel] || KPMG_MID)}30` }}>{ (() => { const IC = ICONS[sel]; return IC ? <IC /> : <SvgClip />; })() }</div>
+//                   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, padding: "20px 22px", borderRadius: 0, background: `linear-gradient(135deg, ${(COLORS[sel] || KPMG_MID)}10, ${(COLORS[sel] || KPMG_MID)}05)`, border: `1.5px solid ${(COLORS[sel] || KPMG_MID)}30` }}>
+//                     <div style={{ width: 52, height: 52, borderRadius: 0, flexShrink: 0, display: "grid", placeItems: "center", background: `${COLORS[sel] || KPMG_MID}15`, border: `1px solid ${(COLORS[sel] || KPMG_MID)}30` }}>{ (() => { const IC = ICONS[sel]; return IC ? <IC /> : <SvgClip />; })() }</div>
 //                     <div style={{ flex: 1 }}>
 //                       <div style={{ fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{sel}</div>
 //                       {selData.description && <div style={{ fontSize: 12, color: "#64748B", marginTop: 3, lineHeight: 1.5 }}>{selData.description}</div>}
 //                     </div>
 //                     <div style={{ textAlign: "right" }}>
 //                       <div style={{ fontSize: 40, fontWeight: 900, color: COLORS[sel] || KPMG_MID, lineHeight: 1 }}>{selData.score}</div>
-//                       <div style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 8, background: bandBg(selData.score), color: bandColor(selData.score), marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{band(selData.score)}</div>
+//                       <div style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 0, background: bandBg(selData.score), color: bandColor(selData.score), marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{band(selData.score)}</div>
 //                     </div>
 //                   </div>
 
@@ -2752,7 +2752,7 @@
 //                   {PRINCIPLE_CONTEXT[sel] && (() => {
 //                     const ctx = PRINCIPLE_CONTEXT[sel];
 //                     return (
-//                       <div style={{ marginBottom: 20, borderRadius: 14, border: `1px solid ${(COLORS[sel] || KPMG_MID)}25`, overflow: "hidden" }}>
+//                       <div style={{ marginBottom: 20, borderRadius: 0, border: `1px solid ${(COLORS[sel] || KPMG_MID)}25`, overflow: "hidden" }}>
 //                         <div style={{ padding: "16px 20px", background: `${COLORS[sel] || KPMG_MID}08` }}>
 //                           <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.75 }}>{ctx.definition}</div>
 //                         </div>
@@ -2766,7 +2766,7 @@
 //                       { label: "Strongest sub-parameter", val: strongestParam?.[0] || "—", score: strongestParam?.[1] ?? 0, color: "#059669", bg: "#DCFCE7" },
 //                       { label: "Weakest sub-parameter",   val: weakestParam?.[0]  || "—", score: weakestParam?.[1]  ?? 0, color: "#DC2626", bg: "#FEE2E2" },
 //                     ].map(s => (
-//                       <div key={s.label} style={{ padding: "14px 16px", borderRadius: 12, background: s.bg, border: `1px solid ${s.color}20` }}>
+//                       <div key={s.label} style={{ padding: "14px 16px", borderRadius: 0, background: s.bg, border: `1px solid ${s.color}20` }}>
 //                         <div style={{ fontSize: 10, color: s.color, textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 6 }}>{s.label}</div>
 //                         <div style={{ fontSize: 14, fontWeight: 800, color: s.color, lineHeight: 1.3, wordBreak: "break-word" }}>{s.val}</div>
 //                         {typeof s.score === "number" && <div style={{ fontSize: 12, color: s.color, marginTop: 3, fontWeight: 700 }}>{s.score} / 100</div>}
@@ -2777,7 +2777,7 @@
 //                   {/* ── SUB-PARAMS + INSIGHT PANEL ── */}
 //                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
 //                     <div>
-//                       <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, padding: "8px 12px", background: "#E6F2FB", borderRadius: 8 }}>
+//                       <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, padding: "8px 12px", background: "#E6F2FB", borderRadius: 0 }}>
 //                         Sub-parameters — hover to inspect
 //                       </div>
 //                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -2789,7 +2789,7 @@
 //                           const meta = SUB_PARAM_META[param];
 //                           return (
 //                             <div key={param} className="param-row"
-//                               style={{ padding: "14px 16px", borderRadius: 12, background: isActive ? `${c}08` : "#F8FAFC", border: isActive ? `2px solid ${c}50` : "1.5px solid #E2E8F0", cursor: "pointer" }}
+//                               style={{ padding: "14px 16px", borderRadius: 0, background: isActive ? `${c}08` : "#F8FAFC", border: isActive ? `2px solid ${c}50` : "1.5px solid #E2E8F0", cursor: "pointer" }}
 //                               onMouseEnter={() => setHoveredParam(param)}
 //                               onMouseLeave={() => setHoveredParam(null)}
 //                             >
@@ -2800,11 +2800,11 @@
 //                                 </div>
 //                                 <div style={{ textAlign: "right", flexShrink: 0 }}>
 //                                   <div style={{ fontSize: 20, fontWeight: 900, color: sc2 }}>{v}</div>
-//                                   <div style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 6, background: bandBg(v), color: sc2, textTransform: "uppercase" }}>{band(v)}</div>
+//                                   <div style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 0, background: bandBg(v), color: sc2, textTransform: "uppercase" }}>{band(v)}</div>
 //                                 </div>
 //                               </div>
-//                               <div style={{ height: 6, background: "#E2E8F0", borderRadius: 99 }}>
-//                                 <div style={{ width: `${v}%`, height: "100%", borderRadius: 99, background: `linear-gradient(90deg, ${c}, ${sc2})`, transition: "width 0.5s ease" }} />
+//                               <div style={{ height: 6, background: "#E2E8F0", borderRadius: 0 }}>
+//                                 <div style={{ width: `${v}%`, height: "100%", borderRadius: 0, background: `linear-gradient(90deg, ${c}, ${sc2})`, transition: "width 0.5s ease" }} />
 //                               </div>
 //                             </div>
 //                           );
@@ -2812,7 +2812,7 @@
 //                       </div>
 //                     </div>
 
-//                     <div style={{ position: "sticky", top: 80, padding: "24px", borderRadius: 18, background: "white", border: `2px solid ${(COLORS[sel] || KPMG_MID)}20`, minHeight: 280, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
+//                     <div style={{ position: "sticky", top: 80, padding: "24px", borderRadius: 0, background: "white", border: `2px solid ${(COLORS[sel] || KPMG_MID)}20`, minHeight: 280, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
 //                       {activeParam && activeInsight ? (
 //                         <>
 //                           {/* Score header */}
@@ -2820,14 +2820,14 @@
 //                             <Radial score={selData.parameters[activeParam] as number} label="" color={COLORS[sel] || KPMG_MID} size={72} />
 //                             <div style={{ flex: 1 }}>
 //                               <div style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", lineHeight: 1.3, marginBottom: 5 }}>{activeParam}</div>
-//                               <div style={{ display: "inline-flex", alignItems: "center", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, color: bandColor(selData.parameters[activeParam] as number), background: bandBg(selData.parameters[activeParam] as number), textTransform: "uppercase", letterSpacing: "0.06em" }}>
+//                               <div style={{ display: "inline-flex", alignItems: "center", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 0, color: bandColor(selData.parameters[activeParam] as number), background: bandBg(selData.parameters[activeParam] as number), textTransform: "uppercase", letterSpacing: "0.06em" }}>
 //                                 {band(selData.parameters[activeParam] as number)} posture
 //                               </div>
 //                             </div>
 //                           </div>
 
 //                           {/* What this means — score-aware */}
-//                           <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 12, background: bandBg(selData.parameters[activeParam] as number), border: `1px solid ${bandColor(selData.parameters[activeParam] as number)}18` }}>
+//                           <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 0, background: bandBg(selData.parameters[activeParam] as number), border: `1px solid ${bandColor(selData.parameters[activeParam] as number)}18` }}>
 //                             <div style={{ fontSize: 10, fontWeight: 700, color: bandColor(selData.parameters[activeParam] as number), textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
 //                               {(selData.parameters[activeParam] as number) >= 75 ? "✓ What this means" : (selData.parameters[activeParam] as number) >= 50 ? "⚠ What this means" : "✗ What this means"}
 //                             </div>
@@ -2842,7 +2842,7 @@
 //                             const whyText = meta?.why;
 //                             if (!formulaText && !whatText) return null;
 //                             return (
-//                               <div style={{ marginBottom: 12, borderRadius: 12, overflow: "hidden", border: "1px solid #E8EFF7" }}>
+//                               <div style={{ marginBottom: 12, borderRadius: 0, overflow: "hidden", border: "1px solid #E8EFF7" }}>
 //                                 <div style={{ padding: "9px 14px", background: "#F0F6FF", display: "flex", alignItems: "center", gap: 8 }}>
 //                                   <span style={{ fontSize: 14, fontWeight: 900, color: KPMG_MID, lineHeight: 1 }}>ƒ</span>
 //                                   <span style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase" as const, letterSpacing: "0.07em" }}>How this score is calculated</span>
@@ -2852,7 +2852,7 @@
 //                                     <p style={{ margin: 0, fontSize: 12, color: "#374151", lineHeight: 1.65, fontWeight: 500 }}>{whatText}</p>
 //                                   )}
 //                                   {formulaText && (
-//                                     <div style={{ padding: "10px 12px", borderRadius: 8, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+//                                     <div style={{ padding: "10px 12px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
 //                                       <p style={{ margin: 0, fontSize: 12, color: "#1E293B", lineHeight: 1.75 }}>{formulaText}</p>
 //                                     </div>
 //                                   )}
@@ -2866,23 +2866,23 @@
 
 //                           {/* Why it matters */}
 //                           {activeInsight.calculation && (
-//                             <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
+//                             <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
 //                               <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Why it matters</div>
 //                               <div style={{ fontSize: 12, lineHeight: 1.65, color: "#64748B" }}>{activeInsight.calculation}</div>
 //                             </div>
 //                           )}
 
 //                           {/* Score bar */}
-//                           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
+//                           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
 //                             <div style={{ fontSize: 26, fontWeight: 900, color: bandColor(selData.parameters[activeParam] as number) }}>{selData.parameters[activeParam]}</div>
 //                             <div style={{ fontSize: 12, color: "#94A3B8" }}>/ 100</div>
-//                             <div style={{ marginLeft: "auto", height: 6, flex: 1, background: "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
-//                               <div style={{ height: "100%", width: `${selData.parameters[activeParam]}%`, background: `linear-gradient(90deg, ${COLORS[sel] || KPMG_MID}, ${bandColor(selData.parameters[activeParam] as number)})`, borderRadius: 99, transition: "width 0.6s ease" }} />
+//                             <div style={{ marginLeft: "auto", height: 6, flex: 1, background: "#E2E8F0", borderRadius: 0, overflow: "hidden" }}>
+//                               <div style={{ height: "100%", width: `${selData.parameters[activeParam]}%`, background: `linear-gradient(90deg, ${COLORS[sel] || KPMG_MID}, ${bandColor(selData.parameters[activeParam] as number)})`, borderRadius: 0, transition: "width 0.6s ease" }} />
 //                             </div>
 //                           </div>
 
 //                           {(selData.parameters[activeParam] as number) < 60 && (
-//                             <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 10, background: "#FEF2F2", border: "1px solid #FECACA" }}>
+//                             <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 0, background: "#FEF2F2", border: "1px solid #FECACA" }}>
 //                               <div style={{ fontSize: 10, fontWeight: 700, color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Low Score Alert</div>
 //                               <div style={{ fontSize: 11, lineHeight: 1.6, color: "#7F1D1D" }}>
 //                                 {(selData.parameters[activeParam] as number) < 30
@@ -2901,7 +2901,7 @@
 //                     </div>
 //                   </div>
 
-//                   <button style={{ marginTop: 20, width: "100%", padding: "12px", background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, color: KPMG_MID, borderRadius: 12, cursor: "pointer", fontSize: 13, fontWeight: 700, transition: "all 0.2s" }}
+//                   <button style={{ marginTop: 20, width: "100%", padding: "12px", background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, color: KPMG_MID, borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 700, transition: "all 0.2s" }}
 //                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#D0E8F8"; }}
 //                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#E6F2FB"; }}
 //                     onClick={() => setSel(null)}>← All Principles</button>
@@ -2915,7 +2915,7 @@
 //         {hasPrn && (
 //           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.25) }}>
 //             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//               <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBarChart /></div>
+//               <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBarChart /></div>
 //               <div>
 //                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Principle Score Distribution</h2>
 //                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Hover bars for detailed scores across all 10 Trusted AI principles</p>
@@ -2929,7 +2929,7 @@
 //         {r.model_metrics && Object.values(r.model_metrics).some(m => m.value !== null) && (
 //           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.3) }}>
 //             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//               <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgGear /></div>
+//               <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgGear /></div>
 //               <div>
 //                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Model-Specific Metrics</h2>
 //                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Measured for <strong style={{ color: "#1E293B" }}>{r.model_label || r.model_type}</strong> — evaluated against model-appropriate thresholds</p>
@@ -2943,11 +2943,11 @@
 //                 // Format key: replace underscores with spaces, title case each word
 //                 const displayKey = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 //                 return (
-//                   <div key={key} className="hover-lift" style={{ padding: "18px 16px", borderRadius: 16, background: mcBg, border: `1px solid ${mc}25`, display: "flex", flexDirection: "column", gap: 8 }}>
+//                   <div key={key} className="hover-lift" style={{ padding: "18px 16px", borderRadius: 0, background: mcBg, border: `1px solid ${mc}25`, display: "flex", flexDirection: "column", gap: 8 }}>
 //                     <div style={{ fontSize: 12, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>{displayKey}</div>
 //                     <div style={{ fontSize: 26, fontWeight: 800, color: mc }}>{displayVal}</div>
 //                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-//                       <span style={{ fontSize: 11, color: mc, background: "white", border: `1px solid ${mc}40`, padding: "2px 8px", borderRadius: 20, fontWeight: 700 }}>{m.risk_level}</span>
+//                       <span style={{ fontSize: 11, color: mc, background: "white", border: `1px solid ${mc}40`, padding: "2px 8px", borderRadius: 0, fontWeight: 700 }}>{m.risk_level}</span>
 //                       {m.threshold_low !== undefined && <span style={{ fontSize: 10, color: "#94A3B8" }}>threshold: {m.threshold_low}{m.unit ? ` ${m.unit}` : ""}</span>}
 //                     </div>
 //                     <div style={{ fontSize: 11, color: "#64748B", lineHeight: 1.5 }}>{m.description}</div>
@@ -2971,7 +2971,7 @@
 //           return (
 //             <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.35) }}>
 //               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//                 <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", color: "#059669" }}><SvgSearch /></div>
+//                 <div style={{ width: 36, height: 36, borderRadius: 0, background: "#DCFCE7", display: "grid", placeItems: "center", color: "#059669" }}><SvgSearch /></div>
 //                 <div>
 //                   <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Metric Computation Transparency</h2>
 //                   <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Every metric computed directly from your input/output data using real NLP/ML libraries</p>
@@ -2983,17 +2983,17 @@
 //                   { label: "Unavailable", count: unavailable.length, color: KPMG_MID, bg: "#E6F2FB" },
 //                   { label: "Total Metrics", count: notes.length, color: KPMG_BLUE, bg: "#E6F2FB" },
 //                 ].map(({ label, count, color, bg }) => (
-//                   <div key={label} style={{ padding: "14px 22px", borderRadius: 14, background: bg, border: `1px solid ${color}20`, textAlign: "center", minWidth: 120 }}>
+//                   <div key={label} style={{ padding: "14px 22px", borderRadius: 0, background: bg, border: `1px solid ${color}20`, textAlign: "center", minWidth: 120 }}>
 //                     <div style={{ fontSize: 26, fontWeight: 900, color }}>{count}</div>
 //                     <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>{label}</div>
 //                   </div>
 //                 ))}
 //               </div>
 //               {unavailable.length > 0 && (
-//                 <div style={{ padding: "12px 16px", borderRadius: 12, marginBottom: 20, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, fontSize: 13, color: KPMG_BLUE, lineHeight: 1.6 }}>
+//                 <div style={{ padding: "12px 16px", borderRadius: 0, marginBottom: 20, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, fontSize: 13, color: KPMG_BLUE, lineHeight: 1.6 }}>
 //                   <strong>{unavailable.length}</strong> metric(s) could not be computed — add{" "}
 //                   {["reference", "context", "label", "confidence"].map((c, i) => (
-//                     <span key={c}><code style={{ background: `${KPMG_LIGHT}20`, borderRadius: 4, padding: "1px 5px", fontSize: 11 }}>{c}</code>{i < 3 ? ", " : ""}</span>
+//                     <span key={c}><code style={{ background: `${KPMG_LIGHT}20`, borderRadius: 0, padding: "1px 5px", fontSize: 11 }}>{c}</code>{i < 3 ? ", " : ""}</span>
 //                   ))} columns to enable them.
 //                 </div>
 //               )}
@@ -3005,10 +3005,10 @@
 //                   // Format metric name: replace underscores, title case
 //                   const displayKey = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 //                   return (
-//                     <div key={key} className="hover-lift" style={{ padding: "16px", borderRadius: 14, background: ncBg, border: `1px solid ${nc}20`, display: "flex", flexDirection: "column", gap: 6 }}>
+//                     <div key={key} className="hover-lift" style={{ padding: "16px", borderRadius: 0, background: ncBg, border: `1px solid ${nc}20`, display: "flex", flexDirection: "column", gap: 6 }}>
 //                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 //                         <span style={{ fontSize: 12, fontWeight: 700, color: "#1E293B" }}>{displayKey}</span>
-//                         <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: nc, background: "white", border: `1px solid ${nc}30` }}>{ok ? "computed" : "unavailable"}</span>
+//                         <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 0, color: nc, background: "white", border: `1px solid ${nc}30` }}>{ok ? "computed" : "unavailable"}</span>
 //                       </div>
 //                       <div style={{ fontSize: 22, fontWeight: 900, color: nc }}>{note.value !== null ? note.value.toFixed(4) : "—"}</div>
 //                       <div style={{ fontSize: 10, color: "#94A3B8", lineHeight: 1.5 }}>{note.library}</div>
@@ -3023,12 +3023,12 @@
 //         {/* AUDIT FINDINGS */}
 //         {/* <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
 //           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}><SvgAlert /></div>
+//             <div style={{ width: 36, height: 36, borderRadius: 0, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}><SvgAlert /></div>
 //             <div>
 //               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
 //                 Audit Findings
 //                 {(r.findings?.length || 0) > 0 && (
-//                   <span style={{ marginLeft: 10, fontSize: 16, fontWeight: 700, color: "#DC2626", background: "#FEE2E2", padding: "2px 10px", borderRadius: 20 }}>{r.findings.length}</span>
+//                   <span style={{ marginLeft: 10, fontSize: 16, fontWeight: 700, color: "#DC2626", background: "#FEE2E2", padding: "2px 10px", borderRadius: 0 }}>{r.findings.length}</span>
 //                 )}
 //               </h2>
 //               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Detailed governance issues identified during the audit</p>
@@ -3042,7 +3042,7 @@
 //                 { label: "Medium", color: KPMG_MID, bg: "#E6F2FB", count: r.findings.filter(f => f.severity === "Medium").length },
 //                 { label: "Low", color: "#059669", bg: "#DCFCE7", count: r.findings.filter(f => f.severity === "Low").length },
 //               ].map(s => (
-//                 <div key={s.label} style={{ padding: "10px 18px", borderRadius: 10, background: s.bg, border: `1px solid ${s.color}20`, display: "flex", alignItems: "center", gap: 8 }}>
+//                 <div key={s.label} style={{ padding: "10px 18px", borderRadius: 0, background: s.bg, border: `1px solid ${s.color}20`, display: "flex", alignItems: "center", gap: 8 }}>
 //                   <div style={{ fontSize: 20, fontWeight: 900, color: s.color }}>{s.count}</div>
 //                   <div style={{ fontSize: 12, color: s.color, fontWeight: 600 }}>{s.label} Severity</div>
 //                 </div>
@@ -3051,7 +3051,7 @@
 //           )}
 
 //           {!r.findings?.length ? (
-//             <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 14, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+//             <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 0, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
 //               <span style={{ color: "#166534" }}><SvgCheck /></span>
 //               <span>No critical findings. Dataset aligns well with Trusted AI standards.</span>
 //             </div>
@@ -3062,19 +3062,19 @@
 //                 const scBg = f.severity === "High" ? "#FEE2E2" : f.severity === "Medium" ? "#E6F2FB" : "#DCFCE7";
 //                 const catColor = COLORS[f.category] || KPMG_MID;
 //                 return (
-//                   <div key={i} style={{ borderRadius: 16, background: "white", border: `1.5px solid ${sc}25`, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+//                   <div key={i} style={{ borderRadius: 0, background: "white", border: `1.5px solid ${sc}25`, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
 //                     <div style={{ padding: "14px 20px", background: scBg, borderBottom: `1px solid ${sc}20`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 //                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
 //                         <span style={{ color: COLORS[f.category] || KPMG_MID }}>{ (() => { const IC = ICONS[f.category]; return IC ? <IC /> : <SvgAlert />; })() }</span>
 //                         <span style={{ color: catColor, fontWeight: 700, fontSize: 14 }}>{f.category}</span>
-//                         {f.type && <span style={{ fontSize: 11, color: "#94A3B8", background: "white", padding: "2px 8px", borderRadius: 10, border: "1px solid #E2E8F0" }}>{f.type}</span>}
+//                         {f.type && <span style={{ fontSize: 11, color: "#94A3B8", background: "white", padding: "2px 8px", borderRadius: 0, border: "1px solid #E2E8F0" }}>{f.type}</span>}
 //                       </div>
-//                       <span style={{ color: sc, fontWeight: 700, background: "white", padding: "4px 14px", borderRadius: 20, fontSize: 12, border: `1px solid ${sc}30` }}>{f.severity}</span>
+//                       <span style={{ color: sc, fontWeight: 700, background: "white", padding: "4px 14px", borderRadius: 0, fontSize: 12, border: `1px solid ${sc}30` }}>{f.severity}</span>
 //                     </div>
 //                     <div style={{ padding: "18px 20px" }}>
 //                       <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Issue Identified</div>
 //                       <p style={{ margin: "0 0 14px", color: "#1E293B", lineHeight: 1.7, fontSize: 14, fontWeight: 500 }}>{f.issue}</p>
-//                       <div style={{ padding: "12px 16px", borderRadius: 10, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}30` }}>
+//                       <div style={{ padding: "12px 16px", borderRadius: 0, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}30` }}>
 //                         <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>Recommended Action</div>
 //                         <p style={{ margin: 0, color: KPMG_BLUE, lineHeight: 1.65, fontSize: 13 }}>{f.recommendation}</p>
 //                       </div>
@@ -3099,7 +3099,7 @@
 
 //           if (!principleKeys.length) return (
 //             <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
-//               <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 14, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+//               <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 0, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
 //                 <span><SvgCheck /></span><span>No findings. All probes passed.</span>
 //               </div>
 //             </div>
@@ -3122,7 +3122,7 @@
 //             <div className="card" style={{ padding: "28px", marginBottom: 24, ...fade(0.4) }}>
 //               {/* Header */}
 //               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-//                 <div style={{ width: 34, height: 34, borderRadius: 10, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}><SvgAlert /></div>
+//                 <div style={{ width: 34, height: 34, borderRadius: 0, background: "#FEE2E2", display: "grid", placeItems: "center", color: "#DC2626" }}><SvgAlert /></div>
 //                 <div style={{ flex: 1 }}>
 //                   <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Behavioural Probe Results</h2>
 //                   <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>
@@ -3138,7 +3138,7 @@
 //               </div>
 
 //               {/* Score mismatch note */}
-//               <div style={{ padding: "10px 14px", borderRadius: 10, background: "#FFFBEB", border: "1px solid #FDE68A", marginBottom: 16 }}>
+//               <div style={{ padding: "10px 14px", borderRadius: 0, background: "#FFFBEB", border: "1px solid #FDE68A", marginBottom: 16 }}>
 //                 <p style={{ margin: 0, fontSize: 12, color: "#92400E", lineHeight: 1.6 }}>
 //                   <span style={{ fontWeight: 700 }}>Why do these scores differ from the principle scores above?</span> The principle scores (e.g. Safety 73/100) are computed by the SDCC engine — they analyse the statistical patterns in your actual AI logs using NLP. These probe results are behavioural tests — we sent adversarial prompts directly to your AI's API and checked whether it responded correctly. Both measure the same principles but from different angles: logs tell you what your AI does in production, probes tell you how it behaves under pressure.
 //                 </p>
@@ -3180,13 +3180,13 @@
 //         {/* OVERALL RECOMMENDATION */}
 //         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.43) }}>
 //           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-//             <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgComply /></div>
+//             <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgComply /></div>
 //             <div>
 //               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Overall Recommendation</h2>
 //               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Based on audit results for {r.model_label || r.model_type}</p>
 //             </div>
 //           </div>
-//           <div style={{ padding: "20px 24px", background: `linear-gradient(135deg, ${KPMG_BLUE}08, ${KPMG_MID}05)`, border: `1.5px solid ${KPMG_MID}25`, borderRadius: 14 }}>
+//           <div style={{ padding: "20px 24px", background: `linear-gradient(135deg, ${KPMG_BLUE}08, ${KPMG_MID}05)`, border: `1.5px solid ${KPMG_MID}25`, borderRadius: 0 }}>
 //             <p style={{ margin: 0, color: "#1E293B", lineHeight: 1.8, fontSize: 14 }}>{toolRecommendation}</p>
 //           </div>
 //           <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
@@ -3195,7 +3195,7 @@
 //               { icon: SvgTarget, label: "Target Score", val: `${Math.min(r.overall_score + 15, 100)}/100`, color: "#059669" },
 //               { icon: SvgScale, label: "Compliance Status", val: r.overall_score >= 75 ? "Compliant" : r.overall_score >= 50 ? "Conditional" : "Non-Compliant", color: r.overall_score >= 75 ? "#059669" : r.overall_score >= 50 ? KPMG_MID : "#DC2626" },
 //             ].map(item => (
-//               <div key={item.label} style={{ padding: "14px 16px", borderRadius: 12, background: "white", border: "1px solid #E2E8F0" }}>
+//               <div key={item.label} style={{ padding: "14px 16px", borderRadius: 0, background: "white", border: "1px solid #E2E8F0" }}>
 //                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 6, color: item.color }}>{ (() => { const IC = item.icon as any; return <IC />; })() }</div>
 //                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{item.label}</div>
 //                 <div style={{ fontSize: 13, fontWeight: 700, color: item.color }}>{item.val}</div>
@@ -3210,11 +3210,11 @@
 //           <h2 style={{ fontSize: 22, fontWeight: 900, color: "#1E293B", marginBottom: 8 }}>Download the Full Report</h2>
 //           <p style={{ color: "#64748B", marginBottom: 28, fontSize: 14 }}>Export a comprehensive PDF with evidence, scoring breakdown, and improvement roadmap.</p>
 //           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-//             <button style={{ padding: "13px 36px", background: `linear-gradient(135deg, ${KPMG_BLUE}, ${KPMG_MID})`, border: "none", borderRadius: 14, color: "white", fontWeight: 700, cursor: pdfLoading ? "not-allowed" : "pointer", fontSize: 14, minWidth: 220, boxShadow: `0 8px 24px ${KPMG_BLUE}40`, opacity: pdfLoading ? 0.7 : 1, transition: "all 0.2s" }}
+//             <button style={{ padding: "13px 36px", background: `linear-gradient(135deg, ${KPMG_BLUE}, ${KPMG_MID})`, border: "none", borderRadius: 0, color: "white", fontWeight: 700, cursor: pdfLoading ? "not-allowed" : "pointer", fontSize: 14, minWidth: 220, boxShadow: `0 8px 24px ${KPMG_BLUE}40`, opacity: pdfLoading ? 0.7 : 1, transition: "all 0.2s" }}
 //               onClick={handleDownloadPDF} disabled={pdfLoading}>
 //               {pdfLoading ? "Preparing PDF…" : "Download Full PDF Report"}
 //             </button>
-//             <button style={{ padding: "13px 36px", background: "white", border: "1.5px solid #E2E8F0", borderRadius: 14, color: "#374151", cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }}
+//             <button style={{ padding: "13px 36px", background: "white", border: "1.5px solid #E2E8F0", borderRadius: 0, color: "#374151", cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }}
 //               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = KPMG_MID; (e.currentTarget as HTMLButtonElement).style.color = KPMG_MID; }}
 //               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#374151"; }}
 //               onClick={() => navigate("/dashboard")}>← Back to Dashboard</button>
@@ -3239,7 +3239,7 @@
 //           style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
 //           onClick={(e) => { if (e.target === e.currentTarget) setShowRerunDialog(false); }}
 //         >
-//           <div style={{ background: "white", borderRadius: 20, padding: "32px 36px", width: "100%", maxWidth: 540, boxShadow: "0 24px 60px rgba(0,0,0,0.2)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}>
+//           <div style={{ background: "white", borderRadius: 0, padding: "32px 36px", width: "100%", maxWidth: 540, boxShadow: "0 24px 60px rgba(0,0,0,0.2)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}>
 
 //             {/* Header */}
 //             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -3253,8 +3253,8 @@
 //                 <p style={{ fontSize: 12, color: "#94A3B8", margin: "4px 0 0", fontWeight: 500 }}>
 //                   {r.ai_name}
 //                   {raw?.audit_id
-//                     ? <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 20, background: "#EFF6FF", color: "#2563EB", fontSize: 10, fontWeight: 700 }}>Blackbox</span>
-//                     : <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 20, background: "#F0FDF4", color: "#059669", fontSize: 10, fontWeight: 700 }}>Full Pipeline</span>
+//                     ? <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 0, background: "#EFF6FF", color: "#2563EB", fontSize: 10, fontWeight: 700 }}>Blackbox</span>
+//                     : <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 0, background: "#F0FDF4", color: "#059669", fontSize: 10, fontWeight: 700 }}>Full Pipeline</span>
 //                   }
 //                   {" "}· Score: <strong style={{ color: "#2563EB" }}>{r.overall_score}</strong>
 //                 </p>
@@ -3265,7 +3265,7 @@
 //             {/* Step progress bar */}
 //             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
 //               {[1, 2].map(s => (
-//                 <div key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: rerunStep >= s ? "#2563EB" : "#E2E8F0", transition: "background 0.3s" }} />
+//                 <div key={s} style={{ flex: 1, height: 4, borderRadius: 0, background: rerunStep >= s ? "#2563EB" : "#E2E8F0", transition: "background 0.3s" }} />
 //               ))}
 //             </div>
 
@@ -3273,7 +3273,7 @@
 //             {rerunStep === 1 && (<>
 
 //               {/* Prior baseline snapshot */}
-//               <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, marginBottom: 16 }}>
+//               <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 0, marginBottom: 16 }}>
 //                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "1px", marginBottom: 8 }}>Prior audit baseline</div>
 //                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap" as const }}>
 //                   <div style={{ textAlign: "center" as const }}>
@@ -3306,7 +3306,7 @@
 //                   onChange={(e) => setRerunContext(e.target.value)}
 //                   placeholder="e.g. Updated system prompt to restrict legal advice, patched safety filters, re-trained on bias dataset…"
 //                   rows={3}
-//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, background: "#F8FAFC" }}
+//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, background: "#F8FAFC" }}
 //                   onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
 //                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.boxShadow = "none"; }}
 //                 />
@@ -3321,7 +3321,7 @@
 //                 <select
 //                   value={rerunChangeType}
 //                   onChange={(e) => setRerunChangeType(e.target.value)}
-//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", cursor: "pointer", boxSizing: "border-box" as const }}
+//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", cursor: "pointer", boxSizing: "border-box" as const }}
 //                 >
 //                   <option value="model_update">Model update / version change</option>
 //                   <option value="system_prompt">System prompt change</option>
@@ -3345,7 +3345,7 @@
 //                     return (
 //                       <button key={p} type="button"
 //                         onClick={() => setRerunPrinciples(prev => selected ? prev.filter(x => x !== p) : [...prev, p])}
-//                         style={{ padding: "4px 11px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}
+//                         style={{ padding: "4px 11px", borderRadius: 0, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}
 //                       >
 //                         {selected ? "✓ " : ""}{p}
 //                       </button>
@@ -3354,13 +3354,13 @@
 //                 </div>
 //               </div>
 
-//               {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
+//               {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 0, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
 
 //               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-//                 <button onClick={() => setShowRerunDialog(false)} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+//                 <button onClick={() => setShowRerunDialog(false)} style={{ padding: "10px 20px", borderRadius: 0, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
 //                 <button
 //                   onClick={() => { if (!rerunContext.trim()) { setRerunError("Please describe what changed."); return; } setRerunError(""); setRerunStep(2); }}
-//                   style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}
+//                   style={{ padding: "10px 24px", borderRadius: 0, border: "none", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}
 //                 >
 //                   Next →
 //                 </button>
@@ -3371,13 +3371,13 @@
 //             {rerunStep === 2 && (<>
 
 //               {/* What will happen */}
-//               <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 12, marginBottom: 16, fontSize: 12, color: "#1D4ED8", lineHeight: 1.65 }}>
+//               <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 0, marginBottom: 16, fontSize: 12, color: "#1D4ED8", lineHeight: 1.65 }}>
 //                 <strong>What happens next:</strong> Phase 1 fingerprinting re-runs first.
 //                 {raw?.audit_id ? " If drift is detected, a full re-audit triggers automatically. Otherwise only failing/weak principles are re-probed." : " Full pipeline re-run: re-fingerprint + adaptive probes + SDCC re-evaluation. Delta applied automatically."}
 //               </div>
 
 //               {/* Change summary preview */}
-//               <div style={{ padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 10, marginBottom: 16, fontSize: 12, color: "#166534" }}>
+//               <div style={{ padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 0, marginBottom: 16, fontSize: 12, color: "#166534" }}>
 //                 <strong>Change context:</strong> {rerunContext.trim().slice(0, 120)}{rerunContext.length > 120 ? "…" : ""}
 //                 {rerunPrinciples.length > 0 && <div style={{ marginTop: 3 }}><strong>Claimed fixes:</strong> {rerunPrinciples.join(", ")}</div>}
 //               </div>
@@ -3392,7 +3392,7 @@
 //                   value={rerunEndpoint}
 //                   onChange={(e) => setRerunEndpoint(e.target.value)}
 //                   placeholder="https://api.example.com/v1/chat/completions"
-//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
+//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
 //                   onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
 //                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }}
 //                 />
@@ -3408,19 +3408,19 @@
 //                   value={rerunApiKey}
 //                   onChange={(e) => setRerunApiKey(e.target.value)}
 //                   placeholder="Your AI endpoint API key"
-//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
+//                   style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
 //                   onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
 //                   onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }}
 //                 />
 //                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>Keys are never stored — used for this request only.</p>
 //               </div>
 
-//               {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
+//               {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 0, fontSize: 12, color: "#DC2626", marginBottom: 14 }}>{rerunError}</div>}
 
 //               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-//                 <button onClick={() => { setRerunStep(1); setRerunError(""); }} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
+//                 <button onClick={() => { setRerunStep(1); setRerunError(""); }} style={{ padding: "10px 20px", borderRadius: 0, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
 //                 <button onClick={handleSubmitRerun} disabled={rerunLoading}
-//                   style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: rerunLoading ? "#93C5FD" : "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: rerunLoading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, boxShadow: rerunLoading ? "none" : "0 4px 12px rgba(37,99,235,0.3)" }}>
+//                   style={{ padding: "10px 24px", borderRadius: 0, border: "none", background: rerunLoading ? "#93C5FD" : "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: rerunLoading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, boxShadow: rerunLoading ? "none" : "0 4px 12px rgba(37,99,235,0.3)" }}>
 //                   {rerunLoading ? (
 //                     <><div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />{raw?.audit_id ? "Re-probing…" : "Re-probing + Evaluating…"}</>
 //                   ) : raw?.audit_id ? "↺ Start Re-run" : "↺ Start Full Re-run"}
@@ -4857,7 +4857,7 @@ function ImprovedBarChart({ principles }: { principles: Record<string, Principle
           />
           <Tooltip
             cursor={{ fill: "rgba(0,51,141,0.05)" }}
-            contentStyle={{ background: "white", border: "1px solid rgba(0,51,141,0.2)", borderRadius: 12, padding: "14px 18px", color: "#1E293B", boxShadow: "0 10px 30px rgba(0,0,0,0.12)" }}
+            contentStyle={{ background: "white", border: "1px solid rgba(0,51,141,0.2)", borderRadius: 0, padding: "14px 18px", color: "#1E293B", boxShadow: "0 10px 30px rgba(0,0,0,0.12)" }}
             formatter={(value: any) => [`${value}/100`, "Score"]}
           />
           <Bar dataKey="score" radius={[0, 10, 10, 0]} barSize={28} animationDuration={1600} animationEasing="ease-out">
@@ -4948,7 +4948,7 @@ function PrincipleFindingCard({
   const allPassed = failedProbes.length === 0;
 
   return (
-    <div style={{ borderRadius: 12, background: "white", border: "1px solid #E2E8F0", overflow: "hidden" }}>
+    <div style={{ borderRadius: 0, background: "white", border: "1px solid #E2E8F0", overflow: "hidden" }}>
       {/* Single compact row */}
       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
         {/* Pass/fail dot */}
@@ -4966,13 +4966,13 @@ function PrincipleFindingCard({
         )}
 
         {/* Severity badge */}
-        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 14, background: allPassed ? "#DCFCE7" : sc === "#64748B" ? "#F1F5F9" : sc === KPMG_MID ? "#EFF6FF" : "#DCFCE7", color: allPassed ? "#059669" : sc }}>
+        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 0, background: allPassed ? "#DCFCE7" : sc === "#64748B" ? "#F1F5F9" : sc === KPMG_MID ? "#EFF6FF" : "#DCFCE7", color: allPassed ? "#059669" : sc }}>
           {allPassed ? "Pass" : worst}
         </span>
 
         {/* Expand button */}
         {catProbes.length > 0 && (
-          <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 8, border: "1px solid #E2E8F0", background: open ? "#F1F5F9" : "white", cursor: "pointer", fontSize: 11, fontWeight: 600, color: "#64748B" }}>
+          <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 0, border: "1px solid #E2E8F0", background: open ? "#F1F5F9" : "white", cursor: "pointer", fontSize: 11, fontWeight: 600, color: "#64748B" }}>
             {catProbes.length} probes <span style={{ fontSize: 9, display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>▼</span>
           </button>
         )}
@@ -5002,14 +5002,14 @@ function PrincipleFindingCard({
                   <p style={{ margin: "0 0 3px", fontSize: 12, color: "#64748B", lineHeight: 1.5 }}>{p.prompt}</p>
                   <p style={{ margin: 0, fontSize: 11, color: psc, lineHeight: 1.4 }}>{p.note}</p>
                   {!p.passed && p.response && p.response.length > 5 && !p.response.startsWith("[HTTP") && (
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#94A3B8", fontFamily: "monospace", background: "white", padding: "4px 8px", borderRadius: 6, border: "1px solid #E2E8F0", wordBreak: "break-word" as const }}>
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#94A3B8", fontFamily: "monospace", background: "white", padding: "4px 8px", borderRadius: 0, border: "1px solid #E2E8F0", wordBreak: "break-word" as const }}>
                       {p.response.length > 160 ? p.response.slice(0, 160) + "…" : p.response}
                     </p>
                   )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   {p.latency_ms !== undefined && <span style={{ fontSize: 10, color: "#CBD5E1" }}>{p.latency_ms}ms</span>}
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 8, background: p.passed ? "#DCFCE7" : "#F1F5F9", color: psc }}>{p.passed ? "✓" : "✗"}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 0, background: p.passed ? "#DCFCE7" : "#F1F5F9", color: psc }}>{p.passed ? "✓" : "✗"}</span>
                 </div>
               </div>
             );
@@ -5099,7 +5099,7 @@ function DataStructuralIntegritySection({ report }: { report: ReportData }) {
   return (
     <div className="card" style={{ padding: "32px", marginBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgDb /></div>
+        <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgDb /></div>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Data Structural Integrity</h2>
           <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>
@@ -5117,7 +5117,7 @@ function DataStructuralIntegritySection({ report }: { report: ReportData }) {
           { label: "Duplicates", value: String(d.duplicates), color: d.duplicates === 0 ? "#059669" : "#64748B", bg: d.duplicates === 0 ? "#DCFCE7" : "#F1F5F9" },
           { label: "Schema", value: `${s.schemaScore}%`, color: bandColor(s.schemaScore), bg: bandBg(s.schemaScore) },
         ].map(item => (
-          <div key={item.label} style={{ padding: "16px", borderRadius: 14, background: item.bg, border: `1px solid ${item.color}20`, textAlign: "center" }}>
+          <div key={item.label} style={{ padding: "16px", borderRadius: 0, background: item.bg, border: `1px solid ${item.color}20`, textAlign: "center" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: item.color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{item.label}</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: item.color }}>{item.value}</div>
           </div>
@@ -5128,27 +5128,27 @@ function DataStructuralIntegritySection({ report }: { report: ReportData }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {metricRows.map((row, i) => (
           <div key={i} style={{
-            padding: "18px 20px", borderRadius: 14, background: "#F8FAFC",
+            padding: "18px 20px", borderRadius: 0, background: "#F8FAFC",
             border: `1.5px solid ${row.score >= 75 ? "rgba(5,150,105,0.2)" : row.score >= 50 ? "rgba(0,94,184,0.2)" : "rgba(220,38,38,0.2)"}`,
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#1E293B", marginBottom: 3 }}>{row.label}</div>
-                <div style={{ fontSize: 11, fontFamily: "monospace", background: "white", border: "1px solid #E2E8F0", borderRadius: 6, padding: "3px 8px", display: "inline-block", color: "#64748B", marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontFamily: "monospace", background: "white", border: "1px solid #E2E8F0", borderRadius: 0, padding: "3px 8px", display: "inline-block", color: "#64748B", marginBottom: 8 }}>
                   {row.formula}
                 </div>
               </div>
               <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <div style={{ fontSize: 22, fontWeight: 900, color: bandColor(row.score), lineHeight: 1 }}>{row.value}</div>
-                <div style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: bandBg(row.score), color: bandColor(row.score), marginTop: 4, display: "inline-block", textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(row.score)}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 0, background: bandBg(row.score), color: bandColor(row.score), marginTop: 4, display: "inline-block", textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(row.score)}</div>
               </div>
             </div>
             {/* Progress bar */}
-            <div style={{ height: 5, background: "#E2E8F0", borderRadius: 99, marginBottom: 12 }}>
-              <div style={{ width: `${Math.min(row.score, 100)}%`, height: "100%", borderRadius: 99, background: `linear-gradient(90deg, ${bandColor(row.score)}80, ${bandColor(row.score)})`, transition: "width 0.8s ease" }} />
+            <div style={{ height: 5, background: "#E2E8F0", borderRadius: 0, marginBottom: 12 }}>
+              <div style={{ width: `${Math.min(row.score, 100)}%`, height: "100%", borderRadius: 0, background: `linear-gradient(90deg, ${bandColor(row.score)}80, ${bandColor(row.score)})`, transition: "width 0.8s ease" }} />
             </div>
             {/* Explanation */}
-            <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, padding: "10px 14px", background: "white", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+            <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, padding: "10px 14px", background: "white", borderRadius: 0, border: "1px solid #E2E8F0" }}>
               {row.why}
             </div>
           </div>
@@ -5157,7 +5157,7 @@ function DataStructuralIntegritySection({ report }: { report: ReportData }) {
 
       {/* Column list */}
       {d.column_names && d.column_names.length > 0 && (
-        <div style={{ marginTop: 20, padding: "16px 18px", borderRadius: 12, background: "white", border: "1px solid #E2E8F0" }}>
+        <div style={{ marginTop: 20, padding: "16px 18px", borderRadius: 0, background: "white", border: "1px solid #E2E8F0" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
             Detected Columns ({d.column_names.length})
           </div>
@@ -5166,7 +5166,7 @@ function DataStructuralIntegritySection({ report }: { report: ReportData }) {
               const isRequired = ["task_id", "input", "output", "latency"].some(req => col.toLowerCase().includes(req));
               return (
                 <span key={col} style={{
-                  padding: "4px 12px", borderRadius: 14, fontSize: 12, fontWeight: 500,
+                  padding: "4px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500,
                   background: isRequired ? "#DCFCE7" : "#F1F5F9",
                   color: isRequired ? "#065F46" : "#475569",
                   border: isRequired ? "1px solid rgba(5,150,105,0.3)" : "1px solid #E2E8F0",
@@ -5233,7 +5233,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "#EDE9FE", display: "grid", placeItems: "center", color: "#7C3AED" }}>
+        <div style={{ width: 36, height: 36, borderRadius: 0, background: "#EDE9FE", display: "grid", placeItems: "center", color: "#7C3AED" }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
         <div>
@@ -5245,14 +5245,14 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
       </div>
 
       {/* Explainer callout */}
-      <div style={{ margin: "16px 0", padding: "14px 18px", borderRadius: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", borderLeft: "4px solid #3B82F6" }}>
+      <div style={{ margin: "16px 0", padding: "14px 18px", borderRadius: 0, background: "#EFF6FF", border: "1px solid #BFDBFE", borderLeft: "4px solid #3B82F6" }}>
         <p style={{ margin: 0, fontSize: 13, color: "#1E3A5F", lineHeight: 1.7 }}>
           <strong>Why three judges?</strong> Any single LLM can be wrong or biased. By running three architecturally different models from three different providers simultaneously — with no shared weights, fine-tuning, or failure modes — the panel achieves cross-provider independence. A correct verdict from ≥ 2/3 judges is far more reliable than any single model's assessment. Rows where judges cannot reach majority are flagged as <em>Disputed</em> and excluded from accuracy.
         </p>
       </div>
 
       {hasError ? (
-        <div style={{ padding: "18px 20px", borderRadius: 14, background: "#FFF7ED", border: "1px solid #FED7AA", color: "#92400E", fontSize: 13, lineHeight: 1.6 }}>
+        <div style={{ padding: "18px 20px", borderRadius: 0, background: "#FFF7ED", border: "1px solid #FED7AA", color: "#92400E", fontSize: 13, lineHeight: 1.6 }}>
           <strong>Judge Panel Unavailable.</strong> The accuracy evaluation panel could not be initialised. Please contact your administrator.
         </div>
       ) : (
@@ -5270,10 +5270,10 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
               ].map((j, idx) => {
                 const active = panelSize > 0 ? idx < panelSize : llmJudge.rows_judged > 0;
                 return (
-                  <div key={j.shortName} style={{ padding: "16px", borderRadius: 14, background: active ? j.bg : "#F8FAFC", border: `1.5px solid ${active ? j.color : "#E2E8F0"}30`, opacity: active ? 1 : 0.45 }}>
+                  <div key={j.shortName} style={{ padding: "16px", borderRadius: 0, background: active ? j.bg : "#F8FAFC", border: `1.5px solid ${active ? j.color : "#E2E8F0"}30`, opacity: active ? 1 : 0.45 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: active ? j.color : "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em" }}>{j.shortName}</span>
-                      <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: active ? j.color : "#94A3B8", color: "white", fontWeight: 700 }}>{active ? "Active" : "Offline"}</span>
+                      <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 0, background: active ? j.color : "#94A3B8", color: "white", fontWeight: 700 }}>{active ? "Active" : "Offline"}</span>
                     </div>
                     <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.5, fontStyle: "italic" }}>{j.specialty}</div>
                   </div>
@@ -5285,7 +5285,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
           {/* ── Workflow steps ── */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>Evaluation Workflow — Per Log Row</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 0, border: "1px solid #E2E8F0", borderRadius: 14, overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 0, border: "1px solid #E2E8F0", borderRadius: 0, overflow: "hidden" }}>
               {[
                 { step: "1A", title: "KB Lookup",      subtitle: kbGrounded ? "Used this audit" : "Not used — no KB provided", color: kbGrounded ? "#059669" : "#94A3B8", bg: kbGrounded ? "#DCFCE7" : "#F8FAFC", desc: "Question matched against knowledge base using Jaccard similarity (≥ 0.12). If found, KB chunk becomes the ground-truth reference." },
                 { step: "1B", title: "LLM Generation", subtitle: kbGrounded ? "Skipped (KB used)" : "Used this audit",          color: kbGrounded ? "#94A3B8" : KPMG_MID, bg: kbGrounded ? "#F8FAFC" : "#E6F2FB", desc: "All 3 judges independently generate a reference answer. Their answers are compared for agreement (Jaccard ≥ 0.15) to form a consensus reference." },
@@ -5297,7 +5297,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
                       <div style={{ fontSize: 10, fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: "0.07em" }}>Stage {s.step}</div>
                       <div style={{ fontWeight: 700, fontSize: 13, color: "#1E293B" }}>{s.title}</div>
                     </div>
-                    <span style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: s.color, color: "white", fontWeight: 700, whiteSpace: "nowrap" }}>{s.subtitle}</span>
+                    <span style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 0, background: s.color, color: "white", fontWeight: 700, whiteSpace: "nowrap" }}>{s.subtitle}</span>
                   </div>
                   <p style={{ margin: 0, fontSize: 12, color: "#475569", lineHeight: 1.6 }}>{s.desc}</p>
                 </div>
@@ -5307,19 +5307,19 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
 
           {/* ── Accuracy Score + Interpretation ── */}
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 24, alignItems: "start", marginBottom: 20 }}>
-            <div style={{ padding: "28px 36px", borderRadius: 14, background: accuracyBg, border: `1.5px solid ${accuracyColor}30`, textAlign: "center", minWidth: 160 }}>
+            <div style={{ padding: "28px 36px", borderRadius: 0, background: accuracyBg, border: `1.5px solid ${accuracyColor}30`, textAlign: "center", minWidth: 160 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: accuracyColor, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Majority Vote Accuracy</div>
               <div style={{ fontSize: 60, fontWeight: 900, color: accuracyColor, lineHeight: 1, letterSpacing: "-0.04em" }}>
                 {accuracyPct !== null ? `${accuracyPct}%` : "—"}
               </div>
-              <div style={{ marginTop: 10, padding: "5px 16px", borderRadius: 14, background: "white", border: `1px solid ${accuracyColor}30`, display: "inline-block" }}>
+              <div style={{ marginTop: 10, padding: "5px 16px", borderRadius: 0, background: "white", border: `1px solid ${accuracyColor}30`, display: "inline-block" }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: accuracyColor }}>{interp.label}</span>
               </div>
               <div style={{ marginTop: 8, fontSize: 11, color: "#64748B" }}>correct rows ÷ (judged − disputed)</div>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ padding: "16px 18px", borderRadius: 14, background: accuracyBg, border: `1px solid ${accuracyColor}20`, fontSize: 13.5, color: "#1E293B", lineHeight: 1.75 }}>
+              <div style={{ padding: "16px 18px", borderRadius: 0, background: accuracyBg, border: `1px solid ${accuracyColor}20`, fontSize: 13.5, color: "#1E293B", lineHeight: 1.75 }}>
                 {interp.desc}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
@@ -5330,7 +5330,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
                   { label: "KB-Grounded",    value: String(kbUsedCount),            color: kbUsedCount > 0 ? "#059669" : "#94A3B8",            bg: kbUsedCount > 0 ? "#DCFCE7" : "#F8FAFC" },
                   { label: "Active Judges",  value: String(panelSize > 0 ? panelSize : llmJudge.rows_judged > 0 ? 3 : 0), color: "#7C3AED", bg: "#EDE9FE" },
                 ].map(item => (
-                  <div key={item.label} style={{ padding: "12px 14px", borderRadius: 12, background: item.bg, textAlign: "center" }}>
+                  <div key={item.label} style={{ padding: "12px 14px", borderRadius: 0, background: item.bg, textAlign: "center" }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: item.color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>{item.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 900, color: item.color }}>{item.value}</div>
                   </div>
@@ -5351,12 +5351,12 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
                 ].map(c => {
                   const pct = confs.length > 0 ? Math.round((c.count / confs.length) * 100) : 0;
                   return (
-                    <div key={c.label} style={{ padding: "16px", borderRadius: 14, background: c.bg, border: `1px solid ${c.color}30` }}>
+                    <div key={c.label} style={{ padding: "16px", borderRadius: 0, background: c.bg, border: `1px solid ${c.color}30` }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: c.color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{c.label}</div>
                       <div style={{ fontSize: 28, fontWeight: 900, color: c.color, marginBottom: 2 }}>{c.count}</div>
                       <div style={{ fontSize: 11, color: "#64748B", marginBottom: 8 }}>rows ({pct}%) · {c.vote}</div>
-                      <div style={{ height: 6, background: "white", borderRadius: 99, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${pct}%`, background: c.color, borderRadius: 99, transition: "width 0.8s ease" }} />
+                      <div style={{ height: 6, background: "white", borderRadius: 0, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, background: c.color, borderRadius: 0, transition: "width 0.8s ease" }} />
                       </div>
                       <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 6, fontStyle: "italic" }}>{c.tip}</div>
                     </div>
@@ -5376,7 +5376,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
                 <span style={{ color: "#059669" }}>Good (80%+)</span>
                 <span>100%</span>
               </div>
-              <div style={{ height: 12, background: "linear-gradient(90deg, #F1F5F9 0%, #F1F5F9 60%, #EFF6FF 60%, #EFF6FF 80%, #F0FDF4 80%, #F0FDF4 100%)", borderRadius: 99, position: "relative", border: "1px solid #E2E8F0" }}>
+              <div style={{ height: 12, background: "linear-gradient(90deg, #F1F5F9 0%, #F1F5F9 60%, #EFF6FF 60%, #EFF6FF 80%, #F0FDF4 80%, #F0FDF4 100%)", borderRadius: 0, position: "relative", border: "1px solid #E2E8F0" }}>
                 <div style={{ position: "absolute", left: `${Math.min(accuracyPct, 98)}%`, top: "50%", transform: "translate(-50%, -50%)", width: 20, height: 20, background: accuracyColor, borderRadius: "50%", border: "3px solid white", boxShadow: `0 0 0 2px ${accuracyColor}`, transition: "left 0.8s ease" }} />
               </div>
               <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, fontWeight: 700, color: accuracyColor }}>
@@ -5386,7 +5386,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
           )}
 
           {/* ── Methodology note ── */}
-          <div style={{ padding: "16px 18px", borderRadius: 12, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+          <div style={{ padding: "16px 18px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Methodology</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Reference Source</div>
@@ -5394,7 +5394,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Verdict Rule</div>
                 <div>Majority vote (≥ 2 of {panelSize > 0 ? panelSize : 3} judges). 3/3 = High confidence. 2/3 = Medium. Tie = Disputed &amp; excluded.</div></div>
               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Accuracy Formula</div>
-                <div style={{ fontFamily: "monospace", background: "white", padding: "6px 10px", borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12, display: "inline-block" }}>correct_rows ÷ (judged_rows − disputed_rows)</div></div>
+                <div style={{ fontFamily: "monospace", background: "white", padding: "6px 10px", borderRadius: 0, border: "1px solid #E2E8F0", fontSize: 12, display: "inline-block" }}>correct_rows ÷ (judged_rows − disputed_rows)</div></div>
               <div><div style={{ fontWeight: 600, color: "#1E293B", marginBottom: 4 }}>Parallelism</div>
                 <div>All three judges run concurrently via ThreadPoolExecutor — no sequential bottleneck. Each judge is called once per row per stage.</div></div>
             </div>
@@ -5402,7 +5402,7 @@ function LLMAccuracySection({ llmJudge, modelLabel }: { llmJudge: LLMJudge; mode
 
           {/* ── Warnings ── */}
           {(llmJudge.warnings ?? []).length > 0 && (
-            <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 12, background: "#FFF7ED", border: "1px solid #FED7AA" }}>
+            <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 0, background: "#FFF7ED", border: "1px solid #FED7AA" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#D97706", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Evaluation Warnings</div>
               {(llmJudge.warnings ?? []).map((w, i) => (
                 <div key={i} style={{ fontSize: 12, color: "#92400E", lineHeight: 1.6, marginBottom: 4 }}>• {w}</div>
@@ -5468,7 +5468,7 @@ export default function Report() {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F8FAFC", gap: 20 }}>
         <p style={{ color: "#64748B", fontSize: 18 }}>No report data found.</p>
-        <button style={{ padding: "14px 32px", background: "white", border: "1px solid #E2E8F0", color: "#374151", borderRadius: 12, cursor: "pointer", fontSize: 15, fontWeight: 600 }} onClick={() => navigate("/dashboard")}>
+        <button style={{ padding: "14px 32px", background: "white", border: "1px solid #E2E8F0", color: "#374151", borderRadius: 0, cursor: "pointer", fontSize: 15, fontWeight: 600 }} onClick={() => navigate("/dashboard")}>
           ← Back to Dashboard
         </button>
       </div>
@@ -5673,7 +5673,7 @@ export default function Report() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        .card { background: white; border-radius: 14px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
+        .card { background: white; border-radius: 0px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
         .hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
         .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important; }
         .param-row { transition: all 0.18s ease; }
@@ -5689,14 +5689,21 @@ export default function Report() {
           {/* Re-run button — always visible; backend validates audit eligibility */}
           <button
             onClick={() => { setShowRerunDialog(true); setRerunError(""); setRerunContext(""); setRerunApiKey(""); setRerunEndpoint(""); setRerunPrinciples([]); setRerunStep(1); }}
-            style={{ padding: "8px 18px", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", border: "none", color: "white", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
+            style={{ padding: "8px 18px", background: `linear-gradient(135deg, ${KPMG_BLUE}, ${KPMG_MID})`, border: "none", color: "white", borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 7, boxShadow: `0 2px 8px ${KPMG_MID}4D` }}
           >
-            ↺ Re-run Audit
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            Re-run Audit
           </button>
-          <button style={{ padding: "8px 20px", background: "white", border: "1px solid #E2E8F0", color: "#64748B", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+          <button style={{ padding: "8px 20px", background: "white", border: "1px solid #E2E8F0", color: "#64748B", borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 7 }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = KPMG_MID; (e.currentTarget as HTMLButtonElement).style.color = KPMG_MID; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#64748B"; }}
-            onClick={() => navigate("/dashboard")}>← Dashboard</button>
+            onClick={() => navigate("/dashboard")}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+            Dashboard
+          </button>
         </div>
       </div>
 
@@ -5725,10 +5732,10 @@ export default function Report() {
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 56, fontWeight: 900, lineHeight: 1, color: "white", letterSpacing: "-0.04em" }}>{r.overall_score}</div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>/ 100 Overall</div>
-              <div style={{ marginTop: 10, display: "inline-block", padding: "5px 16px", borderRadius: 14, fontSize: 12, fontWeight: 700, background: rcBg, color: rc, border: `1px solid ${rc}40` }}>{r.risk_level} Risk</div>
+              <div style={{ marginTop: 10, display: "inline-block", padding: "5px 16px", borderRadius: 0, fontSize: 12, fontWeight: 700, background: rcBg, color: rc, border: `1px solid ${rc}40` }}>{r.risk_level} Risk</div>
               {/* Re-run badge in header */}
               {isRerun && rerunSequence && (
-                <div style={{ marginTop: 8, display: "inline-block", padding: "4px 14px", borderRadius: 14, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.2)", color: "white", border: "1px solid rgba(255,255,255,0.35)" }}>
+                <div style={{ marginTop: 8, display: "inline-block", padding: "4px 14px", borderRadius: 0, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.2)", color: "white", border: "1px solid rgba(255,255,255,0.35)" }}>
                   ↺ Re-run #{rerunSequence}
                 </div>
               )}
@@ -5823,7 +5830,7 @@ export default function Report() {
 
         {/* COLUMN WARNINGS */}
         {r.column_warnings && r.column_warnings.length > 0 && (
-          <div style={{ marginBottom: 24, padding: "14px 20px", borderRadius: 14, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, display: "flex", flexDirection: "column", gap: 6, ...fade(0.12) }}>
+          <div style={{ marginBottom: 24, padding: "14px 20px", borderRadius: 0, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, display: "flex", flexDirection: "column", gap: 6, ...fade(0.12) }}>
             {r.column_warnings.map((w, i) => (
               <div key={i} style={{ display: "flex", gap: 10, fontSize: 13, color: KPMG_BLUE, lineHeight: 1.5 }}><span>ℹ</span><span>{w}</span></div>
             ))}
@@ -5833,7 +5840,7 @@ export default function Report() {
         {/* FRAMEWORK ALIGNMENT */}
         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.15) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBuilding /></div>
+            <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBuilding /></div>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Regulatory &amp; Framework Alignment</h2>
               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Alignment with major AI governance standards — based on overall audit score</p>
@@ -5853,11 +5860,11 @@ export default function Report() {
                   KPMG_TAF:    "10-principle assessment across all governance dimensions",
                 };
                 return (
-                  <div key={key} className="hover-lift" style={{ padding: "20px 24px", borderRadius: 16, minWidth: 190, flex: "1 1 190px", maxWidth: 260, background: "#EFF6FF", border: `1.5px solid ${KPMG_MID}22`, textAlign: "center", boxShadow: "0 2px 8px rgba(0,51,141,0.06)" }}>
+                  <div key={key} className="hover-lift" style={{ padding: "20px 24px", borderRadius: 0, minWidth: 190, flex: "1 1 190px", maxWidth: 260, background: "#EFF6FF", border: `1.5px solid ${KPMG_MID}22`, textAlign: "center", boxShadow: "0 2px 8px rgba(0,51,141,0.06)" }}>
                     <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, color: KPMG_MID }}><FwIcon /></div>
                     <div style={{ fontWeight: 800, fontSize: 14, color: "#1E293B", marginBottom: 3 }}>{fw.label}</div>
                     <div style={{ fontSize: 10, color: "#64748B", marginBottom: 12, lineHeight: 1.4 }}>{FW_FOCUS[key] || fw.desc}</div>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 16px", borderRadius: 14, fontSize: 13, fontWeight: 800, color: KPMG_MID, background: "white", border: `1.5px solid ${KPMG_MID}40` }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 16px", borderRadius: 0, fontSize: 13, fontWeight: 800, color: KPMG_MID, background: "white", border: `1.5px solid ${KPMG_MID}40` }}>
                       <span style={{ width: 8, height: 8, borderRadius: "50%", background: KPMG_MID, flexShrink: 0 }} />
                       {displayLabel}
                     </div>
@@ -5879,7 +5886,7 @@ export default function Report() {
         {hasPrn && (
           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.2) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgWeb /></div>
+              <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgWeb /></div>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Trusted AI Principles Assessment</h2>
                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Click any principle to drill into sub-parameters and see exactly what was calculated</p>
@@ -5892,7 +5899,7 @@ export default function Report() {
                 { label: "Strong Principles", value: `${Object.values(prn).filter(v => v.score >= 75).length}/${pkeys.length}`, color: "#059669", bg: "#DCFCE7" },
                 { label: "Needs Attention", value: `${Object.values(prn).filter(v => v.score < 60).length}`, color: "#64748B", bg: "#F1F5F9" },
               ].map(item => (
-                <div key={item.label} style={{ padding: "16px 18px", borderRadius: 14, background: item.bg, border: `1px solid ${item.color}20` }}>
+                <div key={item.label} style={{ padding: "16px 18px", borderRadius: 0, background: item.bg, border: `1px solid ${item.color}20` }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: item.color, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>{item.label}</div>
                   <div style={{ fontSize: 28, fontWeight: 900, color: item.color }}>{item.value}</div>
                 </div>
@@ -5909,7 +5916,7 @@ export default function Report() {
             <div style={{ borderTop: "1px solid #F1F5F9", paddingTop: 24 }}>
               {!sel ? (
                 <div>
-                  <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 16, padding: "10px 14px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #E2E8F0", textAlign: "center" }}>
+                  <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 16, padding: "10px 14px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0", textAlign: "center" }}>
                     Click any principle above to inspect sub-parameters and see what was calculated
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
@@ -5925,23 +5932,23 @@ export default function Report() {
                         UNCHANGED: { color: "#94A3B8", bg: "#F1F5F9", label: "— UNCHANGED" },
                       };
                       return (
-                        <div key={k} className="hover-lift" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 14, background: "white", border: "1px solid #E2E8F0", cursor: "pointer" }} onClick={() => setSel(k)}>
-                          <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: `${c}15`, border: `1px solid ${c}30`, display: "grid", placeItems: "center", color: c }}>{ (() => { const IC = ICONS[k]; return IC ? <IC /> : <SvgClip />; })() }</div>
+                        <div key={k} className="hover-lift" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 0, background: "white", border: "1px solid #E2E8F0", cursor: "pointer" }} onClick={() => setSel(k)}>
+                          <div style={{ width: 40, height: 40, borderRadius: 0, flexShrink: 0, background: `${c}15`, border: `1px solid ${c}30`, display: "grid", placeItems: "center", color: c }}>{ (() => { const IC = ICONS[k]; return IC ? <IC /> : <SvgClip />; })() }</div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k}</div>
-                            <div style={{ height: 5, background: "#F1F5F9", borderRadius: 99, marginTop: 7 }}>
-                              <div style={{ width: `${sc}%`, height: "100%", background: bandColor(sc), borderRadius: 99, transition: "width 0.8s ease", opacity: 0.8 }} />
+                            <div style={{ height: 5, background: "#F1F5F9", borderRadius: 0, marginTop: 7 }}>
+                              <div style={{ width: `${sc}%`, height: "100%", background: bandColor(sc), borderRadius: 0, transition: "width 0.8s ease", opacity: 0.8 }} />
                             </div>
                             {/* Movement badge — only on re-run audits */}
                             {isRerun && ml && mlStyle[ml] && (
-                              <div style={{ marginTop: 5, display: "inline-block", padding: "2px 7px", borderRadius: 14, fontSize: 9, fontWeight: 800, background: mlStyle[ml].bg, color: mlStyle[ml].color, border: `1px solid ${mlStyle[ml].color}30`, letterSpacing: "0.04em" }}>
+                              <div style={{ marginTop: 5, display: "inline-block", padding: "2px 7px", borderRadius: 0, fontSize: 9, fontWeight: 800, background: mlStyle[ml].bg, color: mlStyle[ml].color, border: `1px solid ${mlStyle[ml].color}30`, letterSpacing: "0.04em" }}>
                                 {mlStyle[ml].label}
                               </div>
                             )}
                           </div>
                           <div style={{ textAlign: "right", flexShrink: 0 }}>
                             <div style={{ fontSize: 20, fontWeight: 900, color: bandColor(sc), lineHeight: 1 }}>{sc}</div>
-                            <div style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6, background: bandBg(sc), color: bandColor(sc), marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(sc)}</div>
+                            <div style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 0, background: bandBg(sc), color: bandColor(sc), marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{band(sc)}</div>
                           </div>
                         </div>
                       );
@@ -5951,15 +5958,15 @@ export default function Report() {
               ) : selData ? (
                 <div>
                   {/* ── PRINCIPLE HEADER ── */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, padding: "20px 22px", borderRadius: 16, background: `linear-gradient(135deg, ${(COLORS[sel] || KPMG_MID)}10, ${(COLORS[sel] || KPMG_MID)}05)`, border: `1.5px solid ${(COLORS[sel] || KPMG_MID)}30` }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, display: "grid", placeItems: "center", background: `${COLORS[sel] || KPMG_MID}15`, border: `1px solid ${(COLORS[sel] || KPMG_MID)}30` }}>{ (() => { const IC = ICONS[sel]; return IC ? <IC /> : <SvgClip />; })() }</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, padding: "20px 22px", borderRadius: 0, background: `linear-gradient(135deg, ${(COLORS[sel] || KPMG_MID)}10, ${(COLORS[sel] || KPMG_MID)}05)`, border: `1.5px solid ${(COLORS[sel] || KPMG_MID)}30` }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 0, flexShrink: 0, display: "grid", placeItems: "center", background: `${COLORS[sel] || KPMG_MID}15`, border: `1px solid ${(COLORS[sel] || KPMG_MID)}30` }}>{ (() => { const IC = ICONS[sel]; return IC ? <IC /> : <SvgClip />; })() }</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{sel}</div>
                       {selData.description && <div style={{ fontSize: 12, color: "#64748B", marginTop: 3, lineHeight: 1.5 }}>{selData.description}</div>}
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: 40, fontWeight: 900, color: COLORS[sel] || KPMG_MID, lineHeight: 1 }}>{selData.score}</div>
-                      <div style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 8, background: bandBg(selData.score), color: bandColor(selData.score), marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{band(selData.score)}</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 0, background: bandBg(selData.score), color: bandColor(selData.score), marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{band(selData.score)}</div>
                     </div>
                   </div>
 
@@ -5967,7 +5974,7 @@ export default function Report() {
                   {PRINCIPLE_CONTEXT[sel] && (() => {
                     const ctx = PRINCIPLE_CONTEXT[sel];
                     return (
-                      <div style={{ marginBottom: 20, borderRadius: 14, border: `1px solid ${(COLORS[sel] || KPMG_MID)}25`, overflow: "hidden" }}>
+                      <div style={{ marginBottom: 20, borderRadius: 0, border: `1px solid ${(COLORS[sel] || KPMG_MID)}25`, overflow: "hidden" }}>
                         <div style={{ padding: "16px 20px", background: `${COLORS[sel] || KPMG_MID}08` }}>
                           <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.75 }}>{ctx.definition}</div>
                         </div>
@@ -5981,7 +5988,7 @@ export default function Report() {
                       { label: "Strongest sub-parameter", val: strongestParam?.[0] || "—", score: strongestParam?.[1] ?? 0, color: "#059669", bg: "#DCFCE7" },
                       { label: "Weakest sub-parameter",   val: weakestParam?.[0]  || "—", score: weakestParam?.[1]  ?? 0, color: "#64748B", bg: "#F1F5F9" },
                     ].map(s => (
-                      <div key={s.label} style={{ padding: "14px 16px", borderRadius: 12, background: s.bg, border: `1px solid ${s.color}20` }}>
+                      <div key={s.label} style={{ padding: "14px 16px", borderRadius: 0, background: s.bg, border: `1px solid ${s.color}20` }}>
                         <div style={{ fontSize: 10, color: s.color, textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 6 }}>{s.label}</div>
                         <div style={{ fontSize: 14, fontWeight: 800, color: s.color, lineHeight: 1.3, wordBreak: "break-word" }}>{s.val}</div>
                         {typeof s.score === "number" && <div style={{ fontSize: 12, color: s.color, marginTop: 3, fontWeight: 700 }}>{s.score} / 100</div>}
@@ -5992,7 +5999,7 @@ export default function Report() {
                   {/* ── SUB-PARAMS + INSIGHT PANEL ── */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, padding: "8px 12px", background: "#E6F2FB", borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, padding: "8px 12px", background: "#E6F2FB", borderRadius: 0 }}>
                         Sub-parameters — hover to inspect
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -6004,7 +6011,7 @@ export default function Report() {
                           const meta = SUB_PARAM_META[param];
                           return (
                             <div key={param} className="param-row"
-                              style={{ padding: "14px 16px", borderRadius: 12, background: isActive ? `${c}08` : "#F8FAFC", border: isActive ? `2px solid ${c}50` : "1.5px solid #E2E8F0", cursor: "pointer" }}
+                              style={{ padding: "14px 16px", borderRadius: 0, background: isActive ? `${c}08` : "#F8FAFC", border: isActive ? `2px solid ${c}50` : "1.5px solid #E2E8F0", cursor: "pointer" }}
                               onMouseEnter={() => setHoveredParam(param)}
                               onMouseLeave={() => setHoveredParam(null)}
                             >
@@ -6015,11 +6022,11 @@ export default function Report() {
                                 </div>
                                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                                   <div style={{ fontSize: 20, fontWeight: 900, color: sc2 }}>{v}</div>
-                                  <div style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 6, background: bandBg(v), color: sc2, textTransform: "uppercase" }}>{band(v)}</div>
+                                  <div style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 0, background: bandBg(v), color: sc2, textTransform: "uppercase" }}>{band(v)}</div>
                                 </div>
                               </div>
-                              <div style={{ height: 6, background: "#E2E8F0", borderRadius: 99 }}>
-                                <div style={{ width: `${v}%`, height: "100%", borderRadius: 99, background: `linear-gradient(90deg, ${c}, ${sc2})`, transition: "width 0.5s ease" }} />
+                              <div style={{ height: 6, background: "#E2E8F0", borderRadius: 0 }}>
+                                <div style={{ width: `${v}%`, height: "100%", borderRadius: 0, background: `linear-gradient(90deg, ${c}, ${sc2})`, transition: "width 0.5s ease" }} />
                               </div>
                             </div>
                           );
@@ -6027,7 +6034,7 @@ export default function Report() {
                       </div>
                     </div>
 
-                    <div style={{ position: "sticky", top: 80, padding: "24px", borderRadius: 14, background: "white", border: `2px solid ${(COLORS[sel] || KPMG_MID)}20`, minHeight: 280, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
+                    <div style={{ position: "sticky", top: 80, padding: "24px", borderRadius: 0, background: "white", border: `2px solid ${(COLORS[sel] || KPMG_MID)}20`, minHeight: 280, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
                       {activeParam && activeInsight ? (
                         <>
                           {/* Score header */}
@@ -6035,14 +6042,14 @@ export default function Report() {
                             <Radial score={selData.parameters[activeParam] as number} label="" color={COLORS[sel] || KPMG_MID} size={72} />
                             <div style={{ flex: 1 }}>
                               <div style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", lineHeight: 1.3, marginBottom: 5 }}>{activeParam}</div>
-                              <div style={{ display: "inline-flex", alignItems: "center", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 14, color: bandColor(selData.parameters[activeParam] as number), background: bandBg(selData.parameters[activeParam] as number), textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                              <div style={{ display: "inline-flex", alignItems: "center", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 0, color: bandColor(selData.parameters[activeParam] as number), background: bandBg(selData.parameters[activeParam] as number), textTransform: "uppercase", letterSpacing: "0.06em" }}>
                                 {band(selData.parameters[activeParam] as number)} posture
                               </div>
                             </div>
                           </div>
 
                           {/* What this means — score-aware */}
-                          <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 12, background: bandBg(selData.parameters[activeParam] as number), border: `1px solid ${bandColor(selData.parameters[activeParam] as number)}18` }}>
+                          <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 0, background: bandBg(selData.parameters[activeParam] as number), border: `1px solid ${bandColor(selData.parameters[activeParam] as number)}18` }}>
                             <div style={{ fontSize: 10, fontWeight: 700, color: bandColor(selData.parameters[activeParam] as number), textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
                               {(selData.parameters[activeParam] as number) >= 75 ? "✓ What this means" : (selData.parameters[activeParam] as number) >= 50 ? "⚠ What this means" : "✗ What this means"}
                             </div>
@@ -6057,7 +6064,7 @@ export default function Report() {
                             const whyText = meta?.why;
                             if (!formulaText && !whatText) return null;
                             return (
-                              <div style={{ marginBottom: 12, borderRadius: 12, overflow: "hidden", border: "1px solid #E8EFF7" }}>
+                              <div style={{ marginBottom: 12, borderRadius: 0, overflow: "hidden", border: "1px solid #E8EFF7" }}>
                                 <div style={{ padding: "9px 14px", background: "#F0F6FF", display: "flex", alignItems: "center", gap: 8 }}>
                                   <span style={{ fontSize: 14, fontWeight: 900, color: KPMG_MID, lineHeight: 1 }}>ƒ</span>
                                   <span style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase" as const, letterSpacing: "0.07em" }}>How this score is calculated</span>
@@ -6067,7 +6074,7 @@ export default function Report() {
                                     <p style={{ margin: 0, fontSize: 12, color: "#374151", lineHeight: 1.65, fontWeight: 500 }}>{whatText}</p>
                                   )}
                                   {formulaText && (
-                                    <div style={{ padding: "10px 12px", borderRadius: 8, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+                                    <div style={{ padding: "10px 12px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
                                       <p style={{ margin: 0, fontSize: 12, color: "#1E293B", lineHeight: 1.75 }}>{formulaText}</p>
                                     </div>
                                   )}
@@ -6081,23 +6088,23 @@ export default function Report() {
 
                           {/* Why it matters */}
                           {activeInsight.calculation && (
-                            <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
+                            <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
                               <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Why it matters</div>
                               <div style={{ fontSize: 12, lineHeight: 1.65, color: "#64748B" }}>{activeInsight.calculation}</div>
                             </div>
                           )}
 
                           {/* Score bar */}
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #F1F5F9" }}>
                             <div style={{ fontSize: 26, fontWeight: 900, color: bandColor(selData.parameters[activeParam] as number) }}>{selData.parameters[activeParam]}</div>
                             <div style={{ fontSize: 12, color: "#94A3B8" }}>/ 100</div>
-                            <div style={{ marginLeft: "auto", height: 6, flex: 1, background: "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
-                              <div style={{ height: "100%", width: `${selData.parameters[activeParam]}%`, background: `linear-gradient(90deg, ${COLORS[sel] || KPMG_MID}, ${bandColor(selData.parameters[activeParam] as number)})`, borderRadius: 99, transition: "width 0.6s ease" }} />
+                            <div style={{ marginLeft: "auto", height: 6, flex: 1, background: "#E2E8F0", borderRadius: 0, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${selData.parameters[activeParam]}%`, background: `linear-gradient(90deg, ${COLORS[sel] || KPMG_MID}, ${bandColor(selData.parameters[activeParam] as number)})`, borderRadius: 0, transition: "width 0.6s ease" }} />
                             </div>
                           </div>
 
                           {(selData.parameters[activeParam] as number) < 60 && (
-                            <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 10, background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                            <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 0, background: "#FEF2F2", border: "1px solid #FECACA" }}>
                               <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Low Score Alert</div>
                               <div style={{ fontSize: 11, lineHeight: 1.6, color: "#7F1D1D" }}>
                                 {(selData.parameters[activeParam] as number) < 30
@@ -6116,7 +6123,7 @@ export default function Report() {
                     </div>
                   </div>
 
-                  <button style={{ marginTop: 20, width: "100%", padding: "12px", background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, color: KPMG_MID, borderRadius: 12, cursor: "pointer", fontSize: 13, fontWeight: 700, transition: "all 0.2s" }}
+                  <button style={{ marginTop: 20, width: "100%", padding: "12px", background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, color: KPMG_MID, borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 700, transition: "all 0.2s" }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#D0E8F8"; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#E6F2FB"; }}
                     onClick={() => setSel(null)}>← All Principles</button>
@@ -6130,7 +6137,7 @@ export default function Report() {
         {hasPrn && (
           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.25) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBarChart /></div>
+              <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgBarChart /></div>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Principle Score Distribution</h2>
                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Hover bars for detailed scores across all 10 Trusted AI principles</p>
@@ -6144,7 +6151,7 @@ export default function Report() {
         {r.model_metrics && Object.values(r.model_metrics).some(m => m.value !== null) && (
           <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.3) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgGear /></div>
+              <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgGear /></div>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Model-Specific Metrics</h2>
                 <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Measured for <strong style={{ color: "#1E293B" }}>{r.model_label || r.model_type}</strong> — evaluated against model-appropriate thresholds</p>
@@ -6158,11 +6165,11 @@ export default function Report() {
                 // Format key: replace underscores with spaces, title case each word
                 const displayKey = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
                 return (
-                  <div key={key} className="hover-lift" style={{ padding: "18px 16px", borderRadius: 16, background: mcBg, border: `1px solid ${mc}25`, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div key={key} className="hover-lift" style={{ padding: "18px 16px", borderRadius: 0, background: mcBg, border: `1px solid ${mc}25`, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ fontSize: 12, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>{displayKey}</div>
                     <div style={{ fontSize: 26, fontWeight: 800, color: mc }}>{displayVal}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 11, color: mc, background: "white", border: `1px solid ${mc}40`, padding: "2px 8px", borderRadius: 14, fontWeight: 700 }}>{m.risk_level}</span>
+                      <span style={{ fontSize: 11, color: mc, background: "white", border: `1px solid ${mc}40`, padding: "2px 8px", borderRadius: 0, fontWeight: 700 }}>{m.risk_level}</span>
                       {m.threshold_low !== undefined && <span style={{ fontSize: 10, color: "#94A3B8" }}>threshold: {m.threshold_low}{m.unit ? ` ${m.unit}` : ""}</span>}
                     </div>
                     <div style={{ fontSize: 11, color: "#64748B", lineHeight: 1.5 }}>{m.description}</div>
@@ -6186,7 +6193,7 @@ export default function Report() {
           return (
             <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.35) }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#DCFCE7", display: "grid", placeItems: "center", color: "#059669" }}><SvgSearch /></div>
+                <div style={{ width: 36, height: 36, borderRadius: 0, background: "#DCFCE7", display: "grid", placeItems: "center", color: "#059669" }}><SvgSearch /></div>
                 <div>
                   <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Metric Computation Transparency</h2>
                   <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Every metric computed directly from your input/output data using real NLP/ML libraries</p>
@@ -6198,17 +6205,17 @@ export default function Report() {
                   { label: "Unavailable", count: unavailable.length, color: KPMG_MID, bg: "#E6F2FB" },
                   { label: "Total Metrics", count: notes.length, color: KPMG_BLUE, bg: "#E6F2FB" },
                 ].map(({ label, count, color, bg }) => (
-                  <div key={label} style={{ padding: "14px 22px", borderRadius: 14, background: bg, border: `1px solid ${color}20`, textAlign: "center", minWidth: 120 }}>
+                  <div key={label} style={{ padding: "14px 22px", borderRadius: 0, background: bg, border: `1px solid ${color}20`, textAlign: "center", minWidth: 120 }}>
                     <div style={{ fontSize: 26, fontWeight: 900, color }}>{count}</div>
                     <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>{label}</div>
                   </div>
                 ))}
               </div>
               {unavailable.length > 0 && (
-                <div style={{ padding: "12px 16px", borderRadius: 12, marginBottom: 20, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, fontSize: 13, color: KPMG_BLUE, lineHeight: 1.6 }}>
+                <div style={{ padding: "12px 16px", borderRadius: 0, marginBottom: 20, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}40`, fontSize: 13, color: KPMG_BLUE, lineHeight: 1.6 }}>
                   <strong>{unavailable.length}</strong> metric(s) could not be computed — add{" "}
                   {["reference", "context", "label", "confidence"].map((c, i) => (
-                    <span key={c}><code style={{ background: `${KPMG_LIGHT}20`, borderRadius: 4, padding: "1px 5px", fontSize: 11 }}>{c}</code>{i < 3 ? ", " : ""}</span>
+                    <span key={c}><code style={{ background: `${KPMG_LIGHT}20`, borderRadius: 0, padding: "1px 5px", fontSize: 11 }}>{c}</code>{i < 3 ? ", " : ""}</span>
                   ))} columns to enable them.
                 </div>
               )}
@@ -6220,10 +6227,10 @@ export default function Report() {
                   // Format metric name: replace underscores, title case
                   const displayKey = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
                   return (
-                    <div key={key} className="hover-lift" style={{ padding: "16px", borderRadius: 14, background: ncBg, border: `1px solid ${nc}20`, display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div key={key} className="hover-lift" style={{ padding: "16px", borderRadius: 0, background: ncBg, border: `1px solid ${nc}20`, display: "flex", flexDirection: "column", gap: 6 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: "#1E293B" }}>{displayKey}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: nc, background: "white", border: `1px solid ${nc}30` }}>{ok ? "computed" : "unavailable"}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 0, color: nc, background: "white", border: `1px solid ${nc}30` }}>{ok ? "computed" : "unavailable"}</span>
                       </div>
                       <div style={{ fontSize: 22, fontWeight: 900, color: nc }}>{note.value !== null ? note.value.toFixed(4) : "—"}</div>
                       <div style={{ fontSize: 10, color: "#94A3B8", lineHeight: 1.5 }}>{note.library}</div>
@@ -6238,12 +6245,12 @@ export default function Report() {
         {/* AUDIT FINDINGS */}
         {/* <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#F1F5F9", display: "grid", placeItems: "center", color: "#64748B" }}><SvgAlert /></div>
+            <div style={{ width: 36, height: 36, borderRadius: 0, background: "#F1F5F9", display: "grid", placeItems: "center", color: "#64748B" }}><SvgAlert /></div>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
                 Audit Findings
                 {(r.findings?.length || 0) > 0 && (
-                  <span style={{ marginLeft: 10, fontSize: 16, fontWeight: 700, color: "#64748B", background: "#F1F5F9", padding: "2px 10px", borderRadius: 20 }}>{r.findings.length}</span>
+                  <span style={{ marginLeft: 10, fontSize: 16, fontWeight: 700, color: "#64748B", background: "#F1F5F9", padding: "2px 10px", borderRadius: 0 }}>{r.findings.length}</span>
                 )}
               </h2>
               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Detailed governance issues identified during the audit</p>
@@ -6257,7 +6264,7 @@ export default function Report() {
                 { label: "Medium", color: KPMG_MID, bg: "#E6F2FB", count: r.findings.filter(f => f.severity === "Medium").length },
                 { label: "Low", color: "#059669", bg: "#DCFCE7", count: r.findings.filter(f => f.severity === "Low").length },
               ].map(s => (
-                <div key={s.label} style={{ padding: "10px 18px", borderRadius: 10, background: s.bg, border: `1px solid ${s.color}20`, display: "flex", alignItems: "center", gap: 8 }}>
+                <div key={s.label} style={{ padding: "10px 18px", borderRadius: 0, background: s.bg, border: `1px solid ${s.color}20`, display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ fontSize: 20, fontWeight: 900, color: s.color }}>{s.count}</div>
                   <div style={{ fontSize: 12, color: s.color, fontWeight: 600 }}>{s.label} Severity</div>
                 </div>
@@ -6266,7 +6273,7 @@ export default function Report() {
           )}
 
           {!r.findings?.length ? (
-            <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 14, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 0, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ color: "#166534" }}><SvgCheck /></span>
               <span>No critical findings. Dataset aligns well with Trusted AI standards.</span>
             </div>
@@ -6277,19 +6284,19 @@ export default function Report() {
                 const scBg = f.severity === "High" ? "#F1F5F9" : f.severity === "Medium" ? "#E6F2FB" : "#DCFCE7";
                 const catColor = COLORS[f.category] || KPMG_MID;
                 return (
-                  <div key={i} style={{ borderRadius: 16, background: "white", border: `1.5px solid ${sc}25`, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                  <div key={i} style={{ borderRadius: 0, background: "white", border: `1.5px solid ${sc}25`, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                     <div style={{ padding: "14px 20px", background: scBg, borderBottom: `1px solid ${sc}20`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ color: COLORS[f.category] || KPMG_MID }}>{ (() => { const IC = ICONS[f.category]; return IC ? <IC /> : <SvgAlert />; })() }</span>
                         <span style={{ color: catColor, fontWeight: 700, fontSize: 14 }}>{f.category}</span>
-                        {f.type && <span style={{ fontSize: 11, color: "#94A3B8", background: "white", padding: "2px 8px", borderRadius: 10, border: "1px solid #E2E8F0" }}>{f.type}</span>}
+                        {f.type && <span style={{ fontSize: 11, color: "#94A3B8", background: "white", padding: "2px 8px", borderRadius: 0, border: "1px solid #E2E8F0" }}>{f.type}</span>}
                       </div>
-                      <span style={{ color: sc, fontWeight: 700, background: "white", padding: "4px 14px", borderRadius: 14, fontSize: 12, border: `1px solid ${sc}30` }}>{f.severity}</span>
+                      <span style={{ color: sc, fontWeight: 700, background: "white", padding: "4px 14px", borderRadius: 0, fontSize: 12, border: `1px solid ${sc}30` }}>{f.severity}</span>
                     </div>
                     <div style={{ padding: "18px 20px" }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Issue Identified</div>
                       <p style={{ margin: "0 0 14px", color: "#1E293B", lineHeight: 1.7, fontSize: 14, fontWeight: 500 }}>{f.issue}</p>
-                      <div style={{ padding: "12px 16px", borderRadius: 10, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}30` }}>
+                      <div style={{ padding: "12px 16px", borderRadius: 0, background: "#E6F2FB", border: `1px solid ${KPMG_LIGHT}30` }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>Recommended Action</div>
                         <p style={{ margin: 0, color: KPMG_BLUE, lineHeight: 1.65, fontSize: 13 }}>{f.recommendation}</p>
                       </div>
@@ -6314,7 +6321,7 @@ export default function Report() {
 
           if (!principleKeys.length) return (
             <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.4) }}>
-              <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 14, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ padding: "20px 24px", background: "#DCFCE7", border: "1px solid #86EFAC", borderRadius: 0, color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
                 <span><SvgCheck /></span><span>No findings. All probes passed.</span>
               </div>
             </div>
@@ -6337,7 +6344,7 @@ export default function Report() {
             <div className="card" style={{ padding: "28px", marginBottom: 24, ...fade(0.4) }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: "#F1F5F9", display: "grid", placeItems: "center", color: "#64748B" }}><SvgAlert /></div>
+                <div style={{ width: 34, height: 34, borderRadius: 0, background: "#F1F5F9", display: "grid", placeItems: "center", color: "#64748B" }}><SvgAlert /></div>
                 <div style={{ flex: 1 }}>
                   <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Behavioural Probe Results</h2>
                   <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>
@@ -6353,7 +6360,7 @@ export default function Report() {
               </div>
 
               {/* Score mismatch note */}
-              <div style={{ padding: "10px 14px", borderRadius: 10, background: "#FFFBEB", border: "1px solid #FDE68A", marginBottom: 16 }}>
+              <div style={{ padding: "10px 14px", borderRadius: 0, background: "#FFFBEB", border: "1px solid #FDE68A", marginBottom: 16 }}>
                 <p style={{ margin: 0, fontSize: 12, color: "#92400E", lineHeight: 1.6 }}>
                   <span style={{ fontWeight: 700 }}>Why do these scores differ from the principle scores above?</span> The principle scores (e.g. Safety 73/100) are computed by the SDCC engine — they analyse the statistical patterns in your actual AI logs using NLP. These probe results are behavioural tests — we sent adversarial prompts directly to your AI's API and checked whether it responded correctly. Both measure the same principles but from different angles: logs tell you what your AI does in production, probes tell you how it behaves under pressure.
                 </p>
@@ -6395,13 +6402,13 @@ export default function Report() {
         {/* OVERALL RECOMMENDATION */}
         <div className="card" style={{ padding: "32px", marginBottom: 24, ...fade(0.43) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgComply /></div>
+            <div style={{ width: 36, height: 36, borderRadius: 0, background: "#E6F2FB", display: "grid", placeItems: "center", color: "#005EB8" }}><SvgComply /></div>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Overall Recommendation</h2>
               <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>Based on audit results for {r.model_label || r.model_type}</p>
             </div>
           </div>
-          <div style={{ padding: "20px 24px", background: `linear-gradient(135deg, ${KPMG_BLUE}08, ${KPMG_MID}05)`, border: `1.5px solid ${KPMG_MID}25`, borderRadius: 14 }}>
+          <div style={{ padding: "20px 24px", background: `linear-gradient(135deg, ${KPMG_BLUE}08, ${KPMG_MID}05)`, border: `1.5px solid ${KPMG_MID}25`, borderRadius: 0 }}>
             <p style={{ margin: 0, color: "#1E293B", lineHeight: 1.8, fontSize: 14 }}>{toolRecommendation}</p>
           </div>
           <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
@@ -6410,7 +6417,7 @@ export default function Report() {
               { icon: SvgTarget, label: "Target Score", val: `${Math.min(r.overall_score + 15, 100)}/100`, color: "#059669" },
               { icon: SvgScale, label: "Compliance Status", val: r.overall_score >= 75 ? "Compliant" : r.overall_score >= 50 ? "Conditional" : "Non-Compliant", color: r.overall_score >= 75 ? "#059669" : r.overall_score >= 50 ? KPMG_MID : "#64748B" },
             ].map(item => (
-              <div key={item.label} style={{ padding: "14px 16px", borderRadius: 12, background: "white", border: "1px solid #E2E8F0" }}>
+              <div key={item.label} style={{ padding: "14px 16px", borderRadius: 0, background: "white", border: "1px solid #E2E8F0" }}>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 6, color: item.color }}>{ (() => { const IC = item.icon as any; return <IC />; })() }</div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{item.label}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: item.color }}>{item.val}</div>
@@ -6425,11 +6432,11 @@ export default function Report() {
           <h2 style={{ fontSize: 22, fontWeight: 900, color: "#1E293B", marginBottom: 8 }}>Download the Full Report</h2>
           <p style={{ color: "#64748B", marginBottom: 28, fontSize: 14 }}>Export a comprehensive PDF with evidence, scoring breakdown, and improvement roadmap.</p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <button style={{ padding: "13px 36px", background: `linear-gradient(135deg, ${KPMG_BLUE}, ${KPMG_MID})`, border: "none", borderRadius: 14, color: "white", fontWeight: 700, cursor: pdfLoading ? "not-allowed" : "pointer", fontSize: 14, minWidth: 220, boxShadow: `0 8px 24px ${KPMG_BLUE}40`, opacity: pdfLoading ? 0.7 : 1, transition: "all 0.2s" }}
+            <button style={{ padding: "13px 36px", background: `linear-gradient(135deg, ${KPMG_BLUE}, ${KPMG_MID})`, border: "none", borderRadius: 0, color: "white", fontWeight: 700, cursor: pdfLoading ? "not-allowed" : "pointer", fontSize: 14, minWidth: 220, boxShadow: `0 8px 24px ${KPMG_BLUE}40`, opacity: pdfLoading ? 0.7 : 1, transition: "all 0.2s" }}
               onClick={handleDownloadPDF} disabled={pdfLoading}>
               {pdfLoading ? "Preparing PDF…" : "Download Full PDF Report"}
             </button>
-            <button style={{ padding: "13px 36px", background: "white", border: "1.5px solid #E2E8F0", borderRadius: 14, color: "#374151", cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }}
+            <button style={{ padding: "13px 36px", background: "white", border: "1.5px solid #E2E8F0", borderRadius: 0, color: "#374151", cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = KPMG_MID; (e.currentTarget as HTMLButtonElement).style.color = KPMG_MID; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#374151"; }}
               onClick={() => navigate("/dashboard")}>← Back to Dashboard</button>
@@ -6454,33 +6461,63 @@ export default function Report() {
           style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowRerunDialog(false); }}
         >
-          <div style={{ background: "white", borderRadius: 14, padding: "32px 36px", width: "100%", maxWidth: 540, boxShadow: "0 24px 60px rgba(0,0,0,0.2)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto" }}>
+          <div style={{ background: "white", borderRadius: 0, padding: "32px 36px", width: "100%", maxWidth: 540, boxShadow: "0 24px 60px rgba(0,0,0,0.25)", fontFamily: "'Plus Jakarta Sans', sans-serif", maxHeight: "90vh", overflowY: "auto", border: "1px solid #E2EAF4" }}>
 
             {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 800, color: "#2563EB", letterSpacing: "1.5px", textTransform: "uppercase" as const, marginBottom: 4 }}>
-                  Re-run Audit · Step {rerunStep} of 2
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, gap: 12 }}>
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start", minWidth: 0 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 0, flexShrink: 0,
+                  background: `linear-gradient(135deg,${KPMG_BLUE},${KPMG_MID})`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {rerunStep === 1 ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="23 4 23 10 17 10" />
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                    </svg>
+                  )}
                 </div>
-                <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1E293B", margin: 0 }}>
-                  {rerunStep === 1 ? "↺ What changed?" : "🔑 Connection details"}
-                </h2>
-                <p style={{ fontSize: 12, color: "#94A3B8", margin: "4px 0 0", fontWeight: 500 }}>
-                  {r.ai_name}
-                  {raw?.audit_id
-                    ? <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 14, background: "#EFF6FF", color: "#2563EB", fontSize: 10, fontWeight: 700 }}>Blackbox</span>
-                    : <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 14, background: "#F0FDF4", color: "#059669", fontSize: 10, fontWeight: 700 }}>Full Pipeline</span>
-                  }
-                  {" "}· Score: <strong style={{ color: "#2563EB" }}>{r.overall_score}</strong>
-                </p>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: KPMG_MID, letterSpacing: "1.5px", textTransform: "uppercase" as const, marginBottom: 4 }}>
+                    Re-run Audit · Step {rerunStep} of 2
+                  </div>
+                  <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1E293B", margin: 0 }}>
+                    {rerunStep === 1 ? "What changed?" : "Connection details"}
+                  </h2>
+                  <p style={{ fontSize: 12, color: "#94A3B8", margin: "4px 0 0", fontWeight: 500 }}>
+                    {r.ai_name}
+                    {raw?.audit_id
+                      ? <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 0, background: "#EFF6FF", color: KPMG_MID, fontSize: 10, fontWeight: 700 }}>Blackbox</span>
+                      : <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 0, background: "#F0FDF4", color: "#059669", fontSize: 10, fontWeight: 700 }}>Full Pipeline</span>
+                    }
+                    {" "}· Score: <strong style={{ color: KPMG_MID }}>{r.overall_score}</strong>
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setShowRerunDialog(false)} style={{ background: "none", border: "none", color: "#94A3B8", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
+              <button onClick={() => setShowRerunDialog(false)} aria-label="Close"
+                style={{
+                  width: 30, height: 30, borderRadius: 0, border: "1px solid #E2E8F0",
+                  background: "white", color: "#94A3B8", cursor: "pointer", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = KPMG_MID; e.currentTarget.style.color = KPMG_MID; e.currentTarget.style.background = "#F0F6FF"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#94A3B8"; e.currentTarget.style.background = "white"; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
             {/* Step progress bar */}
             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
               {[1, 2].map(s => (
-                <div key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: rerunStep >= s ? "#2563EB" : "#E2E8F0", transition: "background 0.3s" }} />
+                <div key={s} style={{ flex: 1, height: 4, borderRadius: 0, background: rerunStep >= s ? KPMG_MID : "#E2E8F0", transition: "background 0.3s" }} />
               ))}
             </div>
 
@@ -6488,11 +6525,11 @@ export default function Report() {
             {rerunStep === 1 && (<>
 
               {/* Prior baseline snapshot */}
-              <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, marginBottom: 16 }}>
+              <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 0, marginBottom: 16 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "1px", marginBottom: 8 }}>Prior audit baseline</div>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap" as const }}>
                   <div style={{ textAlign: "center" as const }}>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: r.overall_score >= 75 ? "#059669" : r.overall_score >= 50 ? "#2563EB" : "#64748B" }}>{r.overall_score}</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: r.overall_score >= 75 ? "#059669" : r.overall_score >= 50 ? KPMG_MID : "#64748B" }}>{r.overall_score}</div>
                     <div style={{ fontSize: 9.5, color: "#94A3B8" }}>Overall</div>
                   </div>
                   <div style={{ textAlign: "center" as const }}>
@@ -6507,13 +6544,13 @@ export default function Report() {
                   )}
                 </div>
                 <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 8, lineHeight: 1.5 }}>
-                  Phase 1 behavioral fingerprinting always re-runs first. Significant drift → full re-audit. Stable → targeted re-probe of failing principles only.
+                  Phase 1 behavioral fingerprinting always re-runs first. Significant drift leads to a full re-audit; a stable fingerprint means only a targeted re-probe of failing principles.
                 </div>
               </div>
 
               {/* What changed */}
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
                   What changed in this AI system? *
                 </label>
                 <textarea
@@ -6521,9 +6558,9 @@ export default function Report() {
                   onChange={(e) => setRerunContext(e.target.value)}
                   placeholder="e.g. Updated system prompt to restrict legal advice, patched safety filters, re-trained on bias dataset…"
                   rows={3}
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, background: "#F8FAFC" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.boxShadow = "none"; }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #DDE5EF", fontSize: 13, fontFamily: "inherit", color: "#1E293B", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, background: "#FAFBFD" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = KPMG_MID; e.currentTarget.style.boxShadow = `0 0 0 4px ${KPMG_MID}1A`; e.currentTarget.style.background = "white"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#DDE5EF"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#FAFBFD"; }}
                 />
                 <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 3 }}>
                   This context is injected into every probe wave — making re-probing adversarially targeted at your claimed fixes.
@@ -6532,25 +6569,33 @@ export default function Report() {
 
               {/* Change type */}
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>Change type</label>
-                <select
-                  value={rerunChangeType}
-                  onChange={(e) => setRerunChangeType(e.target.value)}
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", cursor: "pointer", boxSizing: "border-box" as const }}
-                >
-                  <option value="model_update">Model update / version change</option>
-                  <option value="system_prompt">System prompt change</option>
-                  <option value="fine_tuning">Fine-tuning / retraining</option>
-                  <option value="safety_filters">Safety filter update</option>
-                  <option value="knowledge_base">Knowledge base update</option>
-                  <option value="bug_fix">Bug fix / patch</option>
-                  <option value="other">Other</option>
-                </select>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>Change type</label>
+                <div style={{ position: "relative" as const }}>
+                  <select
+                    value={rerunChangeType}
+                    onChange={(e) => setRerunChangeType(e.target.value)}
+                    style={{ width: "100%", padding: "10px 38px 10px 14px", borderRadius: 0, border: "1.5px solid #DDE5EF", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#FAFBFD", outline: "none", cursor: "pointer", boxSizing: "border-box" as const, appearance: "none" as const }}
+                    onFocus={e => { e.currentTarget.style.borderColor = KPMG_MID; e.currentTarget.style.boxShadow = `0 0 0 4px ${KPMG_MID}1A`; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "#DDE5EF"; e.currentTarget.style.boxShadow = "none"; }}
+                  >
+                    <option value="model_update">Model update / version change</option>
+                    <option value="system_prompt">System prompt change</option>
+                    <option value="fine_tuning">Fine-tuning / retraining</option>
+                    <option value="safety_filters">Safety filter update</option>
+                    <option value="knowledge_base">Knowledge base update</option>
+                    <option value="bug_fix">Bug fix / patch</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ position: "absolute" as const, right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" as const }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
               </div>
 
               {/* Claimed fixed principles */}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 8 }}>
                   Which principles do you believe were fixed?{" "}
                   <span style={{ color: "#94A3B8", fontWeight: 500, textTransform: "none" as const }}>(optional — makes probing harder on these)</span>
                 </label>
@@ -6560,24 +6605,28 @@ export default function Report() {
                     return (
                       <button key={p} type="button"
                         onClick={() => setRerunPrinciples(prev => selected ? prev.filter(x => x !== p) : [...prev, p])}
-                        style={{ padding: "4px 11px", borderRadius: 14, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? "#2563EB" : "#E2E8F0", color: selected ? "#2563EB" : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 11px", borderRadius: 0, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1.5px solid", background: selected ? "#EFF6FF" : "white", borderColor: selected ? KPMG_MID : "#DDE5EF", color: selected ? KPMG_MID : "#94A3B8", fontFamily: "inherit", transition: "all 0.15s" }}
                       >
-                        {selected ? "✓ " : ""}{p}
+                        {selected && (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={KPMG_MID} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        )}
+                        {p}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#64748B", marginBottom: 14 }}>{rerunError}</div>}
+              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 0, fontSize: 12, color: "#64748B", marginBottom: 14 }}>{rerunError}</div>}
 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <button onClick={() => setShowRerunDialog(false)} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+                <button onClick={() => setShowRerunDialog(false)} style={{ padding: "10px 20px", borderRadius: 0, border: "1.5px solid #D0DCEA", background: "white", color: "#4A6080", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
                 <button
                   onClick={() => { if (!rerunContext.trim()) { setRerunError("Please describe what changed."); return; } setRerunError(""); setRerunStep(2); }}
-                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 0, border: "none", background: `linear-gradient(135deg, ${KPMG_BLUE}, ${KPMG_MID})`, color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: `0 4px 12px ${KPMG_MID}4D` }}
                 >
-                  Next →
+                  Next
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                 </button>
               </div>
             </>)}
@@ -6586,20 +6635,26 @@ export default function Report() {
             {rerunStep === 2 && (<>
 
               {/* What will happen */}
-              <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 12, marginBottom: 16, fontSize: 12, color: "#1D4ED8", lineHeight: 1.65 }}>
-                <strong>What happens next:</strong> Phase 1 fingerprinting re-runs first.
-                {raw?.audit_id ? " If drift is detected, a full re-audit triggers automatically. Otherwise only failing/weak principles are re-probed." : " Full pipeline re-run: re-fingerprint + adaptive probes + SDCC re-evaluation. Delta applied automatically."}
+              <div style={{ display: "flex", gap: 10, padding: "12px 14px", background: "#F0F6FF", border: `1.5px solid ${KPMG_MID}2E`, borderRadius: 0, marginBottom: 16, fontSize: 12, color: "#1E3A5F", lineHeight: 1.65 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={KPMG_MID} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                <div>
+                  <strong>What happens next:</strong> Phase 1 fingerprinting re-runs first.
+                  {raw?.audit_id ? " If drift is detected, a full re-audit triggers automatically. Otherwise only failing/weak principles are re-probed." : " Full pipeline re-run: re-fingerprint + adaptive probes + SDCC re-evaluation. Delta applied automatically."}
+                </div>
               </div>
 
               {/* Change summary preview */}
-              <div style={{ padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 10, marginBottom: 16, fontSize: 12, color: "#166534" }}>
-                <strong>Change context:</strong> {rerunContext.trim().slice(0, 120)}{rerunContext.length > 120 ? "…" : ""}
-                {rerunPrinciples.length > 0 && <div style={{ marginTop: 3 }}><strong>Claimed fixes:</strong> {rerunPrinciples.join(", ")}</div>}
+              <div style={{ display: "flex", gap: 10, padding: "10px 13px", background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 0, marginBottom: 16, fontSize: 12, color: "#166534" }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><polyline points="20 6 9 17 4 12" /></svg>
+                <div>
+                  <strong>Change context:</strong> {rerunContext.trim().slice(0, 120)}{rerunContext.length > 120 ? "…" : ""}
+                  {rerunPrinciples.length > 0 && <div style={{ marginTop: 3 }}><strong>Claimed fixes:</strong> {rerunPrinciples.join(", ")}</div>}
+                </div>
               </div>
 
               {/* Endpoint (optional) */}
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
                   AI endpoint URL <span style={{ color: "#94A3B8", fontWeight: 500, textTransform: "none" as const }}>(optional — leave blank to reuse prior)</span>
                 </label>
                 <input
@@ -6607,15 +6662,15 @@ export default function Report() {
                   value={rerunEndpoint}
                   onChange={(e) => setRerunEndpoint(e.target.value)}
                   placeholder="https://api.example.com/v1/chat/completions"
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #DDE5EF", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#FAFBFD", outline: "none", boxSizing: "border-box" as const }}
+                  onFocus={e => { e.currentTarget.style.borderColor = KPMG_MID; e.currentTarget.style.boxShadow = `0 0 0 4px ${KPMG_MID}1A`; e.currentTarget.style.background = "white"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#DDE5EF"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#FAFBFD"; }}
                 />
               </div>
 
               {/* API key */}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#2563EB", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 6 }}>
                   API key *
                 </label>
                 <input
@@ -6623,22 +6678,31 @@ export default function Report() {
                   value={rerunApiKey}
                   onChange={(e) => setRerunApiKey(e.target.value)}
                   placeholder="Your AI endpoint API key"
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#F8FAFC", outline: "none", boxSizing: "border-box" as const }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2563EB"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 0, border: "1.5px solid #DDE5EF", fontSize: 13, fontFamily: "inherit", color: "#1E293B", background: "#FAFBFD", outline: "none", boxSizing: "border-box" as const }}
+                  onFocus={e => { e.currentTarget.style.borderColor = KPMG_MID; e.currentTarget.style.boxShadow = `0 0 0 4px ${KPMG_MID}1A`; e.currentTarget.style.background = "white"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#DDE5EF"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#FAFBFD"; }}
                 />
                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>Keys are never stored — used for this request only.</p>
               </div>
 
-              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 12, color: "#64748B", marginBottom: 14 }}>{rerunError}</div>}
+              {rerunError && <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 0, fontSize: 12, color: "#64748B", marginBottom: 14 }}>{rerunError}</div>}
 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <button onClick={() => { setRerunStep(1); setRerunError(""); }} style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "white", color: "#64748B", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
+                <button onClick={() => { setRerunStep(1); setRerunError(""); }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 0, border: "1.5px solid #D0DCEA", background: "white", color: "#4A6080", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                  Back
+                </button>
                 <button onClick={handleSubmitRerun} disabled={rerunLoading}
-                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: rerunLoading ? "#93C5FD" : "linear-gradient(135deg, #1E3A8A, #2563EB)", color: "white", fontWeight: 700, fontSize: 13, cursor: rerunLoading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, boxShadow: rerunLoading ? "none" : "0 4px 12px rgba(37,99,235,0.3)" }}>
+                  style={{ padding: "10px 24px", borderRadius: 0, border: "none", background: rerunLoading ? "#B7C7DC" : `linear-gradient(135deg, ${KPMG_BLUE}, ${KPMG_MID})`, color: "white", fontWeight: 700, fontSize: 13, cursor: rerunLoading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8, boxShadow: rerunLoading ? "none" : `0 4px 12px ${KPMG_MID}4D` }}>
                   {rerunLoading ? (
                     <><div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />{raw?.audit_id ? "Re-probing…" : "Re-probing + Evaluating…"}</>
-                  ) : raw?.audit_id ? "↺ Start Re-run" : "↺ Start Full Re-run"}
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+                      {raw?.audit_id ? "Start Re-run" : "Start Full Re-run"}
+                    </>
+                  )}
                 </button>
               </div>
             </>)}

@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 const B = "#00338D", M = "#005EB8";
 
-const CSS = `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{background:#F8FAFC;}.la-card{background:white;border-radius:14px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}`;
+const CSS = `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{background:#F8FAFC;}.la-card{background:white;border-radius: 0px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}`;
 
 export default function LlmAnalysis() {
   const location = useLocation();
@@ -17,7 +17,7 @@ export default function LlmAnalysis() {
 
   if (!raw) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:10, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
+      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:0, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
     </div>
   );
 
@@ -27,7 +27,7 @@ export default function LlmAnalysis() {
   if (!llm) return (
     <div style={{ minHeight:"100vh", background:"#F8FAFC", fontFamily:"'Plus Jakarta Sans',sans-serif", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
       <div style={{ fontSize:15, color:"#64748B" }}>No LLM Judge data available for this audit.</div>
-      <button onClick={() => navigate(-1)} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:10, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
+      <button onClick={() => navigate(-1)} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:0, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
     </div>
   );
 
@@ -68,10 +68,10 @@ export default function LlmAnalysis() {
 
         {/* Accuracy hero + metrics row */}
         <div style={{ display:"grid", gridTemplateColumns:"auto 1fr", gap:20, marginBottom:20 }}>
-          <div style={{ padding:"24px 30px", borderRadius:16, background:ab, border:`1.5px solid ${ac}25`, textAlign:"center", minWidth:160 }}>
+          <div style={{ padding:"24px 30px", borderRadius:0, background:ab, border:`1.5px solid ${ac}25`, textAlign:"center", minWidth:160 }}>
             <div style={{ fontSize:11, fontWeight:700, color:ac, textTransform:"uppercase" as const, letterSpacing:"0.8px", marginBottom:10 }}>Majority Vote Accuracy</div>
             <div style={{ fontSize:54, fontWeight:900, color:ac, lineHeight:1, letterSpacing:"-2px" }}>{accuracyPct != null ? `${accuracyPct}%` : "—"}</div>
-            <div style={{ marginTop:10, padding:"4px 14px", borderRadius:20, background:"white", border:`1px solid ${ac}30`, display:"inline-block" }}>
+            <div style={{ marginTop:10, padding:"4px 14px", borderRadius:0, background:"white", border:`1px solid ${ac}30`, display:"inline-block" }}>
               <span style={{ fontSize:12, fontWeight:700, color:ac }}>{ip.label}</span>
             </div>
             <div style={{ marginTop:8, fontSize:11, color:"#64748B" }}>correct ÷ (judged − disputed)</div>
@@ -82,11 +82,11 @@ export default function LlmAnalysis() {
               {[
                 { label:"Rows Judged",   val:String(llm.rows_judged),  color:M, bg:"#EEF4FF" },
                 { label:"Skipped",       val:String(llm.rows_skipped), color:llm.rows_skipped>0?"#64748B":"#059669", bg:llm.rows_skipped>0?"#F1F5F9":"#F0FDF4" },
-                { label:"Disputed",      val:String(disputed),         color:disputed>0?"#D97706":"#059669", bg:disputed>0?"#FFFBEB":"#F0FDF4" },
+                { label:"Disputed",      val:String(disputed),         color:disputed>0?"#2563EB":"#059669", bg:disputed>0?"#EFF6FF":"#F0FDF4" },
                 { label:"KB-Grounded",   val:String(kbUsed),           color:kbUsed>0?"#059669":"#94A3B8", bg:kbUsed>0?"#F0FDF4":"#F8FAFC" },
                 { label:"Active Judges", val:String(panelSize>0?panelSize:llm.rows_judged>0?3:0), color:"#7C3AED", bg:"#F3E8FF" },
               ].map(item => (
-                <div key={item.label} style={{ padding:"12px 10px", borderRadius:12, background:item.bg, textAlign:"center" }}>
+                <div key={item.label} style={{ padding:"12px 10px", borderRadius:0, background:item.bg, textAlign:"center" }}>
                   <div style={{ fontSize:9, fontWeight:700, color:item.color, textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:5 }}>{item.label}</div>
                   <div style={{ fontSize:20, fontWeight:900, color:item.color }}>{item.val}</div>
                 </div>
@@ -110,10 +110,10 @@ export default function LlmAnalysis() {
               ].map((j, idx) => {
                 const active = panelSize > 0 ? idx < panelSize : llm.rows_judged > 0;
                 return (
-                  <div key={j.name} style={{ padding:"13px 15px", borderRadius:12, background:active?j.bg:"#F8FAFC", border:`1px solid ${active?j.color:"#E2E8F0"}30`, opacity:active?1:0.45 }}>
+                  <div key={j.name} style={{ padding:"13px 15px", borderRadius:0, background:active?j.bg:"#F8FAFC", border:`1px solid ${active?j.color:"#E2E8F0"}30`, opacity:active?1:0.45 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
                       <span style={{ fontSize:12, fontWeight:700, color:active?j.color:"#94A3B8" }}>{j.name}</span>
-                      <span style={{ fontSize:10, padding:"2px 8px", borderRadius:99, background:active?j.color:"#94A3B8", color:"white", fontWeight:700 }}>{active?"Active":"Offline"}</span>
+                      <span style={{ fontSize:10, padding:"2px 8px", borderRadius:0, background:active?j.color:"#94A3B8", color:"white", fontWeight:700 }}>{active?"Active":"Offline"}</span>
                     </div>
                     <div style={{ fontSize:11.5, color:"#475569", lineHeight:1.5, fontStyle:"italic" }}>{j.specialty}</div>
                   </div>
@@ -131,11 +131,11 @@ export default function LlmAnalysis() {
                 { step:"1B", title:"LLM Generation", subtitle:kbGrounded?"Skipped":"Used",  color:kbGrounded?"#94A3B8":M,         bg:kbGrounded?"#F8FAFC":"#EEF4FF", desc:"All 3 judges independently generate a reference answer and cross-validate for agreement." },
                 { step:"2",  title:"Majority Vote",  subtitle:"Always runs",                 color:"#7C3AED",                       bg:"#F3E8FF",                       desc:"≥ 2/3 judges = verdict. 3/3 = High confidence. 2/3 = Medium. Tied = Disputed, excluded." },
               ].map((s, i) => (
-                <div key={s.step} style={{ padding:"13px 15px", borderRadius:12, background:s.bg, border:"1px solid #E2E8F0" }}>
+                <div key={s.step} style={{ padding:"13px 15px", borderRadius:0, background:s.bg, border:"1px solid #E2E8F0" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
                     <span style={{ fontSize:9, fontWeight:700, color:s.color, textTransform:"uppercase" as const, letterSpacing:"0.5px" }}>Stage {s.step}</span>
                     <span style={{ fontWeight:700, fontSize:13, color:"#1E293B", flex:1 }}>{s.title}</span>
-                    <span style={{ fontSize:10, padding:"2px 8px", borderRadius:99, background:s.color, color:"white", fontWeight:700 }}>{s.subtitle}</span>
+                    <span style={{ fontSize:10, padding:"2px 8px", borderRadius:0, background:s.color, color:"white", fontWeight:700 }}>{s.subtitle}</span>
                   </div>
                   <p style={{ margin:0, fontSize:11.5, color:"#475569", lineHeight:1.5 }}>{s.desc}</p>
                 </div>
@@ -151,7 +151,7 @@ export default function LlmAnalysis() {
             <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#94A3B8", marginBottom:6, fontWeight:500 }}>
               <span>0%</span><span style={{ color:"#64748B" }}>Poor (&lt;60%)</span><span style={{ color:M }}>Moderate (60–80%)</span><span style={{ color:"#059669" }}>Good (80%+)</span><span>100%</span>
             </div>
-            <div style={{ height:12, background:"linear-gradient(90deg,#FEE2E2 0%,#FEE2E2 60%,#EEF4FF 60%,#EEF4FF 80%,#DCFCE7 80%,#DCFCE7 100%)", borderRadius:99, position:"relative", border:"1px solid #E2E8F0" }}>
+            <div style={{ height:12, background:"linear-gradient(90deg,#FEE2E2 0%,#FEE2E2 60%,#EEF4FF 60%,#EEF4FF 80%,#DCFCE7 80%,#DCFCE7 100%)", borderRadius:0, position:"relative", border:"1px solid #E2E8F0" }}>
               <div style={{ position:"absolute", left:`${Math.min(accuracyPct,98)}%`, top:"50%", transform:"translate(-50%,-50%)", width:20, height:20, background:ac, borderRadius:"50%", border:"3px solid white", boxShadow:`0 0 0 2px ${ac}`, transition:"left 0.8s ease" }}/>
             </div>
             <div style={{ textAlign:"center", marginTop:10, fontSize:13, fontWeight:700, color:ac }}>
@@ -169,18 +169,18 @@ export default function LlmAnalysis() {
               <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                 {[
                   { label:"High Confidence",  count:nHigh, total:confs.length, color:"#059669", bg:"#F0FDF4", vote:"3/3 unanimous",  tip:"All judges agreed" },
-                  { label:"Medium Confidence",count:nMed,  total:confs.length, color:"#D97706", bg:"#FFFBEB", vote:"2/3 majority",   tip:"Solid — review dissent" },
+                  { label:"Medium Confidence",count:nMed,  total:confs.length, color:"#2563EB", bg:"#EFF6FF", vote:"2/3 majority",   tip:"Solid — review dissent" },
                   { label:"Low / Disputed",   count:nLow+disputed, total:confs.length, color:"#64748B", bg:"#F1F5F9", vote:"Split/tied", tip:"Excluded from accuracy" },
                 ].map(c => {
                   const pct = confs.length > 0 ? Math.round((c.count/confs.length)*100) : 0;
                   return (
-                    <div key={c.label} style={{ padding:"13px 15px", borderRadius:12, background:c.bg, border:`1px solid ${c.color}25` }}>
+                    <div key={c.label} style={{ padding:"13px 15px", borderRadius:0, background:c.bg, border:`1px solid ${c.color}25` }}>
                       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                         <span style={{ fontSize:12, fontWeight:700, color:c.color }}>{c.label}</span>
                         <span style={{ fontSize:11, color:"#64748B" }}>{c.count} rows ({pct}%)</span>
                       </div>
-                      <div style={{ height:5, background:"white", borderRadius:99, overflow:"hidden", marginBottom:6 }}>
-                        <div style={{ height:"100%", width:`${pct}%`, background:c.color, borderRadius:99 }}/>
+                      <div style={{ height:5, background:"white", borderRadius:0, overflow:"hidden", marginBottom:6 }}>
+                        <div style={{ height:"100%", width:`${pct}%`, background:c.color, borderRadius:0 }}/>
                       </div>
                       <div style={{ fontSize:11, color:"#94A3B8", fontStyle:"italic" }}>{c.tip} · {c.vote}</div>
                     </div>
@@ -199,14 +199,14 @@ export default function LlmAnalysis() {
                 { label:"Formula",          val:"correct_rows ÷ (judged_rows − disputed_rows)" },
                 { label:"Parallelism",      val:"All judges run concurrently via ThreadPoolExecutor." },
               ].map((m,i) => (
-                <div key={i} style={{ padding:"10px 12px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
+                <div key={i} style={{ padding:"10px 12px", borderRadius:0, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
                   <div style={{ fontSize:10, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:4 }}>{m.label}</div>
                   <div style={{ fontSize:12.5, color:"#374151", fontFamily:m.label==="Formula"?"monospace":"inherit" }}>{m.val}</div>
                 </div>
               ))}
             </div>
             {(llm.warnings??[]).length > 0 && (
-              <div style={{ marginTop:14, padding:"12px 14px", borderRadius:10, background:"#FFFBEB", border:"1px solid #FDE68A" }}>
+              <div style={{ marginTop:14, padding:"12px 14px", borderRadius:0, background:"#FFFBEB", border:"1px solid #FDE68A" }}>
                 <div style={{ fontSize:10, fontWeight:700, color:"#D97706", textTransform:"uppercase" as const, letterSpacing:"0.5px", marginBottom:6 }}>Warnings</div>
                 {(llm.warnings??[]).map((w: string, i: number) => (
                   <div key={i} style={{ fontSize:12, color:"#92400E", lineHeight:1.6 }}>• {w}</div>

@@ -53,6 +53,10 @@ const REPORT_ITEMS = [
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
   },
   {
+    label: "Build Vulnerabilities", path: "/code-build-risk",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
+  },
+  {
     label: "Risks", path: "/risk-intelligence",
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
   },
@@ -83,7 +87,7 @@ function TopItem({ label, path, icon, locked, active, onClick }: {
       title={locked ? "Register an agent first" : undefined}
       style={{
         display: "flex", alignItems: "center", gap: 9,
-        padding: "8px 12px", borderRadius: 7, marginBottom: 1,
+        padding: "8px 12px", borderRadius: 0, marginBottom: 1,
         cursor: locked ? "not-allowed" : "pointer",
         background: active ? "rgba(255,255,255,0.15)" : "transparent",
         color: locked ? "rgba(255,255,255,0.25)" : active ? "#fff" : "rgba(255,255,255,0.72)",
@@ -97,7 +101,7 @@ function TopItem({ label, path, icon, locked, active, onClick }: {
       onMouseLeave={e => { if (!locked && !active) (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
     >
       {active && (
-        <div style={{ position: "absolute", left: 0, top: "16%", bottom: "16%", width: 3, borderRadius: 2, background: "#fff" }} />
+        <div style={{ position: "absolute", left: 0, top: "16%", bottom: "16%",        width: 3, borderRadius: 0, background: "#fff" }} />
       )}
       <span style={{ opacity: active ? 1 : 0.8, display: "flex", flexShrink: 0 }}>{icon}</span>
       <span style={{ flex: 1 }}>{label}</span>
@@ -124,8 +128,7 @@ function ReportItem({ label, path, icon, active, onClick, index, total }: {
         color: active ? "#fff" : "rgba(255,255,255,0.62)",
         fontSize: 12.5, fontWeight: active ? 700 : 400,
         userSelect: "none", position: "relative",
-        transition: "background 0.12s, color 0.12s",
-        borderRadius: active ? 7 : 0,
+        transition: "background 0.12s, color 0.12s",         borderRadius: 0,
         // Top/bottom connector lines for the vertical timeline feel
         borderLeft: `2px solid ${active ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)"}`,
         marginLeft: 16,
@@ -192,7 +195,7 @@ export default function Sidebar() {
           display: "flex", alignItems: "center", gap: 9,
         }}>
           <div style={{
-            width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+            width: 32, height: 32, borderRadius: 0, flexShrink: 0,
             background: "rgba(255,255,255,0.15)",
             border: "1.5px solid rgba(255,255,255,0.25)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -214,7 +217,7 @@ export default function Sidebar() {
             <div style={{
               display: "flex", alignItems: "center", gap: 7,
               padding: "7px 10px", background: "rgba(255,255,255,0.1)",
-              borderRadius: 8, border: "1px solid rgba(255,255,255,0.18)",
+              borderRadius: 0, border: "1px solid rgba(255,255,255,0.18)",
             }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34D399", flexShrink: 0, animation: "sbPulse 2.5s ease-in-out infinite" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -224,8 +227,7 @@ export default function Sidebar() {
             </div>
           ) : (
             <button onClick={() => navigate("/register-ai")} style={{
-              width: "100%", display: "flex", alignItems: "center", gap: 7,
-              padding: "7px 10px", background: "rgba(255,255,255,0.08)", borderRadius: 8,
+              width: "100%", display: "flex", alignItems: "center", gap: 7,                  padding: "7px 10px", background: "rgba(255,255,255,0.08)", borderRadius: 0,
               border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", textAlign: "left",
             }}>
               <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>Register an agent →</span>
@@ -306,7 +308,7 @@ export default function Sidebar() {
             onClick={() => navigate("/profile")}
             style={{
               display: "flex", alignItems: "center", gap: 8,
-              padding: "7px 9px", borderRadius: 8, cursor: "pointer", marginBottom: 2,
+              padding: "7px 9px", borderRadius: 0, cursor: "pointer", marginBottom: 2,
               background: isActive("/profile") ? "rgba(255,255,255,0.15)" : "transparent",
               border: isActive("/profile") ? "1px solid rgba(255,255,255,0.2)" : "1px solid transparent",
               transition: "background 0.12s",
@@ -316,10 +318,10 @@ export default function Sidebar() {
             onMouseLeave={e => { if (!isActive("/profile")) (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
           >
             {isActive("/profile") && (
-              <div style={{ position: "absolute", left: 0, top: "16%", bottom: "16%", width: 3, borderRadius: 2, background: "#fff" }} />
+              <div style={{ position: "absolute", left: 0, top: "16%", bottom: "16%",        width: 3, borderRadius: 0, background: "#fff" }} />
             )}
             <div style={{
-              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+              width: 28, height: 28, borderRadius: 0, flexShrink: 0,
               background: "rgba(255,255,255,0.18)",
               border: "1.5px solid rgba(255,255,255,0.25)",
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -336,7 +338,7 @@ export default function Sidebar() {
             onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("activeAI"); navigate("/login"); }}
             style={{
               display: "flex", alignItems: "center", gap: 7,
-              padding: "6px 9px", borderRadius: 7, cursor: "pointer",
+              padding: "6px 9px", borderRadius: 0, cursor: "pointer",
               color: "rgba(255,255,255,0.45)", fontSize: 12.5, fontWeight: 500,
               transition: "background 0.12s, color 0.12s",
             }}

@@ -36,18 +36,18 @@ const Login = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        .ai{width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid #E3EAF3;font-size:14px;font-family:inherit;color:#0B1F33;background:#fff;transition:all 0.2s;outline:none;}
+        .ai{width:100%;padding:14px 16px;border-radius: 0px;border:1.5px solid #E3EAF3;font-size:14px;font-family:inherit;color:#0B1F33;background:#fff;transition:all 0.2s;outline:none;}
         .ai:focus{border-color:#005EB8;box-shadow:0 0 0 4px rgba(0,94,184,0.1);}
         .ai::placeholder{color:#A0B4CC;}
-        .as{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#00338D,#005EB8);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(0,51,141,0.25);}
+        .as{width:100%;padding:15px;border-radius: 0px;border:none;background:linear-gradient(135deg,#00338D,#005EB8);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(0,51,141,0.25);}
         .as:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,51,141,0.35);}
         .as:disabled{opacity:0.55;cursor:not-allowed;transform:none;}
         .alp{flex:1;background:linear-gradient(145deg,#00338D 0%,#005EB8 55%,#0091DA 100%);display:flex;flex-direction:column;justify-content:center;padding:64px;position:relative;overflow:hidden;}
         .alp::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;}
-        .aorb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}
+        .aorb{position:absolute;border-radius: 50%;filter:blur(80px);pointer-events:none;}
         .arp{width:480px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:64px 56px;background:#fff;overflow-y:auto;}
-        .apill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;padding:6px 14px;border-radius:100px;letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;backdrop-filter:blur(8px);}
-        .apd{width:6px;height:6px;border-radius:50%;background:#00A3A1;animation:apulse 2s ease-in-out infinite;}
+        .apill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;padding:6px 14px;border-radius: 0px;letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;backdrop-filter:blur(8px);}
+        .apd{width:6px;height:6px;border-radius: 50%;background:#00A3A1;animation:apulse 2s ease-in-out infinite;}
         @keyframes apulse{0%,100%{transform:scale(1);}50%{transform:scale(1.5);opacity:0.6;}}
         @keyframes authUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
         @media(max-width:768px){.alp{display:none;}.arp{width:100%;padding:40px 28px;}}
@@ -84,7 +84,7 @@ const Login = () => {
           </div>
 
           {error && (
-            <div style={{ marginTop:14, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:10, fontSize:13, color:"#C53030" }}>
+            <div style={{ marginTop:14, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:0, fontSize:13, color:"#C53030" }}>
               {error}
             </div>
           )}

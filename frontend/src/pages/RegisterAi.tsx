@@ -83,6 +83,19 @@ const BIAS_TESTED_OPTS = [
   "Not applicable",
 ];
 
+// ── Build provenance (feeds the Code & Build Risk tab) ──────────────────────
+const AI_GENERATED_OPTS = [
+  "Yes — mostly built with AI code-gen tools",
+  "Partially — some parts AI-generated",
+  "No — hand-written",
+  "Unknown",
+];
+const REVIEW_GATE_OPTS = [
+  "Yes — a human reviews code before deploy",
+  "No — code ships without human review",
+  "Unknown",
+];
+
 // ── Domain-specific extra options ───────────────────────────────────────────
 // Keyed by the exact DOMAIN_OPTS label. Each field lists EXTRA options that
 // are prepended ahead of the generic pool for that field when the domain is
@@ -217,7 +230,7 @@ html,body{height:100%;}
 body{background:#F0F4FA;}
 
 .rai-inp{
-  width:100%;padding:12px 14px;border-radius:0;
+  width:100%;padding:12px 14px;border-radius: 0;
   border:1.5px solid #DDE5EF;font-size:14px;font-family:${FF};
   color:#0F172A;background:#FAFBFD;outline:none;
   transition:border 0.18s,box-shadow 0.18s,background 0.18s;
@@ -226,7 +239,7 @@ body{background:#F0F4FA;}
 .rai-inp::placeholder{color:#B0C0D4;}
 
 .rai-ta{
-  width:100%;padding:12px 14px;border-radius:0;
+  width:100%;padding:12px 14px;border-radius: 0;
   border:1.5px solid #DDE5EF;font-size:13.5px;font-family:${FF};
   color:#0F172A;background:#FAFBFD;outline:none;resize:vertical;
   min-height:96px;line-height:1.65;transition:border 0.18s,box-shadow 0.18s,background 0.18s;
@@ -236,7 +249,7 @@ body{background:#F0F4FA;}
 
 .rai-sel-wrap{position:relative;}
 .rai-sel{
-  width:100%;padding:12px 38px 12px 14px;border-radius:0;
+  width:100%;padding:12px 38px 12px 14px;border-radius: 0;
   border:1.5px solid #DDE5EF;font-size:14px;font-family:${FF};
   background:#FAFBFD;outline:none;appearance:none;cursor:pointer;
   color:#0F172A;transition:border 0.18s,box-shadow 0.18s,background 0.18s;
@@ -251,7 +264,7 @@ body{background:#F0F4FA;}
 
 .rai-btn-p{
   display:inline-flex;align-items:center;gap:8px;
-  padding:13px 26px;border-radius:0;border:none;
+  padding:13px 26px;border-radius: 0;border:none;
   background:linear-gradient(135deg,${B},${M});
   color:#fff;font-size:14px;font-weight:800;font-family:${FF};
   cursor:pointer;transition:transform 0.18s,box-shadow 0.18s;
@@ -262,7 +275,7 @@ body{background:#F0F4FA;}
 
 .rai-btn-g{
   display:inline-flex;align-items:center;gap:8px;
-  padding:13px 22px;border-radius:0;
+  padding:13px 22px;border-radius: 0;
   border:1.5px solid #D0DCEA;background:#fff;
   color:#4A6080;font-size:14px;font-weight:700;font-family:${FF};
   cursor:pointer;transition:all 0.18s;
@@ -271,7 +284,7 @@ body{background:#F0F4FA;}
 
 .rai-step-item{
   display:flex;align-items:flex-start;gap:14px;
-  padding:14px 16px;border-radius:0;cursor:default;
+  padding:14px 16px;border-radius: 0;cursor:default;
   transition:background 0.2s;
 }
 .rai-step-item.done{cursor:pointer;}
@@ -279,7 +292,7 @@ body{background:#F0F4FA;}
 .rai-step-item.active{background:rgba(0,94,184,0.07);}
 
 .rai-step-circle{
-  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  width:34px;height:34px;border-radius: 50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   font-size:12px;font-weight:800;transition:all 0.22s;
   border:2px solid transparent;
@@ -289,7 +302,7 @@ body{background:#F0F4FA;}
 .rai-step-circle.future{background:#F1F5F9;color:#B0C0D4;border-color:#E2E8F0;}
 
 .rai-step-connector{
-  width:2px;height:28px;margin-left:16px;border-radius:0;
+  width:2px;height:28px;margin-left:16px;border-radius: 0;
   background:linear-gradient(to bottom,${M}60,#E2E8F0);
   transition:background 0.3s;
 }
@@ -310,7 +323,7 @@ body{background:#F0F4FA;}
 /* single-select option cards */
 .rai-opt-card{
   display:flex;align-items:center;gap:12px;
-  padding:13px 16px;border-radius:0 !important;border:1.5px solid #DDE5EF;
+  padding:13px 16px;border-radius: 0 !important;border:1.5px solid #DDE5EF;
   background:#FAFBFD;cursor:pointer;transition:all 0.18s;
   font-size:12.5px;font-family:${FF};text-align:left;
   color:#344054;width:100%;
@@ -318,24 +331,24 @@ body{background:#F0F4FA;}
 .rai-opt-card:hover{border-color:${M};background:#F0F6FF;}
 .rai-opt-card.selected{border-color:${M};background:rgba(0,94,184,0.06);color:${B};font-weight:700;}
 .rai-opt-radio{
-  width:18px;height:18px;border-radius:50%;border:2px solid #CBD5E1;
+  width:18px;height:18px;border-radius: 50%;border:2px solid #CBD5E1;
   flex-shrink:0;display:flex;align-items:center;justify-content:center;
   transition:all 0.18s;
 }
 .rai-opt-card.selected .rai-opt-radio{border-color:${M};background:${M};}
-.rai-opt-radio-dot{width:7px;height:7px;border-radius:50%;background:#fff;}
+.rai-opt-radio-dot{width:7px;height:7px;border-radius: 50%;background:#fff;}
 
 /* multi-select checkbox cards */
 .rai-chk-card{
   display:flex;align-items:center;gap:10px;
-  padding:10px 14px;border-radius:0 !important;border:1.5px solid #DDE5EF;
+  padding:10px 14px;border-radius: 0 !important;border:1.5px solid #DDE5EF;
   background:#FAFBFD;cursor:pointer;transition:all 0.18s;
   font-size:12.5px;font-family:${FF};text-align:left;color:#344054;
 }
 .rai-chk-card:hover{border-color:${M};background:#F0F6FF;}
 .rai-chk-card.checked{border-color:${M};background:rgba(0,94,184,0.06);color:${B};font-weight:600;}
 .rai-chk-box{
-  width:17px;height:17px;border-radius:50%;border:2px solid #CBD5E1;
+  width:17px;height:17px;border-radius: 50%;border:2px solid #CBD5E1;
   flex-shrink:0;display:flex;align-items:center;justify-content:center;
   transition:all 0.18s;
 }
@@ -344,7 +357,7 @@ body{background:#F0F4FA;}
 .rai-fact{
   display:flex;align-items:center;gap:8px;
   font-size:12.5px;color:#3D5880;padding:8px 12px;
-  background:rgba(0,94,184,0.06);border-radius:0;
+  background:rgba(0,94,184,0.06);border-radius: 0;
   border:1px solid rgba(0,94,184,0.12);
 }
 `;
@@ -550,6 +563,11 @@ export default function RegisterAi() {
   const [highestStakes, setHighestStakes]       = useState("");
   const [biasTested, setBiasTested]             = useState("");
 
+  // Build provenance — feeds the (display-only) Code & Build Risk tab
+  const [aiGenerated, setAiGenerated]           = useState("");
+  const [aiCodegenTools, setAiCodegenTools]     = useState("");
+  const [reviewGate, setReviewGate]             = useState("");
+
   const canNext = () => {
     if (step === 1) return name.trim().length > 1 && Boolean(domain);
     if (step === 2) return Boolean(endUsers) && Boolean(decisionInfluence) && Boolean(deploymentStatus);
@@ -580,6 +598,14 @@ export default function RegisterAi() {
           output_visibility:      outputVisibility,
           highest_stakes_failure: highestStakes,
           bias_tested:            biasTested,
+          // Build provenance — gates the Code & Build Risk checks/tab.
+          // Normalised to the short tokens the backend expects.
+          ai_generated:           aiGenerated.startsWith("Yes") ? "Yes"
+                                 : aiGenerated.startsWith("Partially") ? "Partially"
+                                 : aiGenerated.startsWith("No") ? "No" : "Unknown",
+          ai_codegen_tools:       aiCodegenTools,
+          human_review_gate:      reviewGate.startsWith("Yes") ? "Yes"
+                                 : reviewGate.startsWith("No") ? "No" : "Unknown",
         },
       });
       localStorage.setItem("activeAI", name.trim());
@@ -752,6 +778,28 @@ export default function RegisterAi() {
                     </div>
                   </div>
 
+                  {/* Build provenance — powers the Code & Build Risk tab */}
+                  <div style={{ marginTop:20, paddingTop:20, borderTop:"1.5px solid #EEF2F7" }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"#0B1F33", marginBottom:2 }}>How was this app built?</div>
+                    <div style={{ fontSize:12.5, color:"#7A90A8", marginBottom:16, lineHeight:1.55 }}>
+                      Used to run build-quality checks and populate the Code &amp; Build Risk tab. Leave as "No / Unknown" to skip those checks.
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
+                      <Field label="Built with AI code-gen tools?" hint="e.g. Cursor, Copilot, Claude Code, Lovable, v0. Enables the build-risk probes.">
+                        <OptionCards options={AI_GENERATED_OPTS} value={aiGenerated} onChange={setAiGenerated} />
+                      </Field>
+                      <div>
+                        <Field label="Which tool(s)?" hint="Optional. Shown as context on the Code & Build Risk tab.">
+                          <input className="rai-inp" value={aiCodegenTools} onChange={e => setAiCodegenTools(e.target.value)}
+                            placeholder="e.g. Cursor + Lovable" />
+                        </Field>
+                        <Field label="Human code review before deploy?" hint="A missing review gate is itself a governance finding.">
+                          <OptionCards options={REVIEW_GATE_OPTS} value={reviewGate} onChange={setReviewGate} />
+                        </Field>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Connection callout — explains where credentials go */}
                   <div style={{ marginTop:8, display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", borderRadius:0, fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:2 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -883,8 +931,8 @@ export default function RegisterAi() {
                       </div>
                       <div style={{ fontSize:12, fontWeight:800, color:M }}>{pct}%</div>
                     </div>
-                    <div style={{ height:5, borderRadius:99, background:"#EEF2F8", overflow:"hidden" }}>
-                      <div style={{ height:"100%", width:`${pct}%`, background:`linear-gradient(90deg,${B},${T})`, borderRadius:99, transition:"width 0.35s cubic-bezier(.16,1,.3,1)" }} />
+                    <div style={{ height:5, borderRadius:0, background:"#EEF2F8", overflow:"hidden" }}>
+                      <div style={{ height:"100%", width:`${pct}%`, background:`linear-gradient(90deg,${B},${T})`, borderRadius:0, transition:"width 0.35s cubic-bezier(.16,1,.3,1)" }} />
                     </div>
                   </>
                 );

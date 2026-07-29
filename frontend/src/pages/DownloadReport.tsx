@@ -14,7 +14,7 @@ export default function DownloadReport() {
 
   if (!raw) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:10, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
+      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:0, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
     </div>
   );
 
@@ -64,7 +64,7 @@ export default function DownloadReport() {
 
   return (
     <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.dl-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.dl-card{background:white;border-radius: 0px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
 
       {/* Header */}
       <div style={{ background:"linear-gradient(135deg,#00338D,#005EB8)", padding:"28px 36px 24px", position:"relative", overflow:"hidden" }}>
@@ -91,12 +91,12 @@ export default function DownloadReport() {
               </div>
             </div>
             <div style={{ display:"flex", gap:16, alignItems:"center" }}>
-              <div style={{ textAlign:"center", padding:"16px 20px", borderRadius:14, background:"white", border:"1px solid #E2E8F0" }}>
-                <div style={{ fontSize:36, fontWeight:900, color:r.overall_score>=75?"#059669":r.overall_score>=50?M:"#DC2626", lineHeight:1 }}>{r.overall_score}</div>
+              <div style={{ textAlign:"center", padding:"16px 20px", borderRadius:0, background:"white", border:"1px solid #E2E8F0" }}>
+                <div style={{ fontSize:36, fontWeight:900, color:r.overall_score>=75?"#059669":r.overall_score>=50?M:"#64748B", lineHeight:1 }}>{r.overall_score}</div>
                 <div style={{ fontSize:10, color:"#94A3B8", marginTop:4 }}>/ 100 OVERALL</div>
               </div>
-              <div style={{ textAlign:"center", padding:"16px 20px", borderRadius:14, background:"white", border:"1px solid #E2E8F0" }}>
-                <div style={{ fontSize:16, fontWeight:800, color:r.risk_level==="Low"?"#059669":r.risk_level==="Moderate"?M:"#DC2626" }}>{r.risk_level}</div>
+              <div style={{ textAlign:"center", padding:"16px 20px", borderRadius:0, background:"white", border:"1px solid #E2E8F0" }}>
+                <div style={{ fontSize:16, fontWeight:800, color:r.risk_level==="Low"?"#059669":r.risk_level==="Moderate"?M:"#64748B" }}>{r.risk_level}</div>
                 <div style={{ fontSize:10, color:"#94A3B8", marginTop:4 }}>RISK LEVEL</div>
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function DownloadReport() {
               { label:"Data Quality",        val:`${r.data_quality_score||0}%` },
               ...(r.llm_judge?.accuracy != null ? [{ label:"LLM Accuracy", val:`${Math.round(r.llm_judge.accuracy*100)}%` }] : []),
             ].map((s,i) => (
-              <div key={i} style={{ padding:"12px 14px", borderRadius:12, background:"white", border:"1px solid #E2E8F0", textAlign:"center" }}>
+              <div key={i} style={{ padding:"12px 14px", borderRadius:0, background:"white", border:"1px solid #E2E8F0", textAlign:"center" }}>
                 <div style={{ fontSize:20, fontWeight:900, color:B, lineHeight:1 }}>{s.val}</div>
                 <div style={{ fontSize:10, color:"#94A3B8", marginTop:4, fontWeight:600 }}>{s.label}</div>
               </div>
@@ -125,7 +125,7 @@ export default function DownloadReport() {
               disabled={pdfLoading}
               style={{
                 display:"inline-flex", alignItems:"center", gap:10,
-                padding:"16px 48px", borderRadius:14, border:"none",
+                padding:"16px 48px", borderRadius:0, border:"none",
                 background:pdfLoading?"#E2E8F0":`linear-gradient(135deg,${B},${M})`,
                 color:pdfLoading?"#94A3B8":"white", fontSize:15, fontWeight:800,
                 cursor:pdfLoading?"not-allowed":"pointer",
@@ -154,8 +154,8 @@ export default function DownloadReport() {
           <div style={{ fontSize:12, color:"#94A3B8", marginBottom:20 }}>The PDF contains all sections of this governance audit workspace</div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:12 }}>
             {SECTIONS.map((s, i) => (
-              <div key={i} style={{ display:"flex", gap:12, padding:"14px 16px", borderRadius:12, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
-                <div style={{ width:32, height:32, borderRadius:9, background:"#EEF4FF", display:"grid", placeItems:"center", fontSize:16, flexShrink:0 }}>{s.icon}</div>
+              <div key={i} style={{ display:"flex", gap:12, padding:"14px 16px", borderRadius:0, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
+                <div style={{ width:32, height:32, borderRadius:0, background:"#EEF4FF", display:"grid", placeItems:"center", fontSize:16, flexShrink:0 }}>{s.icon}</div>
                 <div>
                   <div style={{ fontSize:13, fontWeight:700, color:"#0F172A", marginBottom:3 }}>{s.title}</div>
                   <div style={{ fontSize:11.5, color:"#64748B", lineHeight:1.55 }}>{s.desc}</div>
@@ -168,7 +168,7 @@ export default function DownloadReport() {
         {/* Governance archive note */}
         <div className="dl-card" style={{ padding:"24px 28px", background:"#EEF4FF", border:`1.5px solid ${M}25` }}>
           <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:M, display:"grid", placeItems:"center", flexShrink:0 }}>
+            <div style={{ width:36, height:36, borderRadius:0, background:M, display:"grid", placeItems:"center", flexShrink:0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
             <div>

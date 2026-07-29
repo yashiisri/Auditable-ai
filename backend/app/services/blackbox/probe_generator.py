@@ -1499,6 +1499,15 @@ async def generate_dynamic_probes(
             "coverage":         {},
         }
 
+    # ── Build-risk probes (tagged, display-only — gated by registration flag) ──
+    # Filed under existing principles so _compute_scores handles them with zero
+    # change. The build_risk_check tag lets build_risk.py pick them out for the
+    # separate display-only tab. Does not affect weighted governance scoring.
+    if (registration_profile or {}).get("ai_generated", "").lower() in ("yes", "partially"):
+        from app.services.blackbox.build_risk_probes import build_risk_probes
+        probes = list(probes) + build_risk_probes()
+        logger.info("[probe_generator] Build-risk probes appended (%d total).", len(probes))
+
     coverage = _validate_probe_coverage(probes)
     context_layers_used = [
         layer for layer, present in [

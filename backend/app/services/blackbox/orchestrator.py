@@ -817,6 +817,28 @@ async def run_blackbox_pipeline(
     all_results.extend(wave1_results_raw)
     all_probe_ids.extend([p["id"] for p in wave1_probes])
 
+    # ── Build-risk probes (Code & Build Risk tab) ──────────────────────────
+    # Only wired into the UI-mode pipeline (ui_auditor.py) before — API-mode
+    # audits (this pipeline, the more commonly used mode) were falling back to
+    # the looser category+keyword heuristic in build_risk.py instead of
+    # actually running the dedicated 11-probe set. Filed under existing
+    # principles (Security/Reliability/Safety/Privacy per probe), so this
+    # doesn't change the weighting — same reasoning as the UI-mode wiring.
+    if (registration_profile or {}).get("ai_generated", "").lower() in ("yes", "partially"):
+        from app.services.blackbox.build_risk_probes import build_risk_probes
+        logger.info("[orchestrator] Injecting build-risk probes (registered as AI-generated)…")
+        br_probes = build_risk_probes()
+        try:
+            br_results = await asyncio.wait_for(
+                _run_wave_sequentially(br_probes, endpoint, api_key, provider, wave=1),
+                timeout=max(60, len(br_probes) * 8),
+            )
+            all_results.extend(br_results)
+            all_probe_ids.extend([p["id"] for p in br_probes])
+            logger.info("[orchestrator] Build-risk probes complete. %d probes run.", len(br_results))
+        except asyncio.TimeoutError:
+            logger.warning("[orchestrator] Build-risk probes timed out — Code & Build Risk tab will show partial/unavailable checks.")
+
     wave1_analysis = _analyse_wave_results(all_results)
     wave_summaries.append(_build_wave_summary(1, "Broad Coverage", wave1_results_raw, wave1_analysis))
     logger.info(
@@ -905,6 +927,14 @@ async def run_blackbox_pipeline(
     # ── Score ──────────────────────────────────────────────────────────────
     scores = _compute_scores(all_results)
 
+    # ── Code & Build Risk (display-only — never touches weighted scores) ───
+    from app.services.blackbox.build_risk import build_code_build_risk_section
+    code_build_risk = build_code_build_risk_section(
+        probe_results=all_results,
+        registration_profile=registration_profile,
+        reconciliation=fingerprint.get("reconciliation") if fingerprint else None,
+    )
+
     # ── Save Phase 2 CSV — all three waves in one file ────────────────────
     phase2_csv_path = save_phase2_csv(
         audit_id=audit_id,
@@ -941,6 +971,7 @@ async def run_blackbox_pipeline(
         "risk_level":            scores["risk_level"],
         "category_scores":       scores["category_scores"],
         "findings":              scores["findings"],
+        "code_build_risk":       code_build_risk,
         "probe_results":         all_results,
         "endpoint_tested":       endpoint,
         "provider":              provider,
@@ -951,6 +982,12 @@ async def run_blackbox_pipeline(
         "phase1_csv":            phase1_csv_path,
         "phase2_csv":            phase2_csv_path,
     }
+    # ── Include registration context so the frontend can display user-entered data ──
+    result["description"]          = ai_description or ""
+    result["domain"]               = ai_domain or ""
+    result["registration_profile"] = registration_profile
+    result["system_prompt"]        = system_prompt or ""
+
     if conn_warning:
         result["connection_warning"] = conn_warning
 

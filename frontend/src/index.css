@@ -45,10 +45,10 @@
   --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Manrope', 'Inter', system-ui, sans-serif;
 
-  --radius-sm: 6px;
-  --radius:    10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-sm: 0;
+  --radius:    0;
+  --radius-lg: 0;
+  --radius-xl: 0;
 
   /* Legacy aliases — so existing pages using --B / --M keep working */
   --B: var(--brand);
@@ -78,7 +78,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Scrollbar polish */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #D6DEEA; border-radius: 8px; border: 2px solid var(--bg); }
+*::-webkit-scrollbar-thumb { background: #D6DEEA; border-radius: 0; border: 2px solid var(--bg); }
 *::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
 /* ---------- Reusable utility classes ---------- */
@@ -119,7 +119,7 @@ button { font-family: inherit; cursor: pointer; }
 .btn-ghost:hover { border-color: var(--brand-mid); color: var(--brand-mid); }
 
 /* Risk pill — drop-in for any "band" tag */
-.pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px;
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 0;
   font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .pill-strong   { background: var(--strong-soft);   color: var(--strong); }
 .pill-watch    { background: var(--watch-soft);    color: var(--watch); }

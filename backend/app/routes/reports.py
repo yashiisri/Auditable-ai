@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import A4
@@ -44,6 +43,12 @@ KPMG_WHITE      = colors.white
 KPMG_RED        = colors.HexColor("#DC2626")
 KPMG_AMBER      = colors.HexColor("#D97706")
 KPMG_GREEN      = colors.HexColor("#059669")
+# Standardized band colors — matches the frontend scheme: grey for low/critical,
+# blue for watch/partial, green for strong/good. KPMG_RED/KPMG_AMBER above are
+# kept only for any genuine warning/alert callouts that aren't score bands.
+KPMG_SLATE      = colors.HexColor("#64748B")
+KPMG_DARK_SLATE = colors.HexColor("#475569")
+KPMG_WATCH_BLUE = colors.HexColor("#2563EB")
 
 PRINCIPLE_COLORS = {
     "Fairness":       "#00338D",
@@ -349,9 +354,9 @@ def score_to_color(score: int) -> colors.Color:
     if score >= 75:
         return KPMG_GREEN
     elif score >= 55:
-        return KPMG_AMBER
+        return KPMG_WATCH_BLUE
     else:
-        return KPMG_RED
+        return KPMG_SLATE
 
 
 def score_to_label(score: int) -> str:
@@ -366,9 +371,9 @@ def score_to_label(score: int) -> str:
 def risk_color(level: str) -> colors.Color:
     return {
         "Low": KPMG_GREEN,
-        "Moderate": KPMG_AMBER,
-        "High": KPMG_RED,
-        "Critical": colors.HexColor("#7F1D1D"),
+        "Moderate": KPMG_WATCH_BLUE,
+        "High": KPMG_SLATE,
+        "Critical": KPMG_DARK_SLATE,
     }.get(level, KPMG_GREY)
 
 
@@ -1903,8 +1908,8 @@ def build_pdf(report: dict) -> BytesIO:
                     principle_score = pdata.get("score")
                     break
 
-            sev_bg     = colors.HexColor("#FEF2F2") if severity == "High" else colors.HexColor("#EFF6FF") if severity == "Low" else colors.HexColor("#FFFBEB")
-            sev_border = KPMG_RED if severity == "High" else KPMG_BLUE if severity == "Low" else KPMG_AMBER
+            sev_bg     = colors.HexColor("#F1F5F9") if severity == "High" else colors.HexColor("#F0FDF4") if severity == "Low" else colors.HexColor("#EFF6FF")
+            sev_border = KPMG_SLATE if severity == "High" else KPMG_GREEN if severity == "Low" else KPMG_WATCH_BLUE
 
             score_context = f" (Principle Score: {principle_score}/100)" if principle_score is not None else ""
 
@@ -2182,8 +2187,8 @@ def build_pdf(report: dict) -> BytesIO:
 
     def diag_status(val, good_thresh, warn_thresh, invert=False):
         if invert:
-            return ("Good", KPMG_GREEN) if val <= good_thresh else ("Moderate", KPMG_AMBER) if val <= warn_thresh else ("High", KPMG_RED)
-        return ("Good", KPMG_GREEN) if val >= good_thresh else ("Moderate", KPMG_AMBER) if val >= warn_thresh else ("Low", KPMG_RED)
+            return ("Good", KPMG_GREEN) if val <= good_thresh else ("Moderate", KPMG_WATCH_BLUE) if val <= warn_thresh else ("High", KPMG_SLATE)
+        return ("Good", KPMG_GREEN) if val >= good_thresh else ("Moderate", KPMG_WATCH_BLUE) if val >= warn_thresh else ("Low", KPMG_SLATE)
 
     diag_data = [[
         Paragraph("Metric",         S("dgh0", fontSize=8, fontName="Helvetica-Bold", textColor=KPMG_WHITE)),
@@ -2199,7 +2204,7 @@ def build_pdf(report: dict) -> BytesIO:
          diag_status(missing, 0.05, 0.15, invert=True),
          "Proportion of fields with no value. Below 5% is acceptable."),
         ("Duplicate Records",  str(dupes),
-         ("None detected", KPMG_GREEN) if dupes == 0 else ("Duplicates found", KPMG_RED),
+         ("None detected", KPMG_GREEN) if dupes == 0 else ("Duplicates found", KPMG_SLATE),
          "Repeated records reduce data diversity and inflate volume metrics."),
         ("Schema Confidence",  f"{schema_c * 100:.1f}%",
          diag_status(schema_c, 0.85, 0.6),
@@ -2586,8 +2591,8 @@ def build_pdf(report: dict) -> BytesIO:
     elements.append(Spacer(1, 3))
     legend_rows = [
         ("75 \u2013 100", "Strong Alignment",   KPMG_GREEN, "The AI system demonstrates strong governance practices aligned with this framework. Continue monitoring and document evidence for stakeholder reporting."),
-        ("55 \u2013 74",  "Partial Alignment",  KPMG_AMBER, "Moderate alignment detected with identifiable areas for improvement. Targeted remediation is recommended within the next governance cycle."),
-        ("0 \u2013 54",   "Needs Improvement",  KPMG_RED,   "Material improvement areas identified. Remediation actions should be prioritised before expanded deployment or regulatory review."),
+        ("55 \u2013 74",  "Partial Alignment",  KPMG_WATCH_BLUE, "Moderate alignment detected with identifiable areas for improvement. Targeted remediation is recommended within the next governance cycle."),
+        ("0 \u2013 54",   "Needs Improvement",  KPMG_SLATE,   "Material improvement areas identified. Remediation actions should be prioritised before expanded deployment or regulatory review."),
     ]
     leg_data = []
     for rng, lbl, col, desc in legend_rows:

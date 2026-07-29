@@ -25,7 +25,7 @@ import {
 // ── Palette (matches TrustShield blues) ──────────────────────────────────────
 const B  = "#00338D";
 const M  = "#005EB8";
-const L  = "#0091DA";
+const L = "#005EB8";
 
 const GREEN  = "#059669";
 const RED    = "#DC2626";
@@ -117,14 +117,51 @@ function movementColor(label?: string): string {
   }
 }
 
-function movementIcon(label?: string): string {
+// SVG icon for principle movement — replaces the old text-glyph icons
+// (✓✓ ↑ ↓↓ ↓ →) with proper stroked SVGs sized for inline badges.
+function MovementIcon({ label, color, size = 12 }: { label?: string; color: string; size?: number }) {
+  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 3, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   switch (label) {
-    case "RESOLVED":  return "✓✓";
-    case "IMPROVING": return "↑";
-    case "REGRESSED": return "↓↓";
-    case "WORSENING": return "↓";
-    case "UNCHANGED": return "→";
-    default:          return "—";
+    case "RESOLVED":
+      return (
+        <svg {...common}>
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      );
+    case "IMPROVING":
+      return (
+        <svg {...common}>
+          <line x1="12" y1="19" x2="12" y2="5" />
+          <polyline points="5 12 12 5 19 12" />
+        </svg>
+      );
+    case "REGRESSED":
+      return (
+        <svg {...common}>
+          <polyline points="7 7 17 7 17 17" />
+          <line x1="17" y1="7" x2="7" y2="17" />
+          <line x1="7" y1="17" x2="7" y2="12" />
+        </svg>
+      );
+    case "WORSENING":
+      return (
+        <svg {...common}>
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <polyline points="5 12 12 19 19 12" />
+        </svg>
+      );
+    case "UNCHANGED":
+      return (
+        <svg {...common}>
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <line x1="6" y1="12" x2="18" y2="12" />
+        </svg>
+      );
   }
 }
 
@@ -163,7 +200,7 @@ function ScoreDeltaBanner({ rerunData, priorScore }: { rerunData: RerunData; pri
   return (
     <div style={{
       display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 0,
-      background: "white", borderRadius: 16, border: "1px solid #E2E8F0",
+      background: "white", borderRadius: 0, border: "1px solid #E2E8F0", borderTop: `3px solid ${M}`,
       boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "hidden", marginBottom: 20,
     }}>
       {/* Prior */}
@@ -186,7 +223,25 @@ function ScoreDeltaBanner({ rerunData, priorScore }: { rerunData: RerunData; pri
         borderLeft: `1px solid ${positive ? "#BBF7D0" : "#FECACA"}`,
         borderRight: `1px solid ${positive ? "#BBF7D0" : "#FECACA"}`,
       }}>
-        <div style={{ fontSize: 36, marginBottom: 6 }}>{positive ? "📈" : "📉"}</div>
+        <div style={{
+          width: 44, height: 44, borderRadius: "50%", marginBottom: 10,
+          background: positive ? "#DCFCE7" : "#FEE2E2",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={positive ? GREEN : RED} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {positive ? (
+              <>
+                <polyline points="3 17 9 11 13 15 21 7" />
+                <polyline points="14 7 21 7 21 14" />
+              </>
+            ) : (
+              <>
+                <polyline points="3 7 9 13 13 9 21 17" />
+                <polyline points="14 17 21 17 21 10" />
+              </>
+            )}
+          </svg>
+        </div>
         <div style={{
           fontSize: 28, fontWeight: 900, lineHeight: 1,
           color: positive ? GREEN : RED,
@@ -230,15 +285,16 @@ function DeltaSummaryBar({ ds }: { ds: DeltaSummary }) {
   return (
     <div style={{
       display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20,
-      padding: "16px 20px", background: "white", borderRadius: 14,
+      padding: "16px 20px", background: "white", borderRadius: 0,
       border: "1px solid #E2E8F0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
     }}>
       {pills.map(p => (
         <div key={p.label} style={{
           display: "flex", alignItems: "center", gap: 8,
-          padding: "8px 14px", borderRadius: 10,
+          padding: "8px 14px", borderRadius: 0,
           background: p.bg, border: `1px solid ${p.color}22`,
         }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
           <span style={{ fontSize: 18, fontWeight: 900, color: p.color, lineHeight: 1 }}>{p.val}</span>
           <span style={{ fontSize: 11, fontWeight: 700, color: p.color }}>{p.label}</span>
         </div>
@@ -251,7 +307,7 @@ function DeltaSummaryBar({ ds }: { ds: DeltaSummary }) {
 function PrincipleDeltaTable({ deltas }: { deltas: PrincipleDelta[] }) {
   return (
     <div style={{
-      background: "white", borderRadius: 14, border: "1px solid #E2E8F0",
+      background: "white", borderRadius: 0, border: "1px solid #E2E8F0",
       boxShadow: "0 1px 4px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: 20,
     }}>
       <div style={{ padding: "16px 20px", borderBottom: "1px solid #F1F5F9" }}>
@@ -286,11 +342,12 @@ function PrincipleDeltaTable({ deltas }: { deltas: PrincipleDelta[] }) {
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" }}>
                     <span style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "3px 10px", borderRadius: 20,
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      padding: "3px 10px", borderRadius: 0,
                       background: `${color}18`, color, fontSize: 11, fontWeight: 700,
                     }}>
-                      {movementIcon(d.movement_label)} {d.not_reprobed ? "SKIPPED" : d.movement_label ?? "—"}
+                      <MovementIcon label={d.movement_label} color={color} size={11} />
+                      {d.not_reprobed ? "SKIPPED" : d.movement_label ?? "—"}
                     </span>
                   </td>
                 </tr>
@@ -321,7 +378,7 @@ function FindingsPanel({ resolved, persisting, newFindings }: {
 
   return (
     <div style={{
-      background: "white", borderRadius: 14, border: "1px solid #E2E8F0",
+      background: "white", borderRadius: 0, border: "1px solid #E2E8F0",
       boxShadow: "0 1px 4px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: 20,
     }}>
       <div style={{ padding: "16px 20px", borderBottom: "1px solid #F1F5F9" }}>
@@ -349,8 +406,11 @@ function FindingsPanel({ resolved, persisting, newFindings }: {
       {/* Finding list */}
       <div style={{ maxHeight: 280, overflowY: "auto" }}>
         {active.length === 0 ? (
-          <div style={{ padding: "32px 20px", textAlign: "center", color: "#94A3B8", fontSize: 13 }}>
-            {tab === "resolved" ? "✓ No resolved findings" : tab === "new" ? "No new findings" : "No persisting findings"}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "32px 20px", textAlign: "center", color: "#94A3B8", fontSize: 13 }}>
+            {tab === "resolved" && (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            )}
+            {tab === "resolved" ? "No resolved findings" : tab === "new" ? "No new findings" : "No persisting findings"}
           </div>
         ) : active.map((f, i) => {
           const color = tab === "new" ? PURPLE : tab === "persisting" ? AMBER : GREEN;
@@ -364,7 +424,7 @@ function FindingsPanel({ resolved, persisting, newFindings }: {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 3, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B" }}>{f.category}</span>
-                  <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 8, background: `${sevColor}18`, color: sevColor, fontWeight: 700 }}>{f.severity}</span>
+                  <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 0, background: `${sevColor}18`, color: sevColor, fontWeight: 700 }}>{f.severity}</span>
                   {f.finding_id && <span style={{ fontSize: 10, color: "#94A3B8", fontFamily: "monospace" }}>{f.finding_id.slice(0, 8)}</span>}
                 </div>
                 <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.5 }}>{f.issue || f.note || "—"}</div>
@@ -436,13 +496,13 @@ function ContinuousMonitoringChart({ history, currentScore, currentDate }: {
     const d = payload[0].payload;
     return (
       <div style={{
-        background: "white", border: "1px solid #E2E8F0", borderRadius: 10,
+        background: "white", border: "1px solid #E2E8F0", borderRadius: 0,
         padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
         fontSize: 12, fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}>
         <div style={{ fontWeight: 800, color: "#0F172A", marginBottom: 4 }}>{d.date}</div>
         <div style={{ color: scoreColor(d.score), fontWeight: 700, fontSize: 16 }}>Score: {d.score}</div>
-        {d.isCurrent && <div style={{ color: M, fontSize: 11, marginTop: 2 }}>← Current re-run</div>}
+        {d.isCurrent && <div style={{ color: M, fontSize: 11, marginTop: 2, fontWeight: 700 }}>Current re-run</div>}
         {d.risk && <div style={{ color: "#64748B", fontSize: 11 }}>{d.risk} Risk</div>}
       </div>
     );
@@ -450,7 +510,7 @@ function ContinuousMonitoringChart({ history, currentScore, currentDate }: {
 
   return (
     <div style={{
-      background: "white", borderRadius: 14, border: "1px solid #E2E8F0",
+      background: "white", borderRadius: 0, border: "1px solid #E2E8F0",
       boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: "20px 24px", marginBottom: 20,
     }}>
       <div style={{ marginBottom: 16 }}>
@@ -463,7 +523,7 @@ function ContinuousMonitoringChart({ history, currentScore, currentDate }: {
       {chartData.length < 2 ? (
         /* Only one data point — show a single-score summary instead of a blank chart */
         <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 0" }}>
-          <div style={{ textAlign: "center", padding: "16px 24px", borderRadius: 14,
+          <div style={{ textAlign: "center", padding: "16px 24px", borderRadius: 0,
             background: "#F0F9FF", border: "1px solid #BAE6FD" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#0369A1", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>
               Current Score
@@ -482,7 +542,7 @@ function ContinuousMonitoringChart({ history, currentScore, currentDate }: {
           <AreaChart data={chartData} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor={M} stopOpacity={0.15} />
+                <stop offset="5%"  stopColor={B} stopOpacity={0.15} />
                 <stop offset="95%" stopColor={M} stopOpacity={0.01} />
               </linearGradient>
             </defs>
@@ -531,7 +591,7 @@ function FingerprintDeltaPanel({ phase1Delta }: { phase1Delta: RerunData["phase1
 
   return (
     <div style={{
-      background: "white", borderRadius: 14, border: "1px solid #E2E8F0",
+      background: "white", borderRadius: 0, border: "1px solid #E2E8F0",
       boxShadow: "0 1px 4px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: 20,
     }}>
       <div style={{ padding: "16px 20px", borderBottom: "1px solid #F1F5F9" }}>
@@ -542,26 +602,37 @@ function FingerprintDeltaPanel({ phase1Delta }: { phase1Delta: RerunData["phase1
       <div style={{ padding: "16px 20px" }}>
         {/* Conflict count */}
         <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 140, padding: "12px 16px", borderRadius: 12, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+          <div style={{ flex: 1, minWidth: 140, padding: "12px 16px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
             <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 700, marginBottom: 4 }}>Conflicts (Baseline)</div>
             <div style={{ fontSize: 24, fontWeight: 900, color: RED }}>{phase1Delta.conflict_count_prior}</div>
           </div>
-          <div style={{ flex: 1, minWidth: 140, padding: "12px 16px", borderRadius: 12, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+          <div style={{ flex: 1, minWidth: 140, padding: "12px 16px", borderRadius: 0, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
             <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 700, marginBottom: 4 }}>Conflicts (Now)</div>
             <div style={{ fontSize: 24, fontWeight: 900, color: phase1Delta.conflict_count_current === 0 ? GREEN : RED }}>
               {phase1Delta.conflict_count_current}
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: 140, padding: "12px 16px", borderRadius: 12, background: improved ? "#F0FDF4" : "#FEF2F2", border: `1px solid ${improved ? "#BBF7D0" : "#FECACA"}` }}>
+          <div style={{ flex: 1, minWidth: 140, padding: "12px 16px", borderRadius: 0, background: improved ? "#F0FDF4" : "#FEF2F2", border: `1px solid ${improved ? "#BBF7D0" : "#FECACA"}` }}>
             <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 700, marginBottom: 4 }}>Change</div>
             <div style={{ fontSize: 24, fontWeight: 900, color: improved ? GREEN : RED }}>
               {conflictChange > 0 ? "+" : ""}{conflictChange}
             </div>
           </div>
           {phase1Delta.domain_changed && (
-            <div style={{ flex: 1, minWidth: 160, padding: "12px 16px", borderRadius: 12, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
-              <div style={{ fontSize: 11, color: "#92400E", fontWeight: 700, marginBottom: 4 }}>⚠ Domain Changed</div>
-              <div style={{ fontSize: 11, color: "#92400E" }}>{phase1Delta.domain_prior} → {phase1Delta.domain_current}</div>
+            <div style={{ flex: 1, minWidth: 160, padding: "12px 16px", borderRadius: 0, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#92400E", fontWeight: 700, marginBottom: 4 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                Domain Changed
+              </div>
+              <div style={{ fontSize: 11, color: "#92400E", display: "flex", alignItems: "center", gap: 5 }}>
+                {phase1Delta.domain_prior}
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                {phase1Delta.domain_current}
+              </div>
             </div>
           )}
         </div>
@@ -579,16 +650,16 @@ function FingerprintDeltaPanel({ phase1Delta }: { phase1Delta: RerunData["phase1
                 return (
                   <div key={i} style={{
                     display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                    borderRadius: 8, background: isGood ? "#F0FDF4" : "#FEF2F2",
+                    borderRadius: 0, background: isGood ? "#F0FDF4" : "#FEF2F2",
                     border: `1px solid ${isGood ? "#BBF7D0" : "#FECACA"}`,
                     fontSize: 12,
                   }}>
                     <span style={{ fontWeight: 700, color: "#374151", flex: 1 }}>{c.dimension}</span>
-                    <span style={{ padding: "2px 8px", borderRadius: 6, background: wasGood ? "#F0FDF4" : "#FEF2F2", color: wasGood ? GREEN : RED, fontWeight: 700, fontSize: 11 }}>
+                    <span style={{ padding: "2px 8px", borderRadius: 0, background: wasGood ? "#F0FDF4" : "#FEF2F2", color: wasGood ? GREEN : RED, fontWeight: 700, fontSize: 11 }}>
                       {c.prior_status}
                     </span>
-                    <span style={{ color: "#94A3B8" }}>→</span>
-                    <span style={{ padding: "2px 8px", borderRadius: 6, background: isGood ? "#F0FDF4" : "#FEF2F2", color: isGood ? GREEN : RED, fontWeight: 700, fontSize: 11 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                    <span style={{ padding: "2px 8px", borderRadius: 0, background: isGood ? "#F0FDF4" : "#FEF2F2", color: isGood ? GREEN : RED, fontWeight: 700, fontSize: 11 }}>
                       {c.current_status}
                     </span>
                   </div>
@@ -598,8 +669,9 @@ function FingerprintDeltaPanel({ phase1Delta }: { phase1Delta: RerunData["phase1
           </>
         )}
         {phase1Delta.per_dimension_changes.length === 0 && (
-          <div style={{ fontSize: 12, color: "#94A3B8", padding: "12px 0" }}>
-            ✓ No dimension status changes detected — behavioural fingerprint is stable.
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#94A3B8", padding: "12px 0" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+            No dimension status changes detected — behavioural fingerprint is stable.
           </div>
         )}
       </div>
@@ -628,27 +700,56 @@ export default function RerunComparison({ rerunData, auditHistory = [], priorSco
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-        marginBottom: 20, gap: 12,
+        gap: 16, padding: "20px 24px", marginBottom: 20,
+        background: "white", borderRadius: 0, border: "1px solid #E2E8F0", borderLeft: `4px solid ${M}`,
+        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
       }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#94A3B8", marginBottom: 6 }}>
-            Re-run #{rerunData.rerun_sequence} · {rerunData.rerun_scope?.replace("_", " ").toUpperCase()} scope
+        <div style={{ display: "flex", gap: 14, alignItems: "flex-start", minWidth: 0 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 0, flexShrink: 0,
+            background: `linear-gradient(135deg,${B},${M})`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 900, color: "#0F172A", margin: 0, letterSpacing: "-0.3px" }}>
-            {rerunData.ai_name} — Comparison Report
-          </h2>
-          {rerunData.operator_change_context && (
-            <div style={{ fontSize: 12, color: "#64748B", marginTop: 6, fontStyle: "italic" }}>
-              "{rerunData.operator_change_context}"
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#94A3B8", marginBottom: 5 }}>
+              Re-run #{rerunData.rerun_sequence} · {rerunData.rerun_scope?.replace("_", " ").toUpperCase()} scope
             </div>
-          )}
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: "#0F172A", margin: 0, letterSpacing: "-0.3px" }}>
+              {rerunData.ai_name} — Comparison Report
+            </h2>
+            {rerunData.operator_change_context && (
+              <div style={{
+                display: "flex", gap: 8, alignItems: "flex-start", marginTop: 10,
+                padding: "8px 12px", background: "#F0F6FF", border: `1px solid ${M}20`,
+                fontSize: 12, color: "#1E3A5F", lineHeight: 1.55, maxWidth: 560,
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {rerunData.operator_change_context}
+              </div>
+            )}
+          </div>
         </div>
         {onClose && (
-          <button onClick={onClose} style={{
-            padding: "8px 16px", borderRadius: 10, border: "1px solid #E2E8F0",
-            background: "white", color: "#64748B", fontWeight: 600, fontSize: 12,
-            cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
-          }}>✕ Close</button>
+          <button onClick={onClose} aria-label="Close"
+            style={{
+              width: 32, height: 32, borderRadius: 0, border: "1px solid #E2E8F0",
+              background: "white", color: "#64748B", cursor: "pointer", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = M; e.currentTarget.style.color = M; e.currentTarget.style.background = "#F0F6FF"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; e.currentTarget.style.background = "white"; }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         )}
       </div>
 
@@ -678,7 +779,7 @@ export default function RerunComparison({ rerunData, auditHistory = [], priorSco
 
       {/* Scope note */}
       <div style={{
-        padding: "14px 18px", borderRadius: 12,
+        padding: "14px 18px", borderRadius: 0,
         background: "#EEF4FF", border: `1px solid ${M}25`,
         fontSize: 12, color: "#1E3A5F", lineHeight: 1.7,
       }}>

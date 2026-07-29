@@ -54,8 +54,8 @@
   --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
 
   /* Radii */
-  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
-  --radius-xl: 18px; --radius-full: 9999px;
+  --radius-sm: 0; --radius-md: 0; --radius-lg: 0;
+  --radius-xl: 0; --radius-full: 9999px;
 
   /* Shadows */
   --shadow-sm:   0 1px 2px rgba(0,0,0,0.05);
@@ -76,6 +76,8 @@ body {
   color: var(--gray-900);
   -webkit-font-smoothing: antialiased;
 }
+
+/* border-radius: 0 (rectangular look) */
 
 @keyframes ts-fade-up {
   from { opacity: 0; transform: translateY(10px); }

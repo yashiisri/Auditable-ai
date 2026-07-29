@@ -729,6 +729,17 @@ class RegistrationProfileSchema(BaseModel):
     # e.g. "Yes — formal bias audit completed", "No — not yet tested for bias"
     # affects Fairness scoring context
 
+    # ── Build provenance (feeds the Code & Build Risk tab) ─────────────────
+    # Set on the "Built with AI code-gen tools?" step in RegisterAi.tsx.
+    # build_risk.py reads these to decide whether the build-risk checks are
+    # applicable and to populate the section's context block.
+    ai_generated: Optional[str] = ""
+    # "Yes" | "Partially" | "No" | "Unknown"
+    ai_codegen_tools: Optional[str] = ""
+    # freeform: "Cursor, Copilot, Claude Code, Lovable, v0"
+    human_review_gate: Optional[str] = ""
+    # "Yes" | "No" | "Unknown"
+
     # ── Legacy / system prompt (kept for backward compat) ─────────────────
     system_prompt: Optional[str] = ""
     # Prefer providing system_prompt at the top AISystemSchema level.
@@ -1205,6 +1216,15 @@ def evaluate_ai(
 
     blackbox_rows: list[dict] = []
     blackbox_source_info: dict = {}
+    bb_doc: dict | None = None
+
+    # Needed for Code & Build Risk — previously this endpoint never fetched it,
+    # so log-only audits had no way to know if the system was AI-generated.
+    ai_reg_doc = ai_collection.find_one(
+        {"name": ai_name, "owner_id": str(current_user["_id"])},
+        {"registration_profile": 1, "_id": 0},
+    ) or {}
+    registration_profile = ai_reg_doc.get("registration_profile") or {}
 
     if include_blackbox:
         from app.database import db as _db
@@ -1304,17 +1324,56 @@ def evaluate_ai(
     findings   = evaluator.generate_findings(principles, model_metrics)
 
     thr = _COMPLIANCE_THRESHOLDS.get(model_type, _COMPLIANCE_THRESHOLDS["general_llm"])
+
+    # Richer compliance object: carries per-principle scores so the
+    # RegulatoryAlignment frontend can resolve clause-level evidence
+    # directly from the report. "status" kept for backward compat.
+    _pscores = {name: round(pdata.get("score", 0)) for name, pdata in principles.items()}
     framework_compliance = {
-        "EU_AI_Act":   "Compliant"       if overall >= thr["EU_AI_Act"]   else "Conditional",
-        "ISO_42001":   "Certified Ready" if overall >= thr["ISO_42001"]   else "Conditional",
-        "NIST_AI_RMF": "Aligned"         if overall >= thr["NIST_AI_RMF"] else "Conditional",
-        "KPMG_TAF":    "Assessed",
+        "EU_AI_Act": {
+            "status":           "Compliant"       if overall >= thr["EU_AI_Act"]   else "Conditional",
+            "overall_score":    overall,
+            "threshold":        thr["EU_AI_Act"],
+            "principle_scores": _pscores,
+        },
+        "ISO_42001": {
+            "status":           "Certified Ready" if overall >= thr["ISO_42001"]   else "Conditional",
+            "overall_score":    overall,
+            "threshold":        thr["ISO_42001"],
+            "principle_scores": _pscores,
+        },
+        "NIST_AI_RMF": {
+            "status":           "Aligned"         if overall >= thr["NIST_AI_RMF"] else "Conditional",
+            "overall_score":    overall,
+            "threshold":        thr["NIST_AI_RMF"],
+            "principle_scores": _pscores,
+        },
+        "KPMG_TAF": {
+            "status":           "Assessed",
+            "overall_score":    overall,
+            "principle_scores": _pscores,
+        },
     }
 
     _ts = datetime.utcnow()
     _safe_name = "".join(c if c.isalnum() else "-" for c in ai_name.strip()).strip("-")
     _safe_name = "-".join(p for p in _safe_name.split("-") if p)[:40]
     report_id  = f"{_safe_name}-{_ts.strftime('%H%M')}"
+
+    # ── Code & Build Risk ────────────────────────────────────────────────────
+    # Reuse the live BlackBox run's already-computed section when one exists
+    # (it has the real adversarial-probe evidence); otherwise synthesize the
+    # honest, narrower log-only version instead of leaving this tab permanently
+    # "not applicable" for every log-only audit.
+    from app.services.blackbox.build_risk import build_log_only_code_build_risk_section
+    if bb_doc and bb_doc.get("code_build_risk"):
+        code_build_risk = bb_doc["code_build_risk"]
+    else:
+        code_build_risk = build_log_only_code_build_risk_section(
+            outputs=df["output"].tolist() if not df.empty and "output" in df.columns else [],
+            registration_profile=registration_profile,
+        )
+
     report_doc = {
         "report_id":            report_id,
         "ai_name":              ai_name,
@@ -1331,6 +1390,7 @@ def evaluate_ai(
         "diagnostics":          diagnostics,
         "model_metrics":        model_metrics,
         "computation_notes":    computation_notes,
+        "code_build_risk":      code_build_risk,
         "llm_judge": {
             "rows_judged":     judge_result.get("rows_judged", 0),
             "rows_skipped":    judge_result.get("rows_skipped", 0),

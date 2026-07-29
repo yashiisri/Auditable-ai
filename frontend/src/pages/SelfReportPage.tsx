@@ -96,12 +96,12 @@
 //       <style>{`
 //         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 //         * { box-sizing: border-box; }
-//         .sr-card { background: #FFFFFF; border-radius: 20px; padding: 32px; border: 1px solid #E3EAF3; box-shadow: 0 4px 16px rgba(0,51,141,0.05); display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; transition: box-shadow 0.3s; }
+//         .sr-card { background: #FFFFFF; border-radius: 0px; padding: 32px; border: 1px solid #E3EAF3; box-shadow: 0 4px 16px rgba(0,51,141,0.05); display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; transition: box-shadow 0.3s; }
 //         .sr-card:hover { box-shadow: 0 12px 36px rgba(0,51,141,0.09); }
 //         .sr-card h2 { font-size: 16px; font-weight: 700; color: #0B1F33; margin: 0; }
 //         .sr-label { font-size: 11px; font-weight: 700; color: #005EB8; text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 6px; }
 //         .sr-hint { font-size: 11px; color: #94A3B8; margin-top: 4px; }
-//         .sr-input, .sr-select, .sr-textarea { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid #E3EAF3; background: #FAFBFD; color: #0B1F33; font-size: 14px; font-family: 'Inter', sans-serif; transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
+//         .sr-input, .sr-select, .sr-textarea { width: 100%; padding: 11px 14px; border-radius: 0px; border: 1.5px solid #E3EAF3; background: #FAFBFD; color: #0B1F33; font-size: 14px; font-family: 'Inter', sans-serif; transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
 //         .sr-select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-color: #FAFBFD; padding-right: 36px; cursor: pointer; }
 //         .sr-textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
 //         .sr-input:focus, .sr-select:focus, .sr-textarea:focus { border-color: #005EB8; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(0,94,184,0.1); }
@@ -110,17 +110,17 @@
 //         .sr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 //         .sr-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 //         @media (max-width: 600px) { .sr-grid, .sr-grid-3 { grid-template-columns: 1fr; } }
-//         .progress-track { height: 8px; background: #E9EFF6; border-radius: 99px; overflow: hidden; }
-//         .progress-fill { height: 100%; border-radius: 99px; transition: width 0.5s ease, background 0.5s ease; }
-//         .submit-btn { padding: 16px 60px; border-radius: 40px; border: none; background: linear-gradient(135deg, #00338D, #005EB8); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.3s; box-shadow: 0 6px 20px rgba(0,51,141,0.25); }
+//         .progress-track { height: 8px; background: #E9EFF6; border-radius: 0px; overflow: hidden; }
+//         .progress-fill { height: 100%; border-radius: 0px; transition: width 0.5s ease, background 0.5s ease; }
+//         .submit-btn { padding: 16px 60px; border-radius: 0px; border: none; background: linear-gradient(135deg, #00338D, #005EB8); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.3s; box-shadow: 0 6px 20px rgba(0,51,141,0.25); }
 //         .submit-btn:hover:not(:disabled) { transform: scale(1.04); box-shadow: 0 12px 32px rgba(0,51,141,0.30); }
 //         .submit-btn:disabled { background: #C5D5E8; cursor: not-allowed; box-shadow: none; }
-//         .back-btn { padding: 9px 18px; border-radius: 10px; border: 1px solid #E3EAF3; background: #FFFFFF; color: #64748B; font-weight: 600; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; flex-shrink: 0; }
+//         .back-btn { padding: 9px 18px; border-radius: 0px; border: 1px solid #E3EAF3; background: #FFFFFF; color: #64748B; font-weight: 600; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; flex-shrink: 0; }
 //         .back-btn:hover { background: #F1F5F9; transform: translateX(-2px); }
-//         .toggle-json-btn { padding: 7px 16px; border-radius: 8px; border: 1px solid #D0E8F8; background: #E6F2FB; color: #005EB8; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+//         .toggle-json-btn { padding: 7px 16px; border-radius: 0px; border: 1px solid #D0E8F8; background: #E6F2FB; color: #005EB8; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
 //         .toggle-json-btn:hover { background: #D0E8F8; }
-//         .json-box { background: #0B1120; border-radius: 12px; padding: 20px; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.75; max-height: 280px; overflow-y: auto; white-space: pre; border: 1px solid rgba(0,145,218,0.15); }
-//         .section-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #005EB8; background: #E6F2FB; padding: 4px 10px; border-radius: 6px; margin-bottom: 4px; }
+//         .json-box { background: #0B1120; border-radius: 0px; padding: 20px; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.75; max-height: 280px; overflow-y: auto; white-space: pre; border: 1px solid rgba(0,145,218,0.15); }
+//         .section-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #005EB8; background: #E6F2FB; padding: 4px 10px; border-radius: 0px; margin-bottom: 4px; }
 //       `}</style>
 
 //       <div style={{ width: "100%", maxWidth: 760 }}>
@@ -135,7 +135,7 @@
 //         </div>
 
 //         {/* INFO */}
-//         <div style={{ padding: "12px 18px", background: "#E6F2FB", border: "1px solid rgba(0,145,218,0.3)", borderRadius: 12, fontSize: 13, color: "#00338D", marginBottom: 20, lineHeight: 1.6 }}>
+//         <div style={{ padding: "12px 18px", background: "#E6F2FB", border: "1px solid rgba(0,145,218,0.3)", borderRadius: 0, fontSize: 13, color: "#00338D", marginBottom: 20, lineHeight: 1.6 }}>
 //           ℹ Your answers compile into a structured JSON log ingested through the SDCC pipeline — giving you a full governance audit score aligned with KPMG Trusted AI Framework.
 //         </div>
 
@@ -143,7 +143,7 @@
 //         <div className="sr-card" style={{ padding: "22px 28px" }}>
 //           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
 //             <span style={{ fontSize: 13, fontWeight: 600, color: "#0B1F33" }}>Assessment completeness</span>
-//             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 700, background: completeness >= 80 ? "#DCFCE7" : completeness >= 50 ? "#E6F2FB" : "#FEE2E2", color: scoreColor }}>{completeness}%</span>
+//             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 0, fontSize: 13, fontWeight: 700, background: completeness >= 80 ? "#DCFCE7" : completeness >= 50 ? "#E6F2FB" : "#FEE2E2", color: scoreColor }}>{completeness}%</span>
 //           </div>
 //           <div className="progress-track">
 //             <div className="progress-fill" style={{ width: `${completeness}%`, background: scoreColor }} />
@@ -433,7 +433,7 @@
 //           </p>
 //           <button
 //             onClick={() => navigate("/pdf-report")}
-//             style={{ padding: "12px 24px", background: "linear-gradient(135deg, #00338D, #005EB8)", border: "none", borderRadius: 10, color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s", boxShadow: "0 4px 14px rgba(0,51,141,0.2)", alignSelf: "flex-start" }}
+//             style={{ padding: "12px 24px", background: "linear-gradient(135deg, #00338D, #005EB8)", border: "none", borderRadius: 0, color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s", boxShadow: "0 4px 14px rgba(0,51,141,0.2)", alignSelf: "flex-start" }}
 //           >
 //             Upload PDF / JSON Report →
 //           </button>
@@ -468,7 +468,7 @@
 //               })}
 //             </div>
 //           )}
-//           <a className="dl-btn" style={{ display: "inline-block", padding: "9px 20px", background: "#E6F2FB", border: "1px solid rgba(0,145,218,0.3)", borderRadius: 9, fontSize: 13, color: "#005EB8", fontWeight: 600, textDecoration: "none", alignSelf: "flex-start" }}
+//           <a className="dl-btn" style={{ display: "inline-block", padding: "9px 20px", background: "#E6F2FB", border: "1px solid rgba(0,145,218,0.3)", borderRadius: 0, fontSize: 13, color: "#005EB8", fontWeight: 600, textDecoration: "none", alignSelf: "flex-start" }}
 //             href={`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(reportJson, null, 2))}`}
 //             download="self_report.json">⬇ Download JSON</a>
 //         </div>
@@ -476,7 +476,7 @@
 //         {/* SUBMIT */}
 //         <div style={{ textAlign: "center" }}>
 //           {success ? (
-//             <div style={{ padding: "18px 28px", background: "#DCFCE7", border: "1px solid #86EFAC", color: "#166534", borderRadius: 14, fontSize: 15, fontWeight: 600, maxWidth: 420, margin: "0 auto" }}>
+//             <div style={{ padding: "18px 28px", background: "#DCFCE7", border: "1px solid #86EFAC", color: "#166534", borderRadius: 0, fontSize: 15, fontWeight: 600, maxWidth: 420, margin: "0 auto" }}>
 //               ✅ Report ingested! Redirecting to dashboard…
 //             </div>
 //           ) : (
@@ -490,7 +490,7 @@
 //             </>
 //           )}
 //           {error && (
-//             <div style={{ marginTop: 16, padding: "12px 18px", background: "#FEE2E2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 10, fontSize: 13, maxWidth: 420, margin: "16px auto 0" }}>{error}</div>
+//             <div style={{ marginTop: 16, padding: "12px 18px", background: "#FEE2E2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 0, fontSize: 13, maxWidth: 420, margin: "16px auto 0" }}>{error}</div>
 //           )}
 //         </div>
 //       </div>
@@ -676,7 +676,7 @@ function ScoreRing({ score, size = 88 }: { score: number; size?: number }) {
 function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ borderRadius: 14, border: `1.5px solid ${statusCol(data.status)}20`,
+    <div style={{ borderRadius: 0, border: `1.5px solid ${statusCol(data.status)}20`,
       background: C.white, overflow: "hidden",
       boxShadow: open ? "0 6px 20px rgba(0,0,0,0.09)" : "0 1px 4px rgba(0,0,0,0.05)" }}>
       <div onClick={() => setOpen(o => !o)} style={{ padding: "13px 16px",
@@ -686,9 +686,9 @@ function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }
         <span style={{ fontSize: 20 }}>{PRINCIPLE_ICONS[name]}</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>{name}</div>
-          <div style={{ marginTop: 4, height: 5, background: "#E2E8F0", borderRadius: 99 }}>
+          <div style={{ marginTop: 4, height: 5, background: "#E2E8F0", borderRadius: 0 }}>
             <div style={{ width: `${data.coverage_score}%`, height: "100%",
-              background: scoreCol(data.coverage_score), borderRadius: 99,
+              background: scoreCol(data.coverage_score), borderRadius: 0,
               transition: "width 0.8s ease" }}/>
           </div>
         </div>
@@ -710,7 +710,7 @@ function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }
               <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase",
                 letterSpacing: "0.08em", marginBottom: 5 }}>What was found</div>
               <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7,
-                padding: "9px 12px", background: "#F8FAFC", borderRadius: 8,
+                padding: "9px 12px", background: "#F8FAFC", borderRadius: 0,
                 border: "1px solid #E2E8F0" }}>{data.evidence}</p>
             </div>
           )}
@@ -730,7 +730,7 @@ function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }
             </div>
           )}
           {data.recommendation && (
-            <div style={{ padding: "9px 12px", background: "#EFF6FF", borderRadius: 8,
+            <div style={{ padding: "9px 12px", background: "#EFF6FF", borderRadius: 0,
               border: `1px solid ${C.lt}30` }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: C.mid, textTransform: "uppercase",
                 letterSpacing: "0.08em", marginBottom: 4 }}>Recommendation</div>
@@ -766,7 +766,7 @@ function Field({
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "10px 13px", border: `1.5px solid ${C.border}`,
-  borderRadius: 10, fontSize: 13.5, fontFamily: "inherit", color: C.text,
+  borderRadius: 0, fontSize: 13.5, fontFamily: "inherit", color: C.text,
   background: "#FAFBFD", boxSizing: "border-box",
   transition: "border-color 0.2s, box-shadow 0.2s",
 };
@@ -955,9 +955,9 @@ export default function SelfReportPage() {
     return (
       <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Inter', sans-serif", paddingBottom: 80 }}>
         <style>{`* { box-sizing: border-box; margin: 0; padding: 0; }
-          .card { background: ${C.white}; border-radius: 18px; border: 1px solid ${C.border};
+          .card { background: ${C.white}; border-radius: 0px; border: 1px solid ${C.border};
             box-shadow: 0 2px 8px rgba(0,30,90,0.07); }
-          .tab-btn { padding: 9px 20px; border-radius: 10px; border: none; cursor: pointer;
+          .tab-btn { padding: 9px 20px; border-radius: 0px; border: none; cursor: pointer;
             font-size: 13.5px; font-weight: 700; font-family: inherit; transition: all 0.18s; }
           .tab-btn:hover { background: #E6F0FB !important; }
           .tab-active { background: ${C.blue} !important; color: white !important; }
@@ -977,17 +977,17 @@ export default function SelfReportPage() {
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TrustShield AI</span>
             <div style={{ width: 1, height: 18, background: C.border }}/>
             <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", background: "#E6F2FB",
-              color: C.mid, borderRadius: 20, border: `1px solid ${C.lt}40` }}>TAF Gap Analysis</span>
+              color: C.mid, borderRadius: 0, border: `1px solid ${C.lt}40` }}>TAF Gap Analysis</span>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={reset}
               style={{ padding: "8px 18px", background: C.white, border: `1px solid ${C.border}`,
-                color: C.muted, borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                color: C.muted, borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
               ← New Analysis
             </button>
             <button onClick={() => navigate("/dashboard")}
               style={{ padding: "8px 18px", background: `linear-gradient(135deg, ${C.blue}, ${C.mid})`,
-                border: "none", color: C.white, borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+                border: "none", color: C.white, borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
               Dashboard
             </button>
           </div>
@@ -1018,7 +1018,7 @@ export default function SelfReportPage() {
                   {compl}
                 </div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>/ 100 Completeness</div>
-                <div style={{ marginTop: 8, display: "inline-block", padding: "4px 14px", borderRadius: 20,
+                <div style={{ marginTop: 8, display: "inline-block", padding: "4px 14px", borderRadius: 0,
                   fontSize: 12, fontWeight: 700,
                   background: compl >= 75 ? "#DCFCE7" : compl >= 50 ? "#FEF3C7" : "#FEE2E2",
                   color: compl >= 75 ? C.green : compl >= 50 ? C.amber : C.red,
@@ -1075,16 +1075,16 @@ export default function SelfReportPage() {
                     const d = cov[p];
                     const s = d?.coverage_score ?? 0;
                     return (
-                      <div key={p} style={{ padding: "10px 12px", borderRadius: 10,
+                      <div key={p} style={{ padding: "10px 12px", borderRadius: 0,
                         background: scoreBg(s), border: `1px solid ${scoreCol(s)}20`,
                         display: "flex", alignItems: "center", gap: 10 }}>
                         <span style={{ fontSize: 16 }}>{PRINCIPLE_ICONS[p]}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: 700, color: C.text,
                             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p}</div>
-                          <div style={{ marginTop: 3, height: 4, background: "#E2E8F0", borderRadius: 99 }}>
+                          <div style={{ marginTop: 3, height: 4, background: "#E2E8F0", borderRadius: 0 }}>
                             <div style={{ width: `${s}%`, height: "100%",
-                              background: scoreCol(s), borderRadius: 99 }}/>
+                              background: scoreCol(s), borderRadius: 0 }}/>
                           </div>
                         </div>
                         <div style={{ fontSize: 15, fontWeight: 900, color: scoreCol(s), flexShrink: 0 }}>{s}</div>
@@ -1103,11 +1103,11 @@ export default function SelfReportPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {Object.entries(regs).map(([fw, data]) => (
                       <div key={fw} style={{ display: "flex", justifyContent: "space-between",
-                        alignItems: "center", padding: "10px 14px", borderRadius: 10,
+                        alignItems: "center", padding: "10px 14px", borderRadius: 0,
                         background: compBg(data.compliance_estimate),
                         border: `1px solid ${compCol(data.compliance_estimate)}25` }}>
                         <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{fw}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 12px", borderRadius: 20,
+                        <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 12px", borderRadius: 0,
                           background: C.white, color: compCol(data.compliance_estimate),
                           border: `1px solid ${compCol(data.compliance_estimate)}30` }}>
                           {data.compliance_estimate}
@@ -1126,10 +1126,10 @@ export default function SelfReportPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {findings.slice(0, 4).map((f, i) => (
                         <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start",
-                          padding: "8px 12px", borderRadius: 8, background: sevBg(f.severity),
+                          padding: "8px 12px", borderRadius: 0, background: sevBg(f.severity),
                           border: `1px solid ${sevCol(f.severity)}20` }}>
                           <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px",
-                            borderRadius: 20, color: sevCol(f.severity), background: C.white,
+                            borderRadius: 0, color: sevCol(f.severity), background: C.white,
                             border: `1px solid ${sevCol(f.severity)}30`, flexShrink: 0, marginTop: 1 }}>
                             {f.severity}
                           </span>
@@ -1171,13 +1171,13 @@ export default function SelfReportPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                     <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>{fw}</h2>
                     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <span style={{ fontSize: 12, padding: "3px 12px", borderRadius: 20,
+                      <span style={{ fontSize: 12, padding: "3px 12px", borderRadius: 0,
                         background: data.mentioned ? "#DCFCE7" : "#F1F5F9",
                         color: data.mentioned ? C.green : C.muted, fontWeight: 700,
                         border: `1px solid ${data.mentioned ? C.green : "#CBD5E1"}30` }}>
                         {data.mentioned ? "Referenced" : "Not mentioned"}
                       </span>
-                      <span style={{ fontSize: 12, padding: "3px 14px", borderRadius: 20,
+                      <span style={{ fontSize: 12, padding: "3px 14px", borderRadius: 0,
                         background: compBg(data.compliance_estimate),
                         color: compCol(data.compliance_estimate), fontWeight: 700,
                         border: `1px solid ${compCol(data.compliance_estimate)}30` }}>
@@ -1193,7 +1193,7 @@ export default function SelfReportPage() {
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {data.articles_referenced.map((a, i) => (
                           <span key={i} style={{ padding: "3px 10px", background: "#EFF6FF",
-                            color: C.mid, borderRadius: 8, fontSize: 12, fontWeight: 600,
+                            color: C.mid, borderRadius: 0, fontSize: 12, fontWeight: 600,
                             border: `1px solid ${C.lt}30` }}>{a}</span>
                         ))}
                       </div>
@@ -1208,7 +1208,7 @@ export default function SelfReportPage() {
                         {data.missing_controls.map((ctrl, i) => (
                           <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start",
                             fontSize: 13, color: "#374151", lineHeight: 1.6, padding: "8px 12px",
-                            background: "#FEF2F2", borderRadius: 8, border: "1px solid #FCA5A520" }}>
+                            background: "#FEF2F2", borderRadius: 0, border: "1px solid #FCA5A520" }}>
                             <span style={{ color: C.red, flexShrink: 0 }}>✕</span>
                             <span>{ctrl}</span>
                           </div>
@@ -1216,7 +1216,7 @@ export default function SelfReportPage() {
                       </div>
                     </div>
                   ) : data.mentioned ? (
-                    <div style={{ padding: "10px 14px", background: "#F0FDF4", borderRadius: 8,
+                    <div style={{ padding: "10px 14px", background: "#F0FDF4", borderRadius: 0,
                       border: "1px solid #86EFAC30", color: C.green, fontSize: 13, fontWeight: 600 }}>
                       ✓ No significant control gaps identified
                     </div>
@@ -1236,7 +1236,7 @@ export default function SelfReportPage() {
                   <div style={{ fontSize: 13, marginTop: 6 }}>The report appears to cover the key TAF requirements.</div>
                 </div>
               ) : findings.map((f, i) => (
-                <div key={i} style={{ background: C.white, borderRadius: 14,
+                <div key={i} style={{ background: C.white, borderRadius: 0,
                   border: `1.5px solid ${sevCol(f.severity)}20`, overflow: "hidden",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
                   <div style={{ padding: "11px 18px", background: sevBg(f.severity),
@@ -1246,13 +1246,13 @@ export default function SelfReportPage() {
                       <span style={{ fontSize: 16 }}>{PRINCIPLE_ICONS[f.principle] || "⚠️"}</span>
                       <span style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>{f.principle}</span>
                     </div>
-                    <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                    <span style={{ padding: "3px 12px", borderRadius: 0, fontSize: 11, fontWeight: 700,
                       color: sevCol(f.severity), background: C.white,
                       border: `1px solid ${sevCol(f.severity)}30` }}>{f.severity}</span>
                   </div>
                   <div style={{ padding: "15px 18px" }}>
                     <p style={{ margin: "0 0 11px", color: C.text, fontSize: 13.5, lineHeight: 1.7 }}>{f.issue}</p>
-                    <div style={{ padding: "10px 14px", borderRadius: 10, background: "#EFF6FF",
+                    <div style={{ padding: "10px 14px", borderRadius: 0, background: "#EFF6FF",
                       border: `1px solid ${C.lt}30` }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: C.mid, textTransform: "uppercase",
                         letterSpacing: "0.07em", marginBottom: 4 }}>Recommendation</div>
@@ -1268,13 +1268,13 @@ export default function SelfReportPage() {
           <div style={{ display: "flex", gap: 12, marginTop: 28, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={reset}
               style={{ padding: "11px 26px", background: C.white, border: `1.5px solid ${C.border}`,
-                borderRadius: 12, color: "#374151", cursor: "pointer", fontSize: 13.5, fontWeight: 600 }}>
+                borderRadius: 0, color: "#374151", cursor: "pointer", fontSize: 13.5, fontWeight: 600 }}>
               Run Another Analysis
             </button>
             <button onClick={() => navigate("/dashboard")}
               style={{ padding: "11px 26px",
                 background: `linear-gradient(135deg, ${C.blue}, ${C.mid})`,
-                border: "none", borderRadius: 12, color: C.white, cursor: "pointer",
+                border: "none", borderRadius: 0, color: C.white, cursor: "pointer",
                 fontSize: 13.5, fontWeight: 700, boxShadow: `0 6px 20px ${C.blue}30` }}>
               ← Back to Dashboard
             </button>
@@ -1288,11 +1288,11 @@ export default function SelfReportPage() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Inter', sans-serif", paddingBottom: 80 }}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; }
-        .card { background: ${C.white}; border-radius: 18px; border: 1px solid ${C.border};
+        .card { background: ${C.white}; border-radius: 0px; border: 1px solid ${C.border};
           box-shadow: 0 2px 8px rgba(0,30,90,0.07); }
         .mode-tab { flex: 1; padding: 13px 10px; border: none; cursor: pointer;
           font-size: 14px; font-weight: 700; font-family: inherit; transition: all 0.2s;
-          border-radius: 12px; }
+          border-radius: 0px; }
       `}</style>
 
       {/* Nav */}
@@ -1306,11 +1306,11 @@ export default function SelfReportPage() {
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TrustShield AI</span>
           <div style={{ width: 1, height: 18, background: C.border }}/>
           <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", background: "#E6F2FB",
-            color: C.mid, borderRadius: 20, border: `1px solid ${C.lt}40` }}>Self-Assessment & Report Audit</span>
+            color: C.mid, borderRadius: 0, border: `1px solid ${C.lt}40` }}>Self-Assessment & Report Audit</span>
         </div>
         <button onClick={() => navigate("/dashboard")}
           style={{ padding: "8px 18px", background: C.white, border: `1px solid ${C.border}`,
-            color: C.muted, borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+            color: C.muted, borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
           ← Dashboard
         </button>
       </div>
@@ -1320,7 +1320,7 @@ export default function SelfReportPage() {
         {/* Hero */}
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div style={{ display: "inline-block", padding: "5px 14px", background: "#E6F2FB",
-            color: C.mid, borderRadius: 20, fontSize: 11, fontWeight: 700,
+            color: C.mid, borderRadius: 0, fontSize: 11, fontWeight: 700,
             border: `1px solid ${C.lt}40`, marginBottom: 14, letterSpacing: "0.07em",
             textTransform: "uppercase" }}>KPMG Trusted AI Framework</div>
           <h1 style={{ fontSize: 32, fontWeight: 900, color: C.text, lineHeight: 1.2, marginBottom: 12 }}>
@@ -1368,7 +1368,7 @@ export default function SelfReportPage() {
               onClick={() => fileRef.current?.click()}
               style={{
                 border: `2px dashed ${dragOver ? C.mid : uploadFile ? C.teal : C.border}`,
-                borderRadius: 14, padding: "44px 24px", marginBottom: 20,
+                borderRadius: 0, padding: "44px 24px", marginBottom: 20,
                 background: dragOver ? "#E6F2FB" : uploadFile ? "#F0FDF4" : "#FAFBFD",
                 transition: "all 0.2s", cursor: "pointer", textAlign: "center",
               }}>
@@ -1392,7 +1392,7 @@ export default function SelfReportPage() {
             </div>
 
             {uploadFile && (
-              <div style={{ padding: "12px 16px", background: "#EFF6FF", borderRadius: 10,
+              <div style={{ padding: "12px 16px", background: "#EFF6FF", borderRadius: 0,
                 border: `1px solid ${C.lt}30`, marginBottom: 20 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.mid, marginBottom: 4 }}>WHAT HAPPENS NEXT</div>
                 <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7 }}>
@@ -1405,14 +1405,14 @@ export default function SelfReportPage() {
 
             {error && (
               <div style={{ padding: "10px 14px", background: "#FEE2E2", border: "1px solid #FECACA",
-                borderRadius: 10, color: C.red, fontSize: 13, marginBottom: 16 }}>{error}</div>
+                borderRadius: 0, color: C.red, fontSize: 13, marginBottom: 16 }}>{error}</div>
             )}
 
             <div style={{ display: "flex", gap: 12 }}>
               {uploadFile && (
                 <button onClick={() => { setUploadFile(null); if (fileRef.current) fileRef.current.value = ""; }}
                   style={{ padding: "12px 20px", background: C.white, border: `1.5px solid ${C.border}`,
-                    borderRadius: 12, color: C.muted, cursor: "pointer", fontSize: 13.5, fontWeight: 600 }}>
+                    borderRadius: 0, color: C.muted, cursor: "pointer", fontSize: 13.5, fontWeight: 600 }}>
                   Clear
                 </button>
               )}
@@ -1421,7 +1421,7 @@ export default function SelfReportPage() {
                 onClick={submitUpload}
                 style={{ flex: 1, padding: "14px 32px",
                   background: (!uploadFile || loading) ? "#C8D4E8" : `linear-gradient(135deg, ${C.blue}, ${C.mid})`,
-                  border: "none", borderRadius: 12, color: C.white, fontWeight: 700,
+                  border: "none", borderRadius: 0, color: C.white, fontWeight: 700,
                   fontSize: 15, cursor: (!uploadFile || loading) ? "default" : "pointer",
                   boxShadow: (!uploadFile || loading) ? "none" : `0 6px 20px ${C.blue}30`,
                   transition: "all 0.2s" }}>
@@ -1442,9 +1442,9 @@ export default function SelfReportPage() {
                   {completeness}%
                 </span>
               </div>
-              <div style={{ height: 8, background: "#E2E8F0", borderRadius: 99 }}>
+              <div style={{ height: 8, background: "#E2E8F0", borderRadius: 0 }}>
                 <div style={{
-                  width: `${completeness}%`, height: "100%", borderRadius: 99,
+                  width: `${completeness}%`, height: "100%", borderRadius: 0,
                   background: completeness >= 60 ? C.teal : completeness >= 30 ? C.amber : C.red,
                   transition: "width 0.4s ease, background 0.3s",
                 }}/>
@@ -1462,7 +1462,7 @@ export default function SelfReportPage() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20,
                   paddingBottom: 12, borderBottom: `2px solid #EEF2F9` }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8,
+                  <div style={{ width: 32, height: 32, borderRadius: 0,
                     background: `linear-gradient(135deg, ${C.blue}, ${C.mid})`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 15, color: C.white }}>🤖</div>
@@ -1516,7 +1516,7 @@ export default function SelfReportPage() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20,
                   paddingBottom: 12, borderBottom: "2px solid #EEF2F9" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8,
+                  <div style={{ width: 32, height: 32, borderRadius: 0,
                     background: "linear-gradient(135deg, #FFB020, #F59E0B)",
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>📋</div>
                   <div>
@@ -1552,7 +1552,7 @@ export default function SelfReportPage() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20,
                   paddingBottom: 12, borderBottom: "2px solid #EEF2F9" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8,
+                  <div style={{ width: 32, height: 32, borderRadius: 0,
                     background: "linear-gradient(135deg, #FBBF24, #F59E0B)",
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🦺</div>
                   <div>
@@ -1595,7 +1595,7 @@ export default function SelfReportPage() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20,
                   paddingBottom: 12, borderBottom: "2px solid #EEF2F9" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8,
+                  <div style={{ width: 32, height: 32, borderRadius: 0,
                     background: "linear-gradient(135deg, #FF6B9D, #EC4899)",
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>⚖️</div>
                   <div>
@@ -1626,7 +1626,7 @@ export default function SelfReportPage() {
               <div style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20,
                   paddingBottom: 12, borderBottom: "2px solid #EEF2F9" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8,
+                  <div style={{ width: 32, height: 32, borderRadius: 0,
                     background: "linear-gradient(135deg, #60A5FA, #3B82F6)",
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🔐</div>
                   <div>
@@ -1662,7 +1662,7 @@ export default function SelfReportPage() {
               {/* Error */}
               {error && (
                 <div style={{ padding: "10px 14px", background: "#FEE2E2", border: "1px solid #FECACA",
-                  borderRadius: 10, color: C.red, fontSize: 13, marginBottom: 16 }}>{error}</div>
+                  borderRadius: 0, color: C.red, fontSize: 13, marginBottom: 16 }}>{error}</div>
               )}
 
               {/* Submit */}
@@ -1672,7 +1672,7 @@ export default function SelfReportPage() {
                   disabled={loading}
                   style={{ flex: 1, padding: "15px 32px",
                     background: loading ? "#C8D4E8" : `linear-gradient(135deg, ${C.blue}, ${C.mid})`,
-                    border: "none", borderRadius: 12, color: C.white, fontWeight: 700,
+                    border: "none", borderRadius: 0, color: C.white, fontWeight: 700,
                     fontSize: 15, cursor: loading ? "default" : "pointer",
                     boxShadow: loading ? "none" : `0 6px 20px ${C.blue}30`,
                     transition: "all 0.2s" }}>

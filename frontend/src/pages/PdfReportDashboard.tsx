@@ -88,7 +88,7 @@
 //       <style>{`
 //         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 //         * { box-sizing: border-box; margin: 0; padding: 0; }
-//         .card { background: white; border-radius: 20px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+//         .card { background: white; border-radius: 0px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 //         .hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
 //         .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important; }
 //       `}</style>
@@ -98,9 +98,9 @@
 //         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
 //           <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.03em", background: `linear-gradient(135deg, ${KPMG}, ${KPMG_MID})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Auditable AI™</span>
 //           <div style={{ width: 1, height: 20, background: "#E2E8F0" }} />
-//           <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", background: "#E6F2FB", color: KPMG_MID, borderRadius: 20, border: `1px solid ${KPMG_LT}40` }}>PDF Report Dashboard</span>
+//           <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", background: "#E6F2FB", color: KPMG_MID, borderRadius: 0, border: `1px solid ${KPMG_LT}40` }}>PDF Report Dashboard</span>
 //         </div>
-//         <button style={{ padding: "8px 20px", background: "white", border: "1px solid #E2E8F0", color: "#64748B", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+//         <button style={{ padding: "8px 20px", background: "white", border: "1px solid #E2E8F0", color: "#64748B", borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 600 }}
 //           onClick={() => navigate("/dashboard")}>← Dashboard</button>
 //       </div>
 
@@ -121,7 +121,7 @@
 //               onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
 //               style={{
 //                 border: `2px dashed ${dragOver ? KPMG_MID : "#E2E8F0"}`,
-//                 borderRadius: 16, padding: "40px 24px", marginBottom: 20,
+//                 borderRadius: 0, padding: "40px 24px", marginBottom: 20,
 //                 background: dragOver ? "#E6F2FB" : "#F8FAFC",
 //                 transition: "all 0.2s", cursor: "pointer",
 //               }}
@@ -136,12 +136,12 @@
 //                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
 //             </div>
 
-//             {error && <div style={{ padding: "10px 16px", background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: 10, color: "#DC2626", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+//             {error && <div style={{ padding: "10px 16px", background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: 0, color: "#DC2626", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
 //             <button
 //               disabled={!file || loading}
 //               onClick={handleParse}
-//               style={{ padding: "14px 40px", background: `linear-gradient(135deg, ${KPMG}, ${KPMG_MID})`, border: "none", borderRadius: 12, color: "white", fontWeight: 700, fontSize: 15, cursor: file ? "pointer" : "not-allowed", opacity: file ? 1 : 0.5, boxShadow: `0 6px 20px ${KPMG}30`, transition: "all 0.2s" }}
+//               style={{ padding: "14px 40px", background: `linear-gradient(135deg, ${KPMG}, ${KPMG_MID})`, border: "none", borderRadius: 0, color: "white", fontWeight: 700, fontSize: 15, cursor: file ? "pointer" : "not-allowed", opacity: file ? 1 : 0.5, boxShadow: `0 6px 20px ${KPMG}30`, transition: "all 0.2s" }}
 //             >
 //               {loading ? "Parsing…" : "Load Report →"}
 //             </button>
@@ -168,7 +168,7 @@
 //                     <div style={{ fontSize: 52, fontWeight: 900, lineHeight: 1, color: "white", letterSpacing: "-0.04em" }}>{report.overall_score}</div>
 //                     <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>/ 100 Overall</div>
 //                     {report.risk_level && (
-//                       <div style={{ marginTop: 10, display: "inline-block", padding: "5px 16px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: bandBg(report.overall_score), color: bandColor(report.overall_score), border: `1px solid ${bandColor(report.overall_score)}40` }}>
+//                       <div style={{ marginTop: 10, display: "inline-block", padding: "5px 16px", borderRadius: 0, fontSize: 12, fontWeight: 700, background: bandBg(report.overall_score), color: bandColor(report.overall_score), border: `1px solid ${bandColor(report.overall_score)}40` }}>
 //                         {report.risk_level} Risk
 //                       </div>
 //                     )}
@@ -185,14 +185,14 @@
 //                   {pkeys.map(k => {
 //                     const sc = prn[k].score;
 //                     return (
-//                       <div key={k} className="hover-lift" style={{ padding: "16px", borderRadius: 14, background: bandBg(sc), border: `1px solid ${bandColor(sc)}20` }}>
+//                       <div key={k} className="hover-lift" style={{ padding: "16px", borderRadius: 0, background: bandBg(sc), border: `1px solid ${bandColor(sc)}20` }}>
 //                         <div style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", marginBottom: 8 }}>{k}</div>
-//                         <div style={{ height: 6, background: "#E2E8F0", borderRadius: 99, marginBottom: 8 }}>
-//                           <div style={{ width: `${sc}%`, height: "100%", background: bandColor(sc), borderRadius: 99 }} />
+//                         <div style={{ height: 6, background: "#E2E8F0", borderRadius: 0, marginBottom: 8 }}>
+//                           <div style={{ width: `${sc}%`, height: "100%", background: bandColor(sc), borderRadius: 0 }} />
 //                         </div>
 //                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 //                           <span style={{ fontSize: 22, fontWeight: 900, color: bandColor(sc) }}>{sc}</span>
-//                           <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: "white", color: bandColor(sc), border: `1px solid ${bandColor(sc)}30`, textTransform: "uppercase" }}>{band(sc)}</span>
+//                           <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 0, background: "white", color: bandColor(sc), border: `1px solid ${bandColor(sc)}30`, textTransform: "uppercase" }}>{band(sc)}</span>
 //                         </div>
 //                       </div>
 //                     );
@@ -210,9 +210,9 @@
 //                     const sc = status === "Compliant" || status === "Certified Ready" || status === "Aligned" ? "#059669" : status === "Conditional" ? KPMG_MID : "#DC2626";
 //                     const scBg = sc === "#059669" ? "#DCFCE7" : sc === KPMG_MID ? "#E6F2FB" : "#FEE2E2";
 //                     return (
-//                       <div key={key} className="hover-lift" style={{ padding: "16px 20px", borderRadius: 14, background: scBg, border: `1px solid ${sc}25`, minWidth: 160, textAlign: "center" }}>
+//                       <div key={key} className="hover-lift" style={{ padding: "16px 20px", borderRadius: 0, background: scBg, border: `1px solid ${sc}25`, minWidth: 160, textAlign: "center" }}>
 //                         <div style={{ fontWeight: 700, fontSize: 13, color: "#1E293B", marginBottom: 6 }}>{key.replace(/_/g, " ")}</div>
-//                         <div style={{ display: "inline-block", padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: sc, background: "white", border: `1px solid ${sc}40` }}>{status}</div>
+//                         <div style={{ display: "inline-block", padding: "3px 12px", borderRadius: 0, fontSize: 11, fontWeight: 700, color: sc, background: "white", border: `1px solid ${sc}40` }}>{status}</div>
 //                       </div>
 //                     );
 //                   })}
@@ -223,20 +223,20 @@
 //             {/* FINDINGS */}
 //             {(report.findings?.length || 0) > 0 && (
 //               <div className="card" style={{ padding: "32px", marginBottom: 24 }}>
-//                 <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 20 }}>Audit Findings <span style={{ fontSize: 16, fontWeight: 700, color: "#DC2626", background: "#FEE2E2", padding: "2px 10px", borderRadius: 20, marginLeft: 8 }}>{report.findings!.length}</span></h2>
+//                 <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 20 }}>Audit Findings <span style={{ fontSize: 16, fontWeight: 700, color: "#DC2626", background: "#FEE2E2", padding: "2px 10px", borderRadius: 0, marginLeft: 8 }}>{report.findings!.length}</span></h2>
 //                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 //                   {report.findings!.map((f, i) => {
 //                     const sc = f.severity === "High" ? "#DC2626" : f.severity === "Medium" ? KPMG_MID : "#059669";
 //                     const scBg = f.severity === "High" ? "#FEE2E2" : f.severity === "Medium" ? "#E6F2FB" : "#DCFCE7";
 //                     return (
-//                       <div key={i} style={{ borderRadius: 14, background: "white", border: `1.5px solid ${sc}20`, overflow: "hidden" }}>
+//                       <div key={i} style={{ borderRadius: 0, background: "white", border: `1.5px solid ${sc}20`, overflow: "hidden" }}>
 //                         <div style={{ padding: "12px 18px", background: scBg, borderBottom: `1px solid ${sc}15`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 //                           <span style={{ fontWeight: 700, fontSize: 13, color: "#1E293B" }}>{f.category}</span>
-//                           <span style={{ color: sc, fontWeight: 700, background: "white", padding: "3px 12px", borderRadius: 20, fontSize: 11, border: `1px solid ${sc}30` }}>{f.severity}</span>
+//                           <span style={{ color: sc, fontWeight: 700, background: "white", padding: "3px 12px", borderRadius: 0, fontSize: 11, border: `1px solid ${sc}30` }}>{f.severity}</span>
 //                         </div>
 //                         <div style={{ padding: "14px 18px" }}>
 //                           <p style={{ margin: "0 0 10px", color: "#1E293B", fontSize: 13, lineHeight: 1.6 }}>{f.issue}</p>
-//                           <div style={{ padding: "10px 14px", borderRadius: 8, background: "#E6F2FB", border: `1px solid ${KPMG_LT}30` }}>
+//                           <div style={{ padding: "10px 14px", borderRadius: 0, background: "#E6F2FB", border: `1px solid ${KPMG_LT}30` }}>
 //                             <div style={{ fontSize: 10, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Recommendation</div>
 //                             <p style={{ margin: 0, color: KPMG, fontSize: 12, lineHeight: 1.6 }}>{f.recommendation}</p>
 //                           </div>
@@ -252,7 +252,7 @@
 //             {report.recommendation && (
 //               <div className="card" style={{ padding: "32px", marginBottom: 24 }}>
 //                 <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Overall Recommendation</h2>
-//                 <div style={{ padding: "18px 22px", background: `linear-gradient(135deg, ${KPMG}08, ${KPMG_MID}05)`, border: `1.5px solid ${KPMG_MID}25`, borderRadius: 14 }}>
+//                 <div style={{ padding: "18px 22px", background: `linear-gradient(135deg, ${KPMG}08, ${KPMG_MID}05)`, border: `1.5px solid ${KPMG_MID}25`, borderRadius: 0 }}>
 //                   <p style={{ margin: 0, color: "#1E293B", lineHeight: 1.8, fontSize: 14 }}>{report.recommendation}</p>
 //                 </div>
 //               </div>
@@ -261,11 +261,11 @@
 //             {/* ACTIONS */}
 //             <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
 //               <button onClick={() => { setReport(null); setFile(null); }}
-//                 style={{ padding: "12px 28px", background: "white", border: "1.5px solid #E2E8F0", borderRadius: 12, color: "#374151", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
+//                 style={{ padding: "12px 28px", background: "white", border: "1.5px solid #E2E8F0", borderRadius: 0, color: "#374151", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
 //                 Upload Another Report
 //               </button>
 //               <button onClick={() => navigate("/dashboard")}
-//                 style={{ padding: "12px 28px", background: `linear-gradient(135deg, ${KPMG}, ${KPMG_MID})`, border: "none", borderRadius: 12, color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700, boxShadow: `0 6px 20px ${KPMG}30` }}>
+//                 style={{ padding: "12px 28px", background: `linear-gradient(135deg, ${KPMG}, ${KPMG_MID})`, border: "none", borderRadius: 0, color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700, boxShadow: `0 6px 20px ${KPMG}30` }}>
 //                 ← Back to Dashboard
 //               </button>
 //             </div>
@@ -428,7 +428,7 @@ function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }
   const bg  = statusBg(data.status);
   return (
     <div style={{
-      borderRadius: 16, border: `1.5px solid ${col}25`, background: "white",
+      borderRadius: 0, border: `1.5px solid ${col}25`, background: "white",
       overflow: "hidden", transition: "box-shadow 0.2s",
       boxShadow: expanded ? "0 8px 24px rgba(0,0,0,0.10)" : "0 1px 4px rgba(0,0,0,0.06)",
     }}>
@@ -444,10 +444,10 @@ function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }
         <span style={{ fontSize: 20 }}>{PRINCIPLE_ICONS[name]}</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: 13.5, color: "#1E293B" }}>{name}</div>
-          <div style={{ marginTop: 4, height: 5, background: "#E2E8F0", borderRadius: 99 }}>
+          <div style={{ marginTop: 4, height: 5, background: "#E2E8F0", borderRadius: 0 }}>
             <div style={{
               width: `${data.coverage_score}%`, height: "100%",
-              background: scoreColor(data.coverage_score), borderRadius: 99,
+              background: scoreColor(data.coverage_score), borderRadius: 0,
               transition: "width 0.8s ease",
             }} />
           </div>
@@ -470,7 +470,7 @@ function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }
               <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", textTransform: "uppercase",
                 letterSpacing: "0.08em", marginBottom: 5 }}>What the report says</div>
               <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7,
-                padding: "10px 14px", background: "#F8FAFC", borderRadius: 10,
+                padding: "10px 14px", background: "#F8FAFC", borderRadius: 0,
                 border: "1px solid #E2E8F0" }}>{data.evidence}</p>
             </div>
           )}
@@ -490,7 +490,7 @@ function PrincipleCard({ name, data }: { name: string; data: PrincipleCoverage }
             </div>
           )}
           {data.recommendation && (
-            <div style={{ padding: "10px 14px", background: "#EFF6FF", borderRadius: 10,
+            <div style={{ padding: "10px 14px", background: "#EFF6FF", borderRadius: 0,
               border: `1px solid ${KPMG_LT}40` }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase",
                 letterSpacing: "0.08em", marginBottom: 4 }}>Recommendation</div>
@@ -573,9 +573,9 @@ export default function PdfReportDashboard() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         * { box-sizing: border-box; }
-        .card { background: white; border-radius: 20px; border: 1px solid #E2E8F0;
+        .card { background: white; border-radius: 0px; border: 1px solid #E2E8F0;
           box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .tab-btn { padding: 8px 20px; border: none; border-radius: 10px; cursor: pointer;
+        .tab-btn { padding: 8px 20px; border: none; border-radius: 0px; cursor: pointer;
           font-size: 13px; font-weight: 600; font-family: inherit; transition: all 0.2s; }
         .tab-active { background: ${KPMG}; color: white; }
         .tab-inactive { background: white; color: #64748B; border: 1px solid #E2E8F0; }
@@ -597,14 +597,14 @@ export default function PdfReportDashboard() {
           </span>
           <div style={{ width: 1, height: 20, background: "#E2E8F0" }} />
           <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", background: "#EFF6FF",
-            color: KPMG_MID, borderRadius: 20, border: `1px solid ${KPMG_LT}40` }}>
+            color: KPMG_MID, borderRadius: 0, border: `1px solid ${KPMG_LT}40` }}>
             Report Audit Module
           </span>
         </div>
         <button
           onClick={() => navigate("/dashboard")}
           style={{ padding: "8px 20px", background: "white", border: "1px solid #E2E8F0",
-            color: "#64748B", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+            color: "#64748B", borderRadius: 0, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
           ← Dashboard
         </button>
       </div>
@@ -656,7 +656,7 @@ export default function PdfReportDashboard() {
                 onClick={() => fileInput.current?.click()}
                 style={{
                   border: `2px dashed ${dragOver ? KPMG_MID : file ? "#059669" : "#CBD5E1"}`,
-                  borderRadius: 16, padding: "36px 24px", marginBottom: 24, cursor: "pointer",
+                  borderRadius: 0, padding: "36px 24px", marginBottom: 24, cursor: "pointer",
                   background: dragOver ? "#EFF6FF" : file ? "#F0FDF4" : "#F8FAFC",
                   transition: "all 0.2s", textAlign: "center",
                 }}
@@ -676,7 +676,7 @@ export default function PdfReportDashboard() {
 
               {error && (
                 <div style={{ padding: "12px 16px", background: "#FEE2E2", border: "1px solid #FCA5A5",
-                  borderRadius: 10, color: "#DC2626", fontSize: 13, marginBottom: 20, fontWeight: 600 }}>
+                  borderRadius: 0, color: "#DC2626", fontSize: 13, marginBottom: 20, fontWeight: 600 }}>
                   ⚠ {error}
                 </div>
               )}
@@ -701,7 +701,7 @@ export default function PdfReportDashboard() {
                   background: (!file || loading)
                     ? "#CBD5E1"
                     : `linear-gradient(135deg, ${KPMG}, ${KPMG_MID})`,
-                  border: "none", borderRadius: 12, color: "white", fontSize: 15, fontWeight: 700,
+                  border: "none", borderRadius: 0, color: "white", fontSize: 15, fontWeight: 700,
                   cursor: (!file || loading) ? "default" : "pointer",
                   boxShadow: (!file || loading) ? "none" : `0 6px 24px ${KPMG}35`,
                   transition: "all 0.2s",
@@ -767,7 +767,7 @@ export default function PdfReportDashboard() {
                   { label: "Findings",    count: result.top_findings.length, color: "rgba(255,255,255,0.7)" },
                 ].map(({ label, count, color }) => (
                   <div key={label} style={{ padding: "8px 16px", background: "rgba(255,255,255,0.12)",
-                    borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)",
+                    borderRadius: 0, border: "1px solid rgba(255,255,255,0.18)",
                     display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 18, fontWeight: 900, color }}>{count}</span>
                     <span style={{ fontSize: 11.5, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{label}</span>
@@ -795,7 +795,7 @@ export default function PdfReportDashboard() {
                 <div className="card" style={{ padding: "26px 30px" }}>
                   <h2 style={{ fontSize: 17, fontWeight: 800, marginBottom: 14 }}>Overall Assessment</h2>
                   <div style={{ padding: "16px 20px", background: `linear-gradient(135deg, ${KPMG}08, ${KPMG_MID}05)`,
-                    border: `1.5px solid ${KPMG_MID}25`, borderRadius: 14 }}>
+                    border: `1.5px solid ${KPMG_MID}25`, borderRadius: 0 }}>
                     <p style={{ margin: 0, color: "#1E293B", lineHeight: 1.8, fontSize: 14 }}>
                       {result.overall_assessment}
                     </p>
@@ -813,7 +813,7 @@ export default function PdfReportDashboard() {
                         <div key={p}
                           onClick={() => setActiveTab("principles")}
                           style={{
-                            padding: "14px 16px", borderRadius: 14, cursor: "pointer",
+                            padding: "14px 16px", borderRadius: 0, cursor: "pointer",
                             background: scoreBg(d.coverage_score),
                             border: `1.5px solid ${scoreColor(d.coverage_score)}20`,
                             transition: "transform 0.15s, box-shadow 0.15s",
@@ -824,16 +824,16 @@ export default function PdfReportDashboard() {
                             <span style={{ fontSize: 16 }}>{PRINCIPLE_ICONS[p]}</span>
                             <span style={{ fontSize: 12, fontWeight: 700, color: "#1E293B" }}>{p}</span>
                           </div>
-                          <div style={{ height: 5, background: "#E2E8F0", borderRadius: 99, marginBottom: 8 }}>
+                          <div style={{ height: 5, background: "#E2E8F0", borderRadius: 0, marginBottom: 8 }}>
                             <div style={{ width: `${d.coverage_score}%`, height: "100%",
-                              background: scoreColor(d.coverage_score), borderRadius: 99 }} />
+                              background: scoreColor(d.coverage_score), borderRadius: 0 }} />
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ fontSize: 18, fontWeight: 900, color: scoreColor(d.coverage_score) }}>
                               {d.coverage_score}
                             </span>
                             <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px",
-                              borderRadius: 6, background: "white",
+                              borderRadius: 0, background: "white",
                               color: statusColor(d.status), border: `1px solid ${statusColor(d.status)}30` }}>
                               {statusLabel(d.status).toUpperCase()}
                             </span>
@@ -854,9 +854,9 @@ export default function PdfReportDashboard() {
                         .slice(0, 4)
                         .map((f, i) => (
                           <div key={i} style={{ display: "flex", gap: 14, padding: "14px 16px",
-                            background: severityBg(f.severity), borderRadius: 12,
+                            background: severityBg(f.severity), borderRadius: 0,
                             border: `1px solid ${severityColor(f.severity)}20` }}>
-                            <div style={{ padding: "2px 10px", borderRadius: 6, fontSize: 11,
+                            <div style={{ padding: "2px 10px", borderRadius: 0, fontSize: 11,
                               fontWeight: 700, color: severityColor(f.severity),
                               background: "white", border: `1px solid ${severityColor(f.severity)}30`,
                               height: "fit-content", flexShrink: 0 }}>
@@ -898,13 +898,13 @@ export default function PdfReportDashboard() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
                       <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>{fw}</h2>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20,
+                        <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 0,
                           background: data.mentioned ? "#DCFCE7" : "#F1F5F9",
                           color: data.mentioned ? "#059669" : "#64748B",
                           fontWeight: 700, border: `1px solid ${data.mentioned ? "#059669" : "#CBD5E1"}30` }}>
                           {data.mentioned ? "Referenced in report" : "Not mentioned"}
                         </span>
-                        <span style={{ fontSize: 12, padding: "4px 14px", borderRadius: 20,
+                        <span style={{ fontSize: 12, padding: "4px 14px", borderRadius: 0,
                           background: complianceBg(data.compliance_estimate),
                           color: complianceColor(data.compliance_estimate),
                           fontWeight: 700, border: `1px solid ${complianceColor(data.compliance_estimate)}30` }}>
@@ -922,7 +922,7 @@ export default function PdfReportDashboard() {
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           {data.articles_referenced.map((a, i) => (
                             <span key={i} style={{ padding: "4px 10px", background: "#EFF6FF",
-                              color: KPMG_MID, borderRadius: 8, fontSize: 12, fontWeight: 600,
+                              color: KPMG_MID, borderRadius: 0, fontSize: 12, fontWeight: 600,
                               border: `1px solid ${KPMG_LT}30` }}>{a}</span>
                           ))}
                         </div>
@@ -939,7 +939,7 @@ export default function PdfReportDashboard() {
                           {data.missing_controls.map((c, i) => (
                             <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start",
                               fontSize: 13, color: "#374151", lineHeight: 1.6,
-                              padding: "8px 12px", background: "#FEF2F2", borderRadius: 8,
+                              padding: "8px 12px", background: "#FEF2F2", borderRadius: 0,
                               border: "1px solid #FCA5A520" }}>
                               <span style={{ color: "#DC2626", flexShrink: 0 }}>✕</span>
                               <span>{c}</span>
@@ -950,7 +950,7 @@ export default function PdfReportDashboard() {
                     )}
 
                     {data.missing_controls.length === 0 && data.mentioned && (
-                      <div style={{ padding: "12px 16px", background: "#F0FDF4", borderRadius: 10,
+                      <div style={{ padding: "12px 16px", background: "#F0FDF4", borderRadius: 0,
                         border: "1px solid #86EFAC30", color: "#059669", fontSize: 13, fontWeight: 600 }}>
                         ✓ No significant control gaps identified for this framework
                       </div>
@@ -972,7 +972,7 @@ export default function PdfReportDashboard() {
                 ) : (
                   result.top_findings.map((f, i) => (
                     <div key={i} style={{
-                      background: "white", borderRadius: 16, overflow: "hidden",
+                      background: "white", borderRadius: 0, overflow: "hidden",
                       border: `1.5px solid ${severityColor(f.severity)}20`,
                       boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                     }}>
@@ -983,7 +983,7 @@ export default function PdfReportDashboard() {
                           <span style={{ fontSize: 16 }}>{PRINCIPLE_ICONS[f.principle] || "⚠️"}</span>
                           <span style={{ fontWeight: 700, fontSize: 13.5, color: "#1E293B" }}>{f.principle}</span>
                         </div>
-                        <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                        <span style={{ padding: "3px 12px", borderRadius: 0, fontSize: 11, fontWeight: 700,
                           color: severityColor(f.severity), background: "white",
                           border: `1px solid ${severityColor(f.severity)}30` }}>{f.severity}</span>
                       </div>
@@ -991,7 +991,7 @@ export default function PdfReportDashboard() {
                         <p style={{ margin: "0 0 12px", color: "#1E293B", fontSize: 13.5, lineHeight: 1.7 }}>
                           {f.issue}
                         </p>
-                        <div style={{ padding: "10px 14px", borderRadius: 10, background: "#EFF6FF",
+                        <div style={{ padding: "10px 14px", borderRadius: 0, background: "#EFF6FF",
                           border: `1px solid ${KPMG_LT}30` }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: KPMG_MID, textTransform: "uppercase",
                             letterSpacing: "0.07em", marginBottom: 4 }}>Recommendation</div>
@@ -1009,14 +1009,14 @@ export default function PdfReportDashboard() {
               <button
                 onClick={() => { setResult(null); setFile(null); setActiveTab("overview"); }}
                 style={{ padding: "11px 26px", background: "white", border: "1.5px solid #E2E8F0",
-                  borderRadius: 12, color: "#374151", cursor: "pointer", fontSize: 13.5, fontWeight: 600 }}>
+                  borderRadius: 0, color: "#374151", cursor: "pointer", fontSize: 13.5, fontWeight: 600 }}>
                 Upload Another Report
               </button>
               <button
                 onClick={() => navigate("/dashboard")}
                 style={{ padding: "11px 26px",
                   background: `linear-gradient(135deg, ${KPMG}, ${KPMG_MID})`,
-                  border: "none", borderRadius: 12, color: "white", cursor: "pointer",
+                  border: "none", borderRadius: 0, color: "white", cursor: "pointer",
                   fontSize: 13.5, fontWeight: 700, boxShadow: `0 6px 20px ${KPMG}30` }}>
                 ← Back to Dashboard
               </button>

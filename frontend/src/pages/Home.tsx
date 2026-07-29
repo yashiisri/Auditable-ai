@@ -152,7 +152,7 @@ const Home = () => {
         .hm-progress {
           position: fixed; top: 0; left: 0; height: 3px; z-index: 500;
           background: linear-gradient(90deg, #00338D, #0091DA, #00A3A1);
-          border-radius: 0 2px 2px 0;
+          border-radius: 0 2px 0;
           transition: width 0.1s linear;
         }
 
@@ -189,7 +189,7 @@ const Home = () => {
 
         .nav-link {
           padding: 9px 16px;
-          border-radius: 4px;
+          border-radius: 0px;
           font-size: 13px;
           font-weight: 600;
           color: #6B7C93;
@@ -203,7 +203,7 @@ const Home = () => {
 
         .nav-ghost {
           padding: 9px 20px;
-          border-radius: 6px;
+          border-radius: 0px;
           font-size: 13px;
           font-weight: 700;
           color: #00338D;
@@ -217,7 +217,7 @@ const Home = () => {
 
         .nav-cta {
           padding: 10px 22px;
-          border-radius: 6px;
+          border-radius: 0px;
           font-size: 13px;
           font-weight: 700;
           color: white;
@@ -255,7 +255,7 @@ const Home = () => {
           font-size: 11.5px;
           font-weight: 700;
           padding: 7px 16px;
-          border-radius: 100px;
+          border-radius: 0px;
           margin-bottom: 28px;
           letter-spacing: 1px;
           text-transform: uppercase;
@@ -304,7 +304,7 @@ const Home = () => {
 
         .btn-primary {
           padding: 15px 34px;
-          border-radius: 7px;
+          border-radius: 0px;
           border: none;
           background: linear-gradient(135deg, #00338D, #005EB8);
           color: white;
@@ -319,7 +319,7 @@ const Home = () => {
 
         .btn-secondary {
           padding: 15px 34px;
-          border-radius: 7px;
+          border-radius: 0px;
           border: 2px solid #C7D9F5;
           background: rgba(255,255,255,0.85);
           backdrop-filter: blur(8px);
@@ -361,7 +361,7 @@ const Home = () => {
 
         .score-panel {
           background: white;
-          border-radius: 10px;
+          border-radius: 0px;
           border: 1px solid #E3EAF3;
           box-shadow: 0 24px 80px rgba(0,51,141,0.12);
           overflow: hidden;
@@ -421,13 +421,13 @@ const Home = () => {
           flex: 1;
           height: 6px;
           background: #F1F5F9;
-          border-radius: 99px;
+          border-radius: 0px;
           overflow: hidden;
         }
 
         .principle-bar-fill {
           height: 100%;
-          border-radius: 99px;
+          border-radius: 0px;
           background: linear-gradient(90deg, #00338D, #0091DA);
           transform-origin: left;
           animation: barGrow 1.2s cubic-bezier(.16,1,.3,1) both;
@@ -465,7 +465,7 @@ const Home = () => {
           content: '';
           width: 28px; height: 2px;
           background: linear-gradient(to right, #005EB8, #0091DA);
-          border-radius: 2px;
+          border-radius: 0px;
           flex-shrink: 0;
         }
 
@@ -501,7 +501,7 @@ const Home = () => {
 
         .feature-card {
           background: white;
-          border-radius: 10px;
+          border-radius: 0px;
           padding: 34px 28px;
           border: 1.5px solid #E3EAF3;
           transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -518,7 +518,7 @@ const Home = () => {
           background: linear-gradient(90deg, #00338D, #0091DA);
           opacity: 0;
           transition: opacity 0.3s;
-          border-radius: 10px 10px 0 0;
+          border-radius: 0 0 0;
         }
 
         .feature-card:hover {
@@ -532,7 +532,7 @@ const Home = () => {
         .feature-icon {
           width: 48px;
           height: 48px;
-          border-radius: 6px;
+          border-radius: 0px;
           background: #E6F2FB;
           display: flex;
           align-items: center;
@@ -619,7 +619,7 @@ const Home = () => {
           padding: 32px 24px;
           background: white;
           border: 1.5px solid #E8EEF6;
-          border-radius: 10px;
+          border-radius: 0px;
           font-size: 14px;
           font-weight: 600;
           color: #0B1F33;
@@ -633,7 +633,7 @@ const Home = () => {
           bottom: 0; left: 0; right: 0;
           height: 3px;
           background: var(--fc);
-          border-radius: 0 0 10px 10px;
+          border-radius: 0 10px 10px;
         }
         .framework-card:hover {
           transform: translateY(-8px);
@@ -762,7 +762,7 @@ const Home = () => {
                 ].map((item, i) => (
                   <div key={item.title} style={{ display: "flex", gap: 14, alignItems: "flex-start",
                     opacity: 1, animation: `heroUp 0.7s cubic-bezier(.16,1,.3,1) ${0.6 + i * 0.1}s both` }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#EEF4FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, border: "1px solid rgba(0,51,141,0.1)" }}>{item.icon}</div>
+                    <div style={{ width: 36, height: 36, borderRadius: 0, background: "#EEF4FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, border: "1px solid rgba(0,51,141,0.1)" }}>{item.icon}</div>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#0B1F33", marginBottom: 2 }}>{item.title}</div>
                       <div style={{ fontSize: 12, color: "#6B7C93", lineHeight: 1.5 }}>{item.desc}</div>

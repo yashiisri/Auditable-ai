@@ -7,118 +7,143 @@ const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#64748B";
 const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 const band = (s: number) => s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
 
-const PRINCIPLE_RECS: Record<string, { icon: string; what: string; actions: string[]; priority: "High" | "Medium" | "Low" }> = {
+type RecAction = { text: string; effort: "Low" | "Medium" | "High"; impact: "Quick win" | "Structural" | "Ongoing" };
+type PrincipleRec = { icon: string; what: string; owner: string; actions: RecAction[]; priority: "High" | "Medium" | "Low" };
+
+const PRINCIPLE_RECS: Record<string, PrincipleRec> = {
   Fairness: {
     icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
     what: "Ensure the AI treats all demographic groups with equal quality, tone, and response length.",
+    owner: "Data Science & Fairness Council",
     actions: [
-      "Add demographic group labels to your inference logs to enable differential fairness testing.",
-      "Run bias evaluation across protected attributes (gender, age, ethnicity) using your log data.",
-      "Implement output length monitoring to detect unequal effort across user groups.",
-      "Establish a quarterly fairness review process with documented findings.",
+      { text: "Add demographic group labels to your inference logs to enable differential fairness testing.", effort: "Medium", impact: "Structural" },
+      { text: "Run bias evaluation across protected attributes (gender, age, ethnicity) using your log data.", effort: "Low", impact: "Quick win" },
+      { text: "Implement output length monitoring to detect unequal effort across user groups.", effort: "Medium", impact: "Structural" },
+      { text: "Establish a quarterly fairness review process with documented findings.", effort: "Low", impact: "Ongoing" },
     ],
     priority: "High",
   },
   Transparency: {
     icon: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z",
     what: "Make the AI open about its knowledge boundaries, uncertainty, and reasoning process.",
+    owner: "Product & Engineering",
     actions: [
-      "Add model version tracking to every inference log record.",
-      "Implement uncertainty disclosure — the AI should say 'I'm not sure' when it isn't.",
-      "Ensure the AI addresses the specific question asked, not just related content.",
-      "Log causal reasoning language rates to track whether the AI explains its conclusions.",
+      { text: "Add model version tracking to every inference log record.", effort: "Low", impact: "Quick win" },
+      { text: "Implement uncertainty disclosure — the AI should say 'I'm not sure' when it isn't.", effort: "Medium", impact: "Structural" },
+      { text: "Ensure the AI addresses the specific question asked, not just related content.", effort: "Medium", impact: "Structural" },
+      { text: "Log causal reasoning language rates to track whether the AI explains its conclusions.", effort: "Low", impact: "Quick win" },
     ],
     priority: "Medium",
   },
   Explainability: {
     icon: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3",
     what: "Ensure AI outputs can be understood, interpreted, and verified by non-technical users.",
+    owner: "ML Engineering",
     actions: [
-      "Implement step-by-step reasoning in AI responses for complex decisions.",
-      "Add source citation to AI outputs — especially for factual claims.",
-      "Monitor Flesch readability scores to ensure outputs are accessible.",
-      "Require confidence expression in all outputs so users can calibrate trust.",
+      { text: "Implement step-by-step reasoning in AI responses for complex decisions.", effort: "Medium", impact: "Structural" },
+      { text: "Add source citation to AI outputs — especially for factual claims.", effort: "Medium", impact: "Structural" },
+      { text: "Monitor Flesch readability scores to ensure outputs are accessible.", effort: "Low", impact: "Quick win" },
+      { text: "Require confidence expression in all outputs so users can calibrate trust.", effort: "Low", impact: "Quick win" },
     ],
     priority: "Medium",
   },
   Accountability: {
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
     what: "Establish a clear, auditable chain of responsibility for every AI decision.",
+    owner: "Governance & Compliance",
     actions: [
-      "Implement human escalation triggers for high-stakes or uncertain outputs.",
-      "Add timestamp and user attribution columns to all inference logs.",
-      "Ensure the AI acknowledges errors and provides guidance when it cannot answer.",
-      "Document governance ownership and incident response procedures.",
+      { text: "Implement human escalation triggers for high-stakes or uncertain outputs.", effort: "High", impact: "Structural" },
+      { text: "Add timestamp and user attribution columns to all inference logs.", effort: "Low", impact: "Quick win" },
+      { text: "Ensure the AI acknowledges errors and provides guidance when it cannot answer.", effort: "Medium", impact: "Structural" },
+      { text: "Document governance ownership and incident response procedures.", effort: "Low", impact: "Ongoing" },
     ],
     priority: "High",
   },
   "Data Integrity": {
     icon: "M22 12h-4l-3 9L9 3l-3 9H2",
     what: "Ensure the data used for evaluation is complete, consistent, and trustworthy.",
+    owner: "Data Engineering",
     actions: [
-      "Remove duplicate records from inference logs before re-running the audit.",
-      "Ensure all required columns (task_id, input, output, latency) are populated.",
-      "Implement output format consistency checks in your AI pipeline.",
-      "Add coherence scoring to detect incoherent or low-quality responses.",
+      { text: "Remove duplicate records from inference logs before re-running the audit.", effort: "Low", impact: "Quick win" },
+      { text: "Ensure all required columns (task_id, input, output, latency) are populated.", effort: "Low", impact: "Quick win" },
+      { text: "Implement output format consistency checks in your AI pipeline.", effort: "Medium", impact: "Structural" },
+      { text: "Add coherence scoring to detect incoherent or low-quality responses.", effort: "Medium", impact: "Structural" },
     ],
     priority: "Medium",
   },
   Reliability: {
     icon: "M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83",
     what: "Ensure the AI performs consistently and predictably across all queries.",
+    owner: "ML Engineering & SRE",
     actions: [
-      "Monitor response consistency — similar queries should produce similar answers.",
-      "Implement token efficiency tracking to detect over- or under-answering.",
-      "Add error rate monitoring to your observability stack.",
-      "Run A/B consistency tests across model versions before deployment.",
+      { text: "Monitor response consistency — similar queries should produce similar answers.", effort: "Medium", impact: "Structural" },
+      { text: "Implement token efficiency tracking to detect over- or under-answering.", effort: "Low", impact: "Quick win" },
+      { text: "Add error rate monitoring to your observability stack.", effort: "Low", impact: "Quick win" },
+      { text: "Run A/B consistency tests across model versions before deployment.", effort: "High", impact: "Structural" },
     ],
     priority: "Medium",
   },
   Security: {
     icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
     what: "Protect the AI system against adversarial attacks, misuse, and data exposure.",
+    owner: "Security Engineering",
     actions: [
-      "Implement prompt injection detection on all incoming requests.",
-      "Add content moderation to filter harmful outputs before they reach users.",
-      "Monitor input anomaly rates — empty or malformed inputs are a security signal.",
-      "Implement PII scanning on all AI outputs before delivery.",
+      { text: "Implement prompt injection detection on all incoming requests.", effort: "High", impact: "Structural" },
+      { text: "Add content moderation to filter harmful outputs before they reach users.", effort: "Medium", impact: "Structural" },
+      { text: "Monitor input anomaly rates — empty or malformed inputs are a security signal.", effort: "Low", impact: "Quick win" },
+      { text: "Implement PII scanning on all AI outputs before delivery.", effort: "Medium", impact: "Structural" },
     ],
     priority: "High",
   },
   Privacy: {
     icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
     what: "Ensure the AI handles personal data responsibly and in compliance with GDPR.",
+    owner: "Privacy & Legal",
     actions: [
-      "Implement PII detection and redaction in the AI output pipeline.",
-      "Add data minimisation controls — the AI should not volunteer unnecessary information.",
-      "Ensure the AI demonstrates awareness of data retention rights in relevant contexts.",
-      "Anonymise all personal identifiers before they appear in AI outputs.",
+      { text: "Implement PII detection and redaction in the AI output pipeline.", effort: "High", impact: "Structural" },
+      { text: "Add data minimisation controls — the AI should not volunteer unnecessary information.", effort: "Medium", impact: "Structural" },
+      { text: "Ensure the AI demonstrates awareness of data retention rights in relevant contexts.", effort: "Low", impact: "Quick win" },
+      { text: "Anonymise all personal identifiers before they appear in AI outputs.", effort: "Medium", impact: "Structural" },
     ],
     priority: "High",
   },
   Safety: {
     icon: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
     what: "Prevent the AI from generating harmful, dangerous, or misleading outputs.",
+    owner: "AI Safety Team",
     actions: [
-      "Implement the Triple LLM Judge panel for ongoing safety evaluation.",
-      "Add hallucination detection — especially critical for medical, legal, or financial use cases.",
-      "Ensure human override mechanisms are in place for all high-stakes decisions.",
-      "Run regular red-team exercises to test safety controls under adversarial conditions.",
+      { text: "Implement the Triple LLM Judge panel for ongoing safety evaluation.", effort: "High", impact: "Structural" },
+      { text: "Add hallucination detection — especially critical for medical, legal, or financial use cases.", effort: "High", impact: "Structural" },
+      { text: "Ensure human override mechanisms are in place for all high-stakes decisions.", effort: "Medium", impact: "Structural" },
+      { text: "Run regular red-team exercises to test safety controls under adversarial conditions.", effort: "Medium", impact: "Ongoing" },
     ],
     priority: "High",
   },
   Sustainability: {
     icon: "M12 22V12M12 12C12 12 7 8 7 5a5 5 0 0 1 10 0c0 3-5 7-5 7z",
     what: "Optimise the AI for computational efficiency and minimal environmental impact.",
+    owner: "Platform Engineering",
     actions: [
-      "Monitor token economy — responses should be concise and information-dense.",
-      "Implement response deduplication to avoid pattern-matching instead of reasoning.",
-      "Reduce lexical complexity where possible — simpler language is faster to generate.",
-      "Track and report compute costs per inference as part of your governance metrics.",
+      { text: "Monitor token economy — responses should be concise and information-dense.", effort: "Low", impact: "Quick win" },
+      { text: "Implement response deduplication to avoid pattern-matching instead of reasoning.", effort: "Medium", impact: "Structural" },
+      { text: "Reduce lexical complexity where possible — simpler language is faster to generate.", effort: "Low", impact: "Quick win" },
+      { text: "Track and report compute costs per inference as part of your governance metrics.", effort: "Low", impact: "Ongoing" },
     ],
     priority: "Low",
   },
 };
+
+// ── Effort / impact chip styling ──────────────────────────────────────────────
+const effortMeta = (e: string) =>
+  e === "Low"    ? { color: "#059669", bg: "#F0FDF4" } :
+  e === "Medium" ? { color: "#2563EB", bg: "#EFF6FF" } :
+                   { color: "#64748B", bg: "#F1F5F9" };
+const impactMeta = (i: string) =>
+  i === "Quick win"  ? { color: "#059669", bg: "#F0FDF4" } :
+  i === "Structural" ? { color: "#2563EB", bg: "#EFF6FF" } :
+                       { color: "#7C3AED", bg: "#F5F3FF" };
+const sevDot = (sev: string) => sev === "High" ? "#64748B" : sev === "Medium" ? "#2563EB" : "#059669";
+const titleCase = (s: string) => (s || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function Recommendations() {
   const location = useLocation();
@@ -130,7 +155,7 @@ export default function Recommendations() {
 
   if (!raw) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:10, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
+      <button onClick={() => navigate("/dashboard")} style={{ padding:"10px 24px", background:M, border:"none", borderRadius:0, color:"white", fontWeight:700, cursor:"pointer" }}>← Back</button>
     </div>
   );
 
@@ -139,10 +164,57 @@ export default function Recommendations() {
   const pkeys = Object.keys(prn);
   const _ = anim;
 
-  // Sort: critical first, then watch, then strong
-  const sorted = [...pkeys].sort((a, b) => (prn[a]?.score || 0) - (prn[b]?.score || 0));
+  // Findings actually produced by this audit, linkable back to a principle
+  const findingsAll: any[] = r.findings || [];
+  const findingsFor = (k: string) => findingsAll.filter((f: any) => f.category === k);
 
-  // Overall recommendation text
+  // Weakest sub-parameter per principle (base_evaluator.compute_risk_analysis)
+  const riskItems: any[] = r.risk_analysis?.risk_items || [];
+  const worstByPrinciple: Record<string, any> = {};
+  for (const item of riskItems) worstByPrinciple[item.principle] = item;
+
+  // Rerun movement, when available, escalates a principle regardless of its
+  // current score — a regression is a scheduling signal even if still "Watch".
+  const principleDeltas: any[] = r.principle_deltas || [];
+  const isRerun = !!(r.parent_audit_id || (r.rerun_sequence && r.rerun_sequence > 1));
+
+  const HIGH_IMPACT = new Set(["Safety", "Privacy", "Security", "Fairness"]);
+
+  // Phase 0 = Immediate, 1 = Short-term, 2 = Ongoing.
+  // Score alone under-prioritises regulatory-weighted principles sitting just
+  // inside the "Watch" band, and ignores a fresh regression on a re-run — so
+  // both pull a principle one phase earlier than pure score would.
+  function phaseFor(k: string, score: number): number {
+    const delta = principleDeltas.find((d: any) => d.principle === k);
+    const regressed = !!delta && (delta.movement_label === "REGRESSED" || delta.movement_label === "WORSENING");
+    const hi = HIGH_IMPACT.has(k);
+    if (score < 50 || regressed) return 0;
+    if (score < 75 || (hi && score < 85)) return 1;
+    return 2;
+  }
+  function isEscalated(k: string, score: number): string | null {
+    const delta = principleDeltas.find((d: any) => d.principle === k);
+    if (delta && (delta.movement_label === "REGRESSED" || delta.movement_label === "WORSENING")) return "Regressed since prior audit";
+    if (HIGH_IMPACT.has(k) && score >= 75 && score < 85) return "Elevated regulatory weight";
+    return null;
+  }
+
+  // Sort: earliest phase first; within a phase, more linked findings first;
+  // ties broken by raw score ascending.
+  const sorted = [...pkeys].sort((a, b) => {
+    const sa = prn[a]?.score || 0, sb_ = prn[b]?.score || 0;
+    const pa = phaseFor(a, sa), pb = phaseFor(b, sb_);
+    if (pa !== pb) return pa - pb;
+    const fa = findingsFor(a).length, fb = findingsFor(b).length;
+    if (fa !== fb) return fb - fa;
+    return sa - sb_;
+  });
+
+  // Portfolio view across every recommended action, for the header strip
+  const allActions = sorted.flatMap(k => PRINCIPLE_RECS[k]?.actions || []);
+  const quickWinCount   = allActions.filter(a => a.impact === "Quick win").length;
+  const structuralCount = allActions.filter(a => a.impact === "Structural").length;
+  const ongoingCount    = allActions.filter(a => a.impact === "Ongoing").length;
   const highFindings = (r.findings || []).filter((f: any) => f.severity === "High").length;
   const weakCount = pkeys.filter(k => (prn[k]?.score || 0) < 60).length;
   const overallRec = r.overall_score >= 80 && highFindings === 0
@@ -155,7 +227,7 @@ export default function Recommendations() {
 
   return (
     <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.rec-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}.rec-card{background:white;border-radius: 0px;border:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.04);}`}</style>
 
       <AuditContextBar data={raw} />
 
@@ -164,21 +236,42 @@ export default function Recommendations() {
         {/* Overall recommendation */}
         <div className="rec-card" style={{ padding:"28px 32px", marginBottom:20, borderLeft:`4px solid ${r.overall_score>=75?"#059669":r.overall_score>=50?M:"#64748B"}` }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"#EEF4FF", display:"grid", placeItems:"center", color:M }}>
+            <div style={{ width:36, height:36, borderRadius:0, background:"#EEF4FF", display:"grid", placeItems:"center", color:M }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             </div>
             <div>
               <div style={{ fontSize:16, fontWeight:800, color:"#0F172A" }}>Overall Governance Recommendation</div>
-              <div style={{ fontSize:12, color:"#94A3B8", marginTop:2 }}>Based on audit results for {r.model_label || r.model_type}</div>
+              <div style={{ fontSize:12, color:"#94A3B8", marginTop:2 }}>
+                Based on audit results for {r.model_label || r.model_type}
+                {isRerun && r.rerun_sequence ? ` · re-run #${r.rerun_sequence}, phased against movement since the prior audit` : ""}
+              </div>
             </div>
             <div style={{ marginLeft:"auto", textAlign:"right" }}>
               <div style={{ fontSize:32, fontWeight:900, color:sc(r.overall_score), lineHeight:1 }}>{r.overall_score}</div>
               <div style={{ fontSize:10, color:"#94A3B8" }}>/ 100</div>
             </div>
           </div>
-          <div style={{ padding:"16px 20px", background:`linear-gradient(135deg,${B}08,${M}05)`, border:`1.5px solid ${M}25`, borderRadius:14 }}>
+          <div style={{ padding:"16px 20px", background:`linear-gradient(135deg,${B}08,${M}05)`, border:`1.5px solid ${M}25`, borderRadius:0 }}>
             <p style={{ margin:0, color:"#1E293B", lineHeight:1.85, fontSize:14 }}>{overallRec}</p>
           </div>
+
+          {/* Action portfolio — the shape of the remediation effort, not just a score */}
+          <div style={{ display:"flex", gap:10, marginTop:16 }}>
+            {[
+              { label:"Quick wins",  sub:"Low effort, fast to ship",        val:quickWinCount,   ...impactMeta("Quick win") },
+              { label:"Structural",  sub:"Pipeline or process changes",     val:structuralCount, ...impactMeta("Structural") },
+              { label:"Ongoing",     sub:"Recurring practice, not one-off", val:ongoingCount,     ...impactMeta("Ongoing") },
+            ].map(s => (
+              <div key={s.label} style={{ flex:1, padding:"10px 14px", background:s.bg, borderRadius:0, border:`1px solid ${s.color}20` }}>
+                <div style={{ display:"flex", alignItems:"baseline", gap:6 }}>
+                  <span style={{ fontSize:20, fontWeight:900, color:s.color }}>{s.val}</span>
+                  <span style={{ fontSize:11.5, fontWeight:700, color:s.color }}>{s.label}</span>
+                </div>
+                <div style={{ fontSize:10, color:"#94A3B8", marginTop:1 }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
           {/* Remediation timeline — Gantt chart */}
           <div style={{ marginTop:20 }}>
             <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:16 }}>Remediation Timeline</div>
@@ -221,13 +314,13 @@ export default function Recommendations() {
                 {sorted.map((k) => {
                   const score = prn[k]?.score || 0;
                   const rec = PRINCIPLE_RECS[k];
-                  const isImmediate = score < 50;
-                  const isWatch = score >= 50 && score < 75;
-                  const startPct = isImmediate ? 0   : isWatch ? 40  : 80;
-                  const widthPct = isImmediate ? 38  : isWatch ? 38  : 20;
-                  const barColor = isImmediate ? "#00338D" : isWatch ? "#005EB8" : "#0091DA";
-                  const action   = rec?.actions?.[0] || "Review and remediate.";
-                  const shortAction = action.length > 60 ? action.slice(0, 57) + "…" : action;
+                  const phase = phaseFor(k, score);
+                  const startPct = phase === 0 ? 0   : phase === 1 ? 40  : 80;
+                  const widthPct = phase === 0 ? 38  : phase === 1 ? 38  : 20;
+                  const barColor = phase === 0 ? "#00338D" : phase === 1 ? "#005EB8" : "#0091DA";
+                  const escalated = isEscalated(k, score);
+                  const action   = rec?.actions?.[0]?.text || "Review and remediate.";
+                  const shortAction = (escalated ? `⚠ ${escalated} — ` : "") + (action.length > 55 ? action.slice(0, 52) + "…" : action);
 
                   return (
                     <div key={k} style={{ display:"flex", alignItems:"stretch", minHeight:34 }}>
@@ -299,20 +392,31 @@ export default function Recommendations() {
             const score = prn[k]?.score || 0;
             const rec = PRINCIPLE_RECS[k];
             const isOpen = expanded === k;
-            const priorityColor = score < 50 ? "#64748B" : score < 75 ? "#D97706" : "#059669";
-            const priorityBg    = score < 50 ? "#F1F5F9" : score < 75 ? "#FFF7ED" : "#DCFCE7";
+            const priorityColor = score < 50 ? "#64748B" : score < 75 ? "#2563EB" : "#059669";
+            const priorityBg    = score < 50 ? "#F1F5F9" : score < 75 ? "#EFF6FF" : "#DCFCE7";
             const priorityLabel = score < 50 ? "Critical" : score < 75 ? "Watch" : "Strong";
+            const linkedFindings = findingsFor(k);
+            const escalated = isEscalated(k, score);
+            const worst = worstByPrinciple[k];
 
             return (
               <div key={k} className="rec-card" style={{ overflow:"hidden", borderLeft:`4px solid ${sc(score)}` }}>
                 {/* Header row */}
                 <div style={{ padding:"16px 20px", display:"flex", alignItems:"center", gap:14, cursor:"pointer" }}
                   onClick={() => setExpanded(isOpen ? null : k)}>
-                  <div style={{ width:36, height:36, borderRadius:10, background:sb(score), display:"grid", placeItems:"center", fontSize:18, flexShrink:0 }}>
+                  <div style={{ width:36, height:36, borderRadius:0, background:sb(score), display:"grid", placeItems:"center", fontSize:18, flexShrink:0 }}>
                     <span style={{ fontSize:12, fontWeight:800, color:"currentColor" }}>{(k||"?")[0]}</span>
                   </div>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:14.5, fontWeight:800, color:"#0F172A" }}>{k}</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:7, flexWrap:"wrap" as const }}>
+                      <span style={{ fontSize:14.5, fontWeight:800, color:"#0F172A" }}>{k}</span>
+                      {linkedFindings.length > 0 && (
+                        <span style={{ fontSize:9.5, fontWeight:700, color:"#64748B", background:"#F1F5F9", padding:"1px 7px", borderRadius:0 }}>{linkedFindings.length} linked finding{linkedFindings.length === 1 ? "" : "s"}</span>
+                      )}
+                      {escalated && (
+                        <span style={{ fontSize:9.5, fontWeight:700, color:"#B45309", background:"#FEF3C7", padding:"1px 7px", borderRadius:0 }}>⚠ {escalated}</span>
+                      )}
+                    </div>
                     {rec && <div style={{ fontSize:12, color:"#64748B", marginTop:2, lineHeight:1.4 }}>{rec.what}</div>}
                   </div>
                   <div style={{ display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
@@ -320,41 +424,93 @@ export default function Recommendations() {
                       <div style={{ fontSize:24, fontWeight:900, color:sc(score), lineHeight:1 }}>{score}</div>
                       <div style={{ fontSize:9, color:sc(score), fontWeight:700 }}>/ 100</div>
                     </div>
-                    <div style={{ padding:"4px 10px", borderRadius:20, background:priorityBg, color:priorityColor, fontSize:11, fontWeight:700 }}>{priorityLabel}</div>
+                    <div style={{ padding:"4px 10px", borderRadius:0, background:priorityBg, color:priorityColor, fontSize:11, fontWeight:700 }}>{priorityLabel}</div>
                     <div style={{ width:28, height:28, borderRadius:"50%", background:"#F1F5F9", display:"grid", placeItems:"center", fontSize:12, color:"#94A3B8", transition:"transform 0.2s", transform:isOpen?"rotate(180deg)":"none" }}>▾</div>
                   </div>
                 </div>
 
                 {/* Score bar */}
                 <div style={{ padding:"0 20px 12px" }}>
-                  <div style={{ height:5, background:"#F1F5F9", borderRadius:99, overflow:"hidden" }}>
-                    <div style={{ width:`${score}%`, height:"100%", background:`linear-gradient(90deg,${sc(score)}88,${sc(score)})`, borderRadius:99, transition:"width 0.8s ease" }}/>
+                  <div style={{ height:5, background:"#F1F5F9", borderRadius:0, overflow:"hidden" }}>
+                    <div style={{ width:`${score}%`, height:"100%", background:`linear-gradient(90deg,${sc(score)}88,${sc(score)})`, borderRadius:0, transition:"width 0.8s ease" }}/>
                   </div>
                 </div>
 
                 {/* Expanded actions */}
                 {isOpen && rec && (
                   <div style={{ padding:"0 20px 20px", borderTop:"1px solid #F1F5F9" }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", margin:"16px 0 12px" }}>Recommended Actions</div>
-                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                      {rec.actions.map((action, i) => (
-                        <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
-                          <div style={{ width:22, height:22, borderRadius:"50%", background:sb(score), color:sc(score), display:"grid", placeItems:"center", fontSize:11, fontWeight:800, flexShrink:0 }}>{i+1}</div>
-                          <div style={{ fontSize:13, color:"#374151", lineHeight:1.65 }}>{action}</div>
+
+                    {/* Owner + weakest signal */}
+                    <div style={{ display:"flex", gap:10, flexWrap:"wrap" as const, margin:"16px 0" }}>
+                      <div style={{ padding:"6px 12px", background:"#F8FAFC", border:"1px solid #E2E8F0", borderRadius:0, fontSize:11 }}>
+                        <span style={{ color:"#94A3B8", fontWeight:600 }}>Suggested owner: </span>
+                        <span style={{ color:"#374151", fontWeight:700 }}>{rec.owner}</span>
+                      </div>
+                      {worst && (
+                        <div style={{ padding:"6px 12px", background:"#FAFBFF", border:`1px solid ${M}20`, borderRadius:0, fontSize:11 }}>
+                          <span style={{ color:M, fontWeight:600 }}>Weakest signal: </span>
+                          <span style={{ color:"#374151", fontWeight:700 }}>{titleCase(worst.worst_param)} ({worst.worst_val}/100)</span>
                         </div>
-                      ))}
+                      )}
                     </div>
+
+                    <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:12 }}>Recommended Actions</div>
+                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      {rec.actions.map((action, i) => {
+                        const em = effortMeta(action.effort), im = impactMeta(action.impact);
+                        return (
+                          <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", borderRadius:0, background:"#F8FAFC", border:"1px solid #E2E8F0" }}>
+                            <div style={{ width:22, height:22, borderRadius:"50%", background:sb(score), color:sc(score), display:"grid", placeItems:"center", fontSize:11, fontWeight:800, flexShrink:0 }}>{i+1}</div>
+                            <div style={{ flex:1 }}>
+                              <div style={{ fontSize:13, color:"#374151", lineHeight:1.65, marginBottom:6 }}>{action.text}</div>
+                              <div style={{ display:"flex", gap:6 }}>
+                                <span style={{ fontSize:9.5, fontWeight:700, color:em.color, background:em.bg, padding:"1px 7px", borderRadius:0 }}>{action.effort} effort</span>
+                                <span style={{ fontSize:9.5, fontWeight:700, color:im.color, background:im.bg, padding:"1px 7px", borderRadius:0 }}>{action.impact}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Findings driving this recommendation — real evidence, not just playbook */}
+                    {linkedFindings.length > 0 && (
+                      <div style={{ marginTop:16 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:10 }}>
+                          Findings Driving This Recommendation
+                        </div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                          {linkedFindings.map((f: any, i: number) => (
+                            <div key={i} style={{ display:"flex", gap:10, padding:"10px 14px", background:"#FFFDF7", border:"1px solid #FDE68A50", borderRadius:0 }}>
+                              <div style={{ width:6, height:6, borderRadius:"50%", background:sevDot(f.severity), marginTop:5, flexShrink:0 }}/>
+                              <div style={{ flex:1 }}>
+                                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+                                  <span style={{ fontSize:9.5, fontWeight:700, color:sevDot(f.severity) }}>{f.severity} severity</span>
+                                </div>
+                                <div style={{ fontSize:12, color:"#374151", lineHeight:1.55 }}>{f.issue || f.note}</div>
+                                {f.probe && (
+                                  <div style={{ fontSize:11, color:"#94A3B8", fontStyle:"italic" as const, marginTop:4 }}>Probe: {f.probe}</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Sub-parameter breakdown */}
                     {prn[k]?.parameters && Object.keys(prn[k].parameters).length > 0 && (
                       <div style={{ marginTop:16 }}>
                         <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", textTransform:"uppercase" as const, letterSpacing:"0.7px", marginBottom:10 }}>Sub-parameter Scores</div>
                         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:8 }}>
-                          {Object.entries(prn[k].parameters).map(([param, val]: any) => (
-                            <div key={param} style={{ padding:"10px 12px", borderRadius:10, background:sb(val), border:`1px solid ${sc(val)}18` }}>
-                              <div style={{ fontSize:11, fontWeight:700, color:"#0F172A", marginBottom:5 }}>{param}</div>
+                          {Object.entries(prn[k].parameters)
+                            .sort((a: any, b: any) => a[1] - b[1])
+                            .map(([param, val]: any) => (
+                            <div key={param} style={{ padding:"10px 12px", borderRadius:0, background:sb(val), border:`1px solid ${sc(val)}18` }}>
+                              <div style={{ fontSize:11, fontWeight:700, color:"#0F172A", marginBottom:5 }}>{titleCase(param)}</div>
                               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                                <div style={{ flex:1, height:4, background:"rgba(0,0,0,0.08)", borderRadius:99 }}>
-                                  <div style={{ width:`${val}%`, height:"100%", borderRadius:99, background:sc(val) }}/>
+                                <div style={{ flex:1, height:4, background:"rgba(0,0,0,0.08)", borderRadius:0 }}>
+                                  <div style={{ width:`${val}%`, height:"100%", borderRadius:0, background:sc(val) }}/>
                                 </div>
                                 <span style={{ fontSize:13, fontWeight:800, color:sc(val), flexShrink:0 }}>{val}</span>
                               </div>

@@ -432,7 +432,8 @@ function formatInline(text: string): React.ReactNode {
     if (part.startsWith("**") && part.endsWith("**"))
       return <strong key={i} style={{ fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
     if (part.startsWith("`") && part.endsWith("`"))
-      return <code key={i} style={{ background: "#E8F0FB", padding: "1px 5px", borderRadius: 4, fontSize: "0.9em", fontFamily: "monospace" }}>{part.slice(1, -1)}</code>;
+      return <code key={i} style={{    background: "#E8F0FB", padding: "1px 5px",
+                        borderRadius: 0, fontSize: "0.9em", fontFamily: "monospace" }}>{part.slice(1, -1)}</code>;
     return part;
   });
 }
@@ -692,7 +693,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
         <div style={{
           position: "fixed", bottom: 96, right: 28, zIndex: 9998,
           width: 390, maxHeight: 600,
-          background: C.bg, borderRadius: 20,
+          background: C.bg,          borderRadius: 0,
           border: `1px solid ${C.border}`,
           boxShadow: "0 24px 64px rgba(0,30,90,0.16), 0 4px 20px rgba(0,30,90,0.08)",
           display: "flex", flexDirection: "column",
@@ -739,8 +740,9 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
                 style={{
                   background: voiceEnabled ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.10)",
                   border: `1px solid ${voiceEnabled ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.20)"}`,
-                  cursor: "pointer", color: voiceEnabled ? "white" : "rgba(255,255,255,0.55)",
-                  padding: "5px 7px", borderRadius: 8, transition: "all 0.2s",
+                  cursor: "pointer", color: voiceEnabled ? "white" : "rgba(255,255,255,0.55)",                  padding: "5px 7px",
+                        borderRadius: 0,
+                        transition: "all 0.2s",
                   display: "flex", alignItems: "center", gap: 4,
                   fontSize: 10, fontFamily: "inherit", fontWeight: 600,
                 }}
@@ -770,8 +772,9 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
               title="Clear chat"
               style={{
                 background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.20)",
-                cursor: "pointer", color: "rgba(255,255,255,0.70)", fontSize: 11,
-                padding: "3px 9px", borderRadius: 8, transition: "all 0.2s",
+                cursor: "pointer", color: "rgba(255,255,255,0.70)", fontSize: 11,                        padding: "3px 9px",
+                        borderRadius: 0,
+                        transition: "all 0.2s",
                 fontFamily: "inherit",
               }}
             >
@@ -781,7 +784,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
             <div style={{
               background: "rgba(255,255,255,0.12)",
               border: "1px solid rgba(255,255,255,0.22)",
-              borderRadius: 20, padding: "2px 9px",
+              borderRadius: 0, padding: "2px 9px",
               fontSize: 10, color: "rgba(255,255,255,0.80)",
               fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase",
             }}>
@@ -817,8 +820,8 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
                   <div style={{
                     padding: msg.role === "user" ? "9px 13px" : "11px 14px",
                     borderRadius: msg.role === "user"
-                      ? "16px 16px 4px 16px"
-                      : "4px 16px 16px 16px",
+                      ? "0 0 0 0"
+                      : "0 0 0 0",
                     background: msg.role === "user"
                       ? `linear-gradient(135deg, ${C.blue} 0%, ${C.blueMid} 100%)`
                       : C.bgMsg,
@@ -844,7 +847,8 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
                         background: "none", border: "none", cursor: "pointer",
                         display: "flex", alignItems: "center", gap: 4,
                         color: speakingIdx === i ? C.blueMid : C.textSoft,
-                        fontSize: 11, padding: "1px 4px", borderRadius: 6,
+                        fontSize: 11,                    padding: "1px 4px",
+                        borderRadius: 0,
                         opacity: speakingIdx === i ? 1 : 0.55,
                         transition: "opacity 0.2s, color 0.2s",
                       }}
@@ -855,8 +859,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
                           <span style={{ display: "flex", alignItems: "center", gap: 2, height: 12 }}>
                             {[0, 0.15, 0.3].map((delay, k) => (
                               <span key={k} style={{
-                                display: "block", width: 2, height: "100%",
-                                background: C.blueMid, borderRadius: 2,
+                                display: "block", width: 2, height: "100%",                                                   background: C.blueMid, borderRadius: 0,
                                 animation: `soundWave 0.8s ${delay}s ease-in-out infinite`,
                               }} />
                             ))}
@@ -887,7 +890,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
                   fontSize: 11, color: "white", fontWeight: 700, flexShrink: 0,
                 }}>✦</div>
                 <div style={{
-                  padding: "10px 14px", borderRadius: "14px 14px 14px 3px",
+                  padding: "10px 14px",                    borderRadius: 0,
                   background: C.bgMsg, border: `1px solid ${C.border}`,
                   boxShadow: "0 1px 4px rgba(0,30,90,0.06)",
                 }}>
@@ -898,8 +901,9 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
 
             {/* Error bar */}
             {error && (
-              <div style={{
-                padding: "8px 12px", borderRadius: 8, fontSize: 12,
+              <div style={{                padding: "8px 12px",
+                        borderRadius: 0,
+                        fontSize: 12,
                 background: "#FFF0F0", border: "1px solid #FFCCCC", color: "#CC3333",
               }}>
                 ⚠ {error}
@@ -925,7 +929,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
                   padding: "4px 10px",
                   background: C.accent,
                   border: `1px solid ${C.blueLt}40`,
-                  borderRadius: 20, fontSize: 11.5,
+                  borderRadius: 0, fontSize: 11.5,
                   color: C.blueMid, cursor: "pointer",
                   fontFamily: "inherit", fontWeight: 600,
                   transition: "all 0.18s ease",
@@ -952,7 +956,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
                 disabled={loading}
                 title={isRecording ? "Stop recording" : "Speak your question"}
                 style={{
-                  width: 40, height: 40, borderRadius: 12, flexShrink: 0, border: "none",
+                  width: 40, height: 40, borderRadius: 0, flexShrink: 0, border: "none",
                   background: isRecording
                     ? "linear-gradient(135deg, #DC2626, #EF4444)"
                     : `${C.accent}`,
@@ -991,7 +995,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
               style={{
                 flex: 1, padding: "9px 14px",
                 border: `1.5px solid ${isRecording ? "#EF4444" : C.border}`,
-                borderRadius: 12, fontSize: 13.5,
+                borderRadius: 0, fontSize: 13.5,
                 fontFamily: "inherit", color: C.text,
                 background: "white",
                 transition: "border-color 0.2s, box-shadow 0.2s",
@@ -1002,7 +1006,7 @@ useEffect(() => { if (!open) stopSpeaking(); }, [open, stopSpeaking]);
               onClick={send}
               disabled={loading || !input.trim()}
               style={{
-                width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                width: 40, height: 40, borderRadius: 0, flexShrink: 0,
                 background: (!input.trim() || loading)
                   ? "#C8D4E8"
                   : `linear-gradient(135deg, ${C.blue}, ${C.blueMid})`,

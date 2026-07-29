@@ -55,6 +55,11 @@ const IconChevronRight = () => (
     <polyline points="9 18 15 12 9 6"/>
   </svg>
 );
+const IconCode = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+  </svg>
+);
 
 // ── Route metadata — matches Sidebar.tsx paths exactly ───────────────────────
 
@@ -64,6 +69,7 @@ const REPORT_SECTIONS = [
   { path: "/llm-analysis",          label: "LLM Analysis",          shortLabel: "LLM",        icon: IconBrain    },
   { path: "/governance-principles", label: "Governance Principles", shortLabel: "Principles", icon: IconShield   },
   { path: "/regulatory-alignment",  label: "Regulatory Alignment",  shortLabel: "Regulatory", icon: IconGlobe    },
+  { path: "/code-build-risk",       label: "Build Vulnerabilities", shortLabel: "Build",      icon: IconCode     },
   { path: "/risk-intelligence",     label: "Risk & Actions",        shortLabel: "Risks",      icon: IconAlert    },
   { path: "/recommendations",       label: "Recommendations",       shortLabel: "Actions",    icon: IconLightbulb},
   { path: "/download-report",       label: "Export Report",         shortLabel: "Export",     icon: IconDownload },
@@ -133,7 +139,7 @@ export default function AuditContextBar({ data }: { data: any }) {
           <span style={{
             fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.55)",
             background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.14)",
-            padding: "2px 8px", borderRadius: 20, flexShrink: 0, whiteSpace: "nowrap" as const,
+            padding: "2px 8px", borderRadius: 0, flexShrink: 0, whiteSpace: "nowrap" as const,
           }}>{modelType}</span>
         )}
       </div>
@@ -144,7 +150,7 @@ export default function AuditContextBar({ data }: { data: any }) {
           <div style={{
             display: "flex", alignItems: "baseline", gap: 3,
             background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)",
-            padding: "5px 12px", borderRadius: 9,
+            padding: "5px 12px", borderRadius: 0,
           }}>
             <span style={{ fontSize: 20, fontWeight: 900, color: "white", lineHeight: 1 }}>{score}</span>
             <span style={{ fontSize: 9.5, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>/100</span>
@@ -152,7 +158,7 @@ export default function AuditContextBar({ data }: { data: any }) {
         )}
         {risk && (
           <div style={{
-            padding: "4px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+            padding: "4px 11px", borderRadius: 0, fontSize: 11, fontWeight: 700,
             color: riskCol, background: riskBg, border: `1px solid ${riskCol}25`,
           }}>
             {risk} Risk
@@ -177,57 +183,80 @@ export function LensFooter({ data, currentPath }: { data: any; currentPath?: str
 
   return (
     <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "20px 0", marginTop: 40,
-      borderTop: "1px solid #E2E8F0",
-      gap: 16, flexWrap: "wrap" as const,
+      display: "flex", flexDirection: "column", gap: 12,
+      marginTop: 40, marginBottom: 8,
+      padding: "18px 24px", paddingRight: 100, // clears the floating chat button
+      background: "white", borderRadius: 0,
+      border: "1px solid #E2E8F0",
+      boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
     }}>
+      <style>{`
+        @keyframes lensNextGlow {
+          0%, 100% { box-shadow: 0 4px 16px rgba(0,51,141,0.30); }
+          50%      { box-shadow: 0 4px 26px rgba(0,51,141,0.55); }
+        }
+        .lens-next-btn { animation: lensNextGlow 2.2s ease-in-out infinite; }
+        .lens-next-btn:hover { transform: translateY(-2px) scale(1.02); }
+        .lens-prev-btn:hover { border-color: ${M}; color: ${M}; background: ${M}0A; }
+      `}</style>
 
-      {/* ← Prev */}
-      <div>
-        {prev ? (
-          <button
-            onClick={() => navTo(prev.path)}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "1px solid #E2E8F0", borderRadius: 10, padding: "8px 14px", cursor: "pointer", color: "#64748B", fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = M; (e.currentTarget as HTMLButtonElement).style.color = M; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLButtonElement).style.color = "#64748B"; }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}><prev.icon /> {prev.label}</span>
-          </button>
-        ) : <div />}
+      <div style={{ textAlign: "center", fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>
+        Step {currentIdx + 1} of {REPORT_SECTIONS.length}
       </div>
 
-      {/* Progress dots */}
-      <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-        {REPORT_SECTIONS.map((item, idx) => (
-          <button
-            key={item.path}
-            onClick={() => navTo(item.path)}
-            title={item.label}
-            style={{
-              width: idx === currentIdx ? 20 : 7, height: 7, borderRadius: 4,
-              background: idx === currentIdx ? M : "#CBD5E1",
-              border: "none", cursor: "pointer", padding: 0,
-              transition: "all 0.2s", flexShrink: 0,
-            }}
-          />
-        ))}
-      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" as const }}>
 
-      {/* Next → */}
-      <div>
-        {next ? (
-          <button
-            onClick={() => navTo(next.path)}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: `linear-gradient(135deg, ${B}, ${M})`, border: "none", borderRadius: 10, padding: "8px 14px", cursor: "pointer", color: "white", fontSize: 12.5, fontWeight: 700, fontFamily: "inherit", transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,51,141,0.2)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "none"; }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}><next.icon /> {next.label}</span>
-            <IconChevronRight />
-          </button>
-        ) : <div />}
+        {/* ← Prev */}
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
+          {prev ? (
+            <button
+              className="lens-prev-btn"
+              onClick={() => navTo(prev.path)}
+              style={{ display: "flex", alignItems: "center",      gap: 8, background: "white", border: "1.5px solid #E2E8F0", borderRadius: 0, padding: "11px 18px", cursor: "pointer", color: "#64748B", fontSize: 13, fontWeight: 700, fontFamily: "inherit", transition: "all 0.15s" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}><prev.icon /> {prev.label}</span>
+            </button>
+          ) : <div />}
+        </div>
+
+        {/* Progress dots */}
+        <div style={{ display: "flex", gap: 5, alignItems: "center", flexShrink: 0 }}>
+          {REPORT_SECTIONS.map((item, idx) => (
+            <button
+              key={item.path}
+              onClick={() => navTo(item.path)}
+              title={item.label}
+              style={{
+                width:      idx === currentIdx ? 22 : 7, height: 7, borderRadius: 0,
+                background: idx === currentIdx ? M : "#CBD5E1",
+                border: "none", cursor: "pointer", padding: 0,
+                transition: "all 0.2s", flexShrink: 0,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Next → */}
+        <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", justifyContent: "flex-end" }}>
+          {next ? (
+            <button
+              className="lens-next-btn"
+              onClick={() => navTo(next.path)}
+              style={{ display: "flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg, ${B}, ${M})`, border:      "none", borderRadius: 0, padding: "13px 24px", cursor: "pointer", color: "white", fontSize: 14, fontWeight: 800, fontFamily: "inherit", transition: "transform 0.15s" }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 7 }}><next.icon /> {next.label}</span>
+              <IconChevronRight />
+            </button>
+          ) : (
+            <button
+              onClick={() => navTo("/download-report")}
+              style={{ display: "flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg, ${B}, ${M})`, border:      "none", borderRadius: 0, padding: "13px 24px", cursor: "pointer", color: "white", fontSize: 14, fontWeight: 800, fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,51,141,0.30)" }}
+            >
+              Audit complete <IconChevronRight />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

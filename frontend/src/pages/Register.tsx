@@ -71,7 +71,7 @@
 
 //         .auth-card {
 //           width:100%; max-width:440px; padding:56px 42px;
-//           border-radius:20px;
+//           border-radius: 0px;
 //           background:linear-gradient(135deg, rgba(10,30,66,0.85), rgba(7,21,48,0.80));
 //           backdrop-filter:blur(22px);
 //           border:1px solid rgba(0,145,218,0.28);
@@ -91,7 +91,7 @@
 
 //         .auth-card input {
 //           width:100%; padding:14px 16px; margin-bottom:16px;
-//           border-radius:10px; border:1px solid rgba(0,145,218,0.35);
+//           border-radius: 0px; border:1px solid rgba(0,145,218,0.35);
 //           background:rgba(3,12,30,0.65); color:#EAF2FB; font-size:15px;
 //           transition:all 0.2s;
 //         }
@@ -104,7 +104,7 @@
 //         }
 
 //         .primary-btn {
-//           width:100%; padding:14px; border-radius:10px; border:none;
+//           width:100%; padding:14px; border-radius: 0px; border:none;
 //           background:linear-gradient(135deg, #0091DA, #00C896);
 //           color:white; font-weight:600; font-size:15px; cursor:pointer;
 //           transition:all 0.3s; margin:24px 0 16px;
@@ -120,7 +120,7 @@
 //         .error-message {
 //           color:#ff8787; font-size:14px; text-align:center;
 //           margin:12px 0; background:rgba(239,68,68,0.12);
-//           padding:10px; border-radius:8px; border:1px solid rgba(239,68,68,0.3);
+//           padding:10px; border-radius: 0px; border:1px solid rgba(239,68,68,0.3);
 //         }
 
 //         .auth-footer { text-align:center; font-size:14px; color:var(--muted); }
@@ -224,18 +224,18 @@ const Register = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        .ri{width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid #E3EAF3;font-size:14px;font-family:inherit;color:#0B1F33;background:#fff;transition:all 0.2s;outline:none;}
+        .ri{width:100%;padding:14px 16px;border-radius: 0px;border:1.5px solid #E3EAF3;font-size:14px;font-family:inherit;color:#0B1F33;background:#fff;transition:all 0.2s;outline:none;}
         .ri:focus{border-color:#005EB8;box-shadow:0 0 0 4px rgba(0,94,184,0.1);}
         .ri::placeholder{color:#A0B4CC;}
-        .rs{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#00338D,#005EB8);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(0,51,141,0.25);}
+        .rs{width:100%;padding:15px;border-radius: 0px;border:none;background:linear-gradient(135deg,#00338D,#005EB8);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(0,51,141,0.25);}
         .rs:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,51,141,0.35);}
         .rs:disabled{opacity:0.55;cursor:not-allowed;transform:none;}
         .rlp{flex:1;background:linear-gradient(145deg,#00338D 0%,#005EB8 55%,#0091DA 100%);display:flex;flex-direction:column;justify-content:center;padding:64px;position:relative;overflow:hidden;}
         .rlp::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;}
-        .rorb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}
+        .rorb{position:absolute;border-radius: 50%;filter:blur(80px);pointer-events:none;}
         .rrp{width:500px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:56px;background:#fff;overflow-y:auto;}
-        .rpill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;padding:6px 14px;border-radius:100px;letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;backdrop-filter:blur(8px);}
-        .rpd{width:6px;height:6px;border-radius:50%;background:#00A3A1;animation:rpulse 2s ease-in-out infinite;}
+        .rpill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;padding:6px 14px;border-radius: 0px;letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;backdrop-filter:blur(8px);}
+        .rpd{width:6px;height:6px;border-radius: 50%;background:#00A3A1;animation:rpulse 2s ease-in-out infinite;}
         @keyframes rpulse{0%,100%{transform:scale(1);}50%{transform:scale(1.5);opacity:0.6;}}
         @keyframes regUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
         @media(max-width:768px){.rlp{display:none;}.rrp{width:100%;padding:40px 28px;}}
@@ -273,14 +273,14 @@ const Register = () => {
           </div>
           <div style={{ marginTop:14, display:"flex", alignItems:"center", gap:10 }}>
             <button type="button" onClick={() => setIsAdminMode(!isAdminMode)}
-              style={{ width:36, height:20, borderRadius:10, border:"none", cursor:"pointer", padding:2, background:isAdminMode?"#00338D":"#E3EAF3", transition:"background 0.2s", position:"relative", flexShrink:0 }}>
+              style={{ width:36, height:20, borderRadius:0, border:"none", cursor:"pointer", padding:2, background:isAdminMode?"#00338D":"#E3EAF3", transition:"background 0.2s", position:"relative", flexShrink:0 }}>
               <div style={{ width:16, height:16, borderRadius:"50%", background:"white", boxShadow:"0 1px 4px rgba(0,0,0,0.2)", transition:"transform 0.2s", transform:isAdminMode?"translateX(16px)":"translateX(0)" }} />
             </button>
             <span style={{ fontSize:13, color:"#6B7C93", fontWeight:500 }}>Register as Admin</span>
           </div>
 
           {error && (
-            <div style={{ marginTop:14, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:10, fontSize:13, color:"#C53030" }}>
+            <div style={{ marginTop:14, padding:"12px 16px", background:"#FFF5F5", border:"1px solid #FED7D7", borderRadius:0, fontSize:13, color:"#C53030" }}>
               {error}
             </div>
           )}

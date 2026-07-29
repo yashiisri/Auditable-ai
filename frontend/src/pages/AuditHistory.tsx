@@ -72,7 +72,7 @@ const fmtDateTime = (d: string | null) => {
 const scoreGrade = (score: number) => {
   if (score >= 80) return { label: "Excellent", color: "#059669", bg: "#DCFCE7" };
   if (score >= 65) return { label: "Good", color: "#2563EB", bg: "#EFF6FF" };
-  if (score >= 50) return { label: "Fair", color: "#D97706", bg: "#FEF3C7" };
+  if (score >= 50) return { label: "Fair", color: "#2563EB", bg: "#EFF6FF" };
   return { label: "Poor", color: "#64748B", bg: "#F1F5F9" };
 };
 
@@ -227,7 +227,7 @@ export default function AuditHistory() {
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          border-radius: 8px 8px 0 0;
+          border-radius: 0 0 0;
           transition: all 0.2s;
           border-bottom: 2px solid transparent;
         }
@@ -242,14 +242,14 @@ export default function AuditHistory() {
         }
         .chart-card {
           background: white;
-          border-radius: 12px;
+          border-radius: 0px;
           padding: 24px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.08);
           margin-bottom: 24px;
         }
         .run-card {
           background: white;
-          border-radius: 12px;
+          border-radius: 0px;
           padding: 20px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.06);
           border-left: 4px solid #0091DA;
@@ -263,7 +263,7 @@ export default function AuditHistory() {
         .badge {
           display: inline-block;
           padding: 4px 12px;
-          border-radius: 12px;
+          border-radius: 0px;
           font-size: 12px;
           font-weight: 600;
         }
@@ -317,7 +317,7 @@ export default function AuditHistory() {
             <div style={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 12,
+              borderRadius: 0,
               padding: 40,
               textAlign: "center"
             }}>
@@ -349,7 +349,7 @@ export default function AuditHistory() {
                         marginLeft: 8,
                         fontSize: 11,
                         padding: "2px 8px",
-                        borderRadius: 8,
+                        borderRadius: 0,
                         background: selectedAI === group.ai_name ? "#DCFCE7" : "rgba(255,255,255,0.1)",
                         color: selectedAI === group.ai_name ? "#059669" : "rgba(255,255,255,0.5)"
                       }}>
@@ -366,7 +366,7 @@ export default function AuditHistory() {
                     <div style={{
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: 12,
+                      borderRadius: 0,
                       padding: 32,
                       textAlign: "center",
                       animation: "fadeIn 0.6s ease-out 0.2s backwards"
@@ -426,7 +426,7 @@ export default function AuditHistory() {
                               contentStyle={{
                                 background: "white",
                                 border: "1px solid #E2E8F0",
-                                borderRadius: 8,
+                                borderRadius: 0,
                                 fontSize: 12
                               }}
                             />
@@ -466,7 +466,7 @@ export default function AuditHistory() {
                                 contentStyle={{
                                   background: "white",
                                   border: "1px solid #E2E8F0",
-                                  borderRadius: 8,
+                                  borderRadius: 0,
                                   fontSize: 12
                                 }}
                               />
@@ -542,7 +542,7 @@ export default function AuditHistory() {
                                   </div>
                                   <div style={{
                                     padding: "8px 16px",
-                                    borderRadius: 8,
+                                    borderRadius: 0,
                                     background: bg,
                                     color: color,
                                     fontSize: 20,
@@ -556,7 +556,7 @@ export default function AuditHistory() {
                                   <div style={{
                                     background: "#F8FAFC",
                                     border: "1px solid #E2E8F0",
-                                    borderRadius: 8,
+                                    borderRadius: 0,
                                     padding: 12,
                                     marginBottom: 12,
                                     fontSize: 13,
@@ -613,7 +613,7 @@ export default function AuditHistory() {
                                   background: "#00338D",
                                   color: "white",
                                   border: "none",
-                                  borderRadius: 8,
+                                  borderRadius: 0,
                                   fontSize: 13,
                                   fontWeight: 600,
                                   cursor: "pointer",

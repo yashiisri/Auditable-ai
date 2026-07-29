@@ -58,8 +58,8 @@ function explain(key: string): string {
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}body{background:#F8FAFC;}
-.ab-card{background:#fff;border-radius:14px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}
-.ab-row{transition:background 0.12s;border-radius:9px;}
+.ab-card{background:#fff;border-radius: 0px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);}
+.ab-row{transition:background 0.12s;border-radius: 0px;}
 .ab-row:hover{background:#F8FAFC;}
 @keyframes abIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .ab-in{animation:abIn 0.32s cubic-bezier(.22,1,.36,1) both;}
@@ -76,7 +76,7 @@ function InfoTooltip({ text, width = 200 }: { text: string; width?: number }) {
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
       {show && (
-        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", background: "#0F172A", color: "white", fontSize: 11.5, lineHeight: 1.5, padding: "7px 11px", borderRadius: 8, width, pointerEvents: "none", boxShadow: "0 4px 16px rgba(0,0,0,0.25)", zIndex: 9999, whiteSpace: "normal" as const }}>
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", background: "#0F172A", color: "white", fontSize: 11.5, lineHeight: 1.5, padding: "7px 11px", borderRadius: 0, width, pointerEvents: "none", boxShadow: "0 4px 16px rgba(0,0,0,0.25)", zIndex: 9999, whiteSpace: "normal" as const }}>
           {text}
           <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", borderWidth: 5, borderStyle: "solid", borderColor: "#0F172A transparent transparent transparent" }} />
         </div>
@@ -94,7 +94,7 @@ export default function AgentBehaviour() {
 
   if (!raw) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: FF }}>
-      <button onClick={() => navigate("/dashboard")} style={{ padding: "10px 24px", background: M, border: "none", borderRadius: 10, color: "white", fontWeight: 700, cursor: "pointer" }}>← Back</button>
+      <button onClick={() => navigate("/dashboard")} style={{ padding: "10px 24px", background: M, border: "none", borderRadius: 0, color: "white", fontWeight: 700, cursor: "pointer" }}>← Back</button>
     </div>
   );
 
@@ -182,7 +182,7 @@ export default function AgentBehaviour() {
             <div key={i} className="ab-card" style={{ padding: "16px 18px", borderTop: `3px solid ${sc(k.score)}` }}>
               <div style={{ fontSize: 9.5, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "0.6px", marginBottom: 7, display: "flex", alignItems: "center", gap: 4 }}>{k.label}{(k as any).tip && <InfoTooltip text={(k as any).tip} />}</div>
               <div style={{ fontSize: 22, fontWeight: 900, color: sc(k.score), lineHeight: 1 }}>{k.val}</div>
-              <div style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: sb(k.score), color: sc(k.score), marginTop: 5, display: "inline-block", textTransform: "uppercase" }}>{band(k.score)}</div>
+              <div style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 0, background: sb(k.score), color: sc(k.score), marginTop: 5, display: "inline-block", textTransform: "uppercase" }}>{band(k.score)}</div>
             </div>
           ))}
         </div>
@@ -197,24 +197,24 @@ export default function AgentBehaviour() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {DQ_CARDS.map((row, i) => (
               <div key={i} style={{
-                padding: "16px 18px", borderRadius: 10,
+                padding: "16px 18px", borderRadius: 0,
                 background: "#F8FAFC", border: `1px solid ${row.score >= 75 ? "rgba(5,150,105,0.15)" : row.score >= 50 ? "rgba(0,94,184,0.12)" : "#E2E8F0"}`,
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 10 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 4 }}>{row.label}</div>
-                    <code style={{ fontSize: 10.5, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 5, padding: "2px 7px", color: "#64748B", display: "inline-block" }}>{row.formula}</code>
+                    <code style={{ fontSize: 10.5, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 0, padding: "2px 7px", color: "#64748B", display: "inline-block" }}>{row.formula}</code>
                   </div>
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
                     <div style={{ fontSize: 20, fontWeight: 900, color: sc(row.score), lineHeight: 1 }}>{row.value}</div>
-                    <div style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: sb(row.score), color: sc(row.score), marginTop: 4, display: "inline-block", textTransform: "uppercase" }}>{band(row.score)}</div>
+                    <div style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 0, background: sb(row.score), color: sc(row.score), marginTop: 4, display: "inline-block", textTransform: "uppercase" }}>{band(row.score)}</div>
                   </div>
                 </div>
                 {/* Progress bar */}
-                <div style={{ height: 4, background: "#E2E8F0", borderRadius: 99, marginBottom: 10 }}>
-                  <div style={{ width: `${Math.min(row.score, 100)}%`, height: "100%", borderRadius: 99, background: sc(row.score), transition: "width 0.9s ease" }}/>
+                <div style={{ height: 4, background: "#E2E8F0", borderRadius: 0, marginBottom: 10 }}>
+                  <div style={{ width: `${Math.min(row.score, 100)}%`, height: "100%", borderRadius: 0, background: sc(row.score), transition: "width 0.9s ease" }}/>
                 </div>
-                <div style={{ fontSize: 12.5, color: "#475569", lineHeight: 1.7, padding: "10px 12px", background: "#fff", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+                <div style={{ fontSize: 12.5, color: "#475569", lineHeight: 1.7, padding: "10px 12px", background: "#fff", borderRadius: 0, border: "1px solid #E2E8F0" }}>
                   {row.explanation}
                 </div>
               </div>
@@ -223,14 +223,14 @@ export default function AgentBehaviour() {
 
           {/* Detected columns */}
           {d.column_names && d.column_names.length > 0 && (
-            <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 10, background: "#fff", border: "1px solid #E2E8F0" }}>
+            <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 0, background: "#fff", border: "1px solid #E2E8F0" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Detected Columns ({d.column_names.length})</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {d.column_names.map((col: string) => {
                   const isKey = ["task_id", "input", "output", "latency"].some(k => col.toLowerCase().includes(k));
                   return (
                     <span key={col} style={{
-                      padding: "4px 11px", borderRadius: 20, fontSize: 11.5, fontWeight: 500,
+                      padding: "4px 11px", borderRadius: 0, fontSize: 11.5, fontWeight: 500,
                       background: isKey ? "#DCFCE7" : "#F1F5F9",
                       color: isKey ? "#065F46" : "#475569",
                       border: isKey ? "1px solid rgba(5,150,105,0.25)" : "1px solid #E2E8F0",
@@ -260,11 +260,11 @@ export default function AgentBehaviour() {
                 const lbl = METRIC_LABELS[key]?.label || humanise(key);
                 const exp = METRIC_LABELS[key]?.plain || m.description || "";
                 return (
-                  <div key={key} style={{ padding: "16px", borderRadius: 12, background: mcBg, border: `1px solid ${mc}20` }}>
+                  <div key={key} style={{ padding: "16px", borderRadius: 0, background: mcBg, border: `1px solid ${mc}20` }}>
                     <div style={{ fontSize: 10.5, color: "#64748B", fontWeight: 600, letterSpacing: "0.4px", marginBottom: 6, textTransform: "uppercase" }}>{lbl}</div>
                     <div style={{ fontSize: 24, fontWeight: 900, color: mc, marginBottom: 6, lineHeight: 1 }}>{dv}</div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, color: mc, background: "#fff", border: `1px solid ${mc}40`, padding: "2px 8px", borderRadius: 20, fontWeight: 700 }}>{m.risk_level}</span>
+                      <span style={{ fontSize: 11, color: mc, background: "#fff", border: `1px solid ${mc}40`, padding: "2px 8px", borderRadius: 0, fontWeight: 700 }}>{m.risk_level}</span>
                       {m.threshold_low !== undefined && <span style={{ fontSize: 10, color: "#94A3B8" }}>threshold: {m.threshold_low}{m.unit ? ` ${m.unit}` : ""}</span>}
                     </div>
                     {exp && <div style={{ fontSize: 11.5, color: "#475569", lineHeight: 1.6 }}>{exp}</div>}
@@ -288,7 +288,7 @@ export default function AgentBehaviour() {
                   { label: "Computed", count: computed.length, color: "#059669", bg: "#F0FDF4" },
                   { label: "Unavailable", count: unavailable.length, color: "#64748B", bg: "#F1F5F9" },
                 ].map(({ label, count, color, bg }) => (
-                  <div key={label} style={{ padding: "10px 16px", borderRadius: 10, background: bg, textAlign: "center", minWidth: 90 }}>
+                  <div key={label} style={{ padding: "10px 16px", borderRadius: 0, background: bg, textAlign: "center", minWidth: 90 }}>
                     <div style={{ fontSize: 22, fontWeight: 900, color }}>{count}</div>
                     <div style={{ fontSize: 10.5, color: "#64748B", marginTop: 2 }}>{label}</div>
                   </div>
@@ -318,7 +318,7 @@ export default function AgentBehaviour() {
                     <div style={{ fontSize: 18, fontWeight: 900, color: nc, fontFamily: "monospace", textAlign: "right" }}>{val}</div>
                     <div style={{ fontSize: 11, color: "#64748B" }}>{note.library || ""}</div>
                     <div style={{ textAlign: "right" }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: ok ? "#F0FDF4" : "#F1F5F9", color: ok ? "#059669" : "#64748B", border: ok ? "1px solid rgba(5,150,105,0.2)" : "1px solid #E2E8F0" }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 0, background: ok ? "#F0FDF4" : "#F1F5F9", color: ok ? "#059669" : "#64748B", border: ok ? "1px solid rgba(5,150,105,0.2)" : "1px solid #E2E8F0" }}>
                         {ok ? "computed" : "unavailable"}
                       </span>
                     </div>

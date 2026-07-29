@@ -6,8 +6,8 @@ import axios from "axios";
 const B = "#00338D", M = "#005EB8";
 function ah() { return { Authorization: `Bearer ${localStorage.getItem("token")}` }; }
 function fmt(d: string) { return d ? new Date(d).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—"; }
-function sc(s: number) { return s>=75?"#059669":s>=50?"#D97706":"#DC2626"; }
-function sb(s: number) { return s>=75?"#F0FDF4":s>=50?"#FFFBEB":"#FEF2F2"; }
+function sc(s: number) { return s>=75?"#059669":s>=50?"#2563EB":"#64748B"; }
+function sb(s: number) { return s>=75?"#F0FDF4":s>=50?"#EFF6FF":"#F1F5F9"; }
 function band(s: number) { return s>=75?"Strong":s>=50?"Watch":"Critical"; }
 
 export default function AdminPanel() {
@@ -51,15 +51,15 @@ export default function AdminPanel() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        .ac{background:white;border-radius:14px;border:1px solid #E3EAF3;box-shadow:0 2px 10px rgba(0,51,141,0.05);}
+        .ac{background:white;border-radius: 0px;border:1px solid #E3EAF3;box-shadow:0 2px 10px rgba(0,51,141,0.05);}
         .ah:hover{background:#F8FAFF;}
-        .ab{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
-        .as{width:100%;padding:10px 14px 10px 38px;border-radius:10px;border:1.5px solid #E3EAF3;font-size:13px;font-family:inherit;outline:none;transition:border 0.2s;}
+        .ab{display:inline-flex;align-items:center;padding:3px 10px;border-radius: 0px;font-size:11px;font-weight:700;}
+        .as{width:100%;padding:10px 14px 10px 38px;border-radius: 0px;border:1.5px solid #E3EAF3;font-size:13px;font-family:inherit;outline:none;transition:border 0.2s;}
         .as:focus{border-color:#005EB8;}
         .at{border:none;cursor:pointer;font-family:inherit;background:transparent;transition:all 0.18s;}
         .exp-row{cursor:pointer;transition:background 0.15s;}
         .exp-row:hover{background:#F0F6FF;}
-        code{font-family:'Fira Mono','Courier New',monospace;font-size:11.5px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:6px;padding:3px 8px;color:#1E293B;word-break:break-all;}
+        code{font-family:'Fira Mono','Courier New',monospace;font-size:11.5px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius: 0px;padding:3px 8px;color:#1E293B;word-break:break-all;}
       `}</style>
 
       {/* NAV removed — sidebar handles navigation */}
@@ -228,7 +228,7 @@ function AuditOverview({ a, pkeys, prn }: { a:any; pkeys:string[]; prn:any }) {
           { label:"Data Quality",     val:`${a.data_quality_score??0}%`, color:"#059669" },
           { label:"Structural Risk",  val:a.structural_risk||"—", color:a.structural_risk==="Low"?"#059669":a.structural_risk==="Moderate"?"#D97706":"#DC2626" },
         ].map(s => (
-          <div key={s.label} style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"14px 16px", borderTop:`3px solid ${s.color}` }}>
+          <div key={s.label} style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"14px 16px", borderTop:`3px solid ${s.color}` }}>
             <div style={{ fontSize:22, fontWeight:900, color:s.color, lineHeight:1 }}>{s.val}<span style={{ fontSize:11, opacity:0.6 }}>{(s as any).suffix||""}</span></div>
             <div style={{ fontSize:11, color:"#6B7C93", fontWeight:600, marginTop:5 }}>{s.label}</div>
           </div>
@@ -236,11 +236,11 @@ function AuditOverview({ a, pkeys, prn }: { a:any; pkeys:string[]; prn:any }) {
       </div>
       {/* Framework compliance */}
       {Object.keys(fw).length>0 && (
-        <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
+        <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
           <div style={{ fontSize:12, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Framework Compliance</div>
           <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
             {Object.entries(fw).map(([k,v]:any) => (
-              <div key={k} style={{ padding:"8px 14px", borderRadius:10, background:v==="Compliant"?"#F0FDF4":v==="Conditional"?"#FFFBEB":"#FEF2F2", border:`1px solid ${v==="Compliant"?"#86EFAC":v==="Conditional"?"#FCD34D":"#FECACA"}` }}>
+              <div key={k} style={{ padding:"8px 14px", borderRadius:0, background:v==="Compliant"?"#F0FDF4":v==="Conditional"?"#FFFBEB":"#FEF2F2", border:`1px solid ${v==="Compliant"?"#86EFAC":v==="Conditional"?"#FCD34D":"#FECACA"}` }}>
                 <div style={{ fontSize:11, fontWeight:800, color:"#0B1F33" }}>{k.replace(/_/g," ")}</div>
                 <div style={{ fontSize:11, fontWeight:700, color:v==="Compliant"?"#059669":v==="Conditional"?"#D97706":"#DC2626", marginTop:2 }}>{v}</div>
               </div>
@@ -250,7 +250,7 @@ function AuditOverview({ a, pkeys, prn }: { a:any; pkeys:string[]; prn:any }) {
       )}
       {/* Recommendation */}
       {a.recommendation && (
-        <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"18px 20px", borderLeft:"4px solid #005EB8" }}>
+        <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"18px 20px", borderLeft:"4px solid #005EB8" }}>
           <div style={{ fontSize:11, fontWeight:700, color:"#005EB8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>Overall Recommendation</div>
           <p style={{ fontSize:13, color:"#1E293B", lineHeight:1.8, margin:0 }}>{a.recommendation}</p>
         </div>
@@ -269,12 +269,12 @@ function AuditPrinciples({ prn }: { prn: any }) {
         const p = prn[k]; const s = p.score||0; const params = Object.entries(p.parameters||{});
         const isOpen = sel===k;
         return (
-          <div key={k} style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", overflow:"hidden" }}>
+          <div key={k} style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", overflow:"hidden" }}>
             <div onClick={()=>setSel(isOpen?null:k)} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 18px", cursor:"pointer", background:isOpen?"#F8FAFF":"white" }}>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight:700, color:"#0B1F33" }}>{k}</div>
-                <div style={{ height:4, background:"#F1F5F9", borderRadius:99, marginTop:6, width:"100%" }}>
-                  <div style={{ width:`${s}%`, height:"100%", borderRadius:99, background:sc(s), transition:"width 0.6s" }} />
+                <div style={{ height:4, background:"#F1F5F9", borderRadius:0, marginTop:6, width:"100%" }}>
+                  <div style={{ width:`${s}%`, height:"100%", borderRadius:0, background:sc(s), transition:"width 0.6s" }} />
                 </div>
               </div>
               <div style={{ textAlign:"right", flexShrink:0 }}>
@@ -287,11 +287,11 @@ function AuditPrinciples({ prn }: { prn: any }) {
               <div style={{ padding:"0 18px 16px", borderTop:"1px solid #F1F5F9" }}>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:8, marginTop:12 }}>
                   {params.map(([param, val]:any) => (
-                    <div key={param} style={{ padding:"10px 12px", borderRadius:10, background:sb(val), border:`1px solid ${sc(val)}18` }}>
+                    <div key={param} style={{ padding:"10px 12px", borderRadius:0, background:sb(val), border:`1px solid ${sc(val)}18` }}>
                       <div style={{ fontSize:11, fontWeight:700, color:"#0B1F33", marginBottom:4 }}>{param}</div>
                       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <div style={{ flex:1, height:3, background:"#E3EAF3", borderRadius:99 }}>
-                          <div style={{ width:`${val}%`, height:"100%", borderRadius:99, background:sc(val) }} />
+                        <div style={{ flex:1, height:3, background:"#E3EAF3", borderRadius:0 }}>
+                          <div style={{ width:`${val}%`, height:"100%", borderRadius:0, background:sc(val) }} />
                         </div>
                         <span style={{ fontSize:13, fontWeight:800, color:sc(val), flexShrink:0 }}>{val}</span>
                       </div>
@@ -309,7 +309,7 @@ function AuditPrinciples({ prn }: { prn: any }) {
 
 function AuditFindings({ findings }: { findings: any[] }) {
   if (!findings.length) return (
-    <div style={{ padding:"20px 24px", background:"#F0FDF4", border:"1px solid #86EFAC", borderRadius:12, color:"#166534", fontWeight:600, fontSize:13 }}>
+    <div style={{ padding:"20px 24px", background:"#F0FDF4", border:"1px solid #86EFAC", borderRadius:0, color:"#166534", fontWeight:600, fontSize:13 }}>
       ✓ No findings — this audit passed all checks.
     </div>
   );
@@ -319,14 +319,14 @@ function AuditFindings({ findings }: { findings: any[] }) {
         const sev = f.severity==="High"?"#DC2626":f.severity==="Medium"?"#D97706":"#059669";
         const sevBg = f.severity==="High"?"#FEF2F2":f.severity==="Medium"?"#FFFBEB":"#F0FDF4";
         return (
-          <div key={i} style={{ background:"white", borderRadius:12, border:`1.5px solid ${sev}18`, overflow:"hidden" }}>
+          <div key={i} style={{ background:"white", borderRadius:0, border:`1.5px solid ${sev}18`, overflow:"hidden" }}>
             <div style={{ padding:"10px 16px", background:sevBg, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:13, fontWeight:700, color:"#0B1F33" }}>{f.category}</span>
-              <span style={{ fontSize:11, fontWeight:700, color:sev, background:"white", padding:"2px 10px", borderRadius:20, border:`1px solid ${sev}28` }}>{f.severity}</span>
+              <span style={{ fontSize:11, fontWeight:700, color:sev, background:"white", padding:"2px 10px", borderRadius:0, border:`1px solid ${sev}28` }}>{f.severity}</span>
             </div>
             <div style={{ padding:"12px 16px" }}>
               <p style={{ fontSize:13, color:"#1E293B", lineHeight:1.7, margin:"0 0 10px" }}>{f.issue}</p>
-              <div style={{ padding:"10px 14px", borderRadius:8, background:"#EFF6FF", border:"1px solid #BFDBFE" }}>
+              <div style={{ padding:"10px 14px", borderRadius:0, background:"#EFF6FF", border:"1px solid #BFDBFE" }}>
                 <div style={{ fontSize:10, fontWeight:700, color:"#005EB8", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4 }}>Recommendation</div>
                 <p style={{ fontSize:12, color:"#1E40AF", lineHeight:1.65, margin:0 }}>{f.recommendation}</p>
               </div>
@@ -364,7 +364,7 @@ function AuditFormulas({ prn, compNotes, a }: { prn:any; compNotes:any[]; a:any 
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
 
       {/* How scoring works — methodology */}
-      <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"20px 22px" }}>
+      <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"20px 22px" }}>
         <div style={{ fontSize:13, fontWeight:800, color:"#0B1F33", marginBottom:12, display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:16 }}>⚙️</span> Audit Methodology
         </div>
@@ -377,7 +377,7 @@ function AuditFormulas({ prn, compNotes, a }: { prn:any; compNotes:any[]; a:any 
             { step:"5", title:"Overall Score", desc:"Weighted average of all principle scores. Risk level is derived: ≥75 = Low, ≥50 = Moderate, <50 = High." },
             { step:"6", title:"LLM Judge Panel", desc:"For accuracy/safety: Groq + OpenRouter + Together AI independently judge each input/output pair." },
           ].map(s => (
-            <div key={s.step} style={{ display:"flex", gap:12, padding:"12px 14px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
+            <div key={s.step} style={{ display:"flex", gap:12, padding:"12px 14px", borderRadius:0, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
               <div style={{ width:24, height:24, borderRadius:"50%", background:"#00338D", color:"white", display:"grid", placeItems:"center", fontSize:11, fontWeight:800, flexShrink:0 }}>{s.step}</div>
               <div>
                 <div style={{ fontSize:12, fontWeight:700, color:"#0B1F33", marginBottom:3 }}>{s.title}</div>
@@ -390,7 +390,7 @@ function AuditFormulas({ prn, compNotes, a }: { prn:any; compNotes:any[]; a:any 
 
       {/* Per-principle sub-parameter formulas */}
       {pkeys.length>0 && (
-        <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"20px 22px" }}>
+        <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"20px 22px" }}>
           <div style={{ fontSize:13, fontWeight:800, color:"#0B1F33", marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>∑</span> Sub-parameter Formulas
           </div>
@@ -400,10 +400,10 @@ function AuditFormulas({ prn, compNotes, a }: { prn:any; compNotes:any[]; a:any 
               return params.map(([param, val]:any) => {
                 const f = ADMIN_FORMULAS[param];
                 return (
-                  <div key={`${k}-${param}`} style={{ padding:"12px 14px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
+                  <div key={`${k}-${param}`} style={{ padding:"12px 14px", borderRadius:0, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:6 }}>
                       <div>
-                        <span style={{ fontSize:11, fontWeight:700, color:"#7C3AED", background:"#EDE9FE", padding:"1px 7px", borderRadius:8, marginRight:8 }}>{k}</span>
+                        <span style={{ fontSize:11, fontWeight:700, color:"#7C3AED", background:"#EDE9FE", padding:"1px 7px", borderRadius:0, marginRight:8 }}>{k}</span>
                         <span style={{ fontSize:12, fontWeight:700, color:"#0B1F33" }}>{param}</span>
                       </div>
                       <span style={{ fontSize:13, fontWeight:900, color:sc(val), flexShrink:0 }}>{val}/100</span>
@@ -426,7 +426,7 @@ function AuditFormulas({ prn, compNotes, a }: { prn:any; compNotes:any[]; a:any 
 
       {/* Computation notes */}
       {compNotes.length>0 && (
-        <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"20px 22px" }}>
+        <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"20px 22px" }}>
           <div style={{ fontSize:13, fontWeight:800, color:"#0B1F33", marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>🔬</span> Metric Computation Log
           </div>
@@ -434,10 +434,10 @@ function AuditFormulas({ prn, compNotes, a }: { prn:any; compNotes:any[]; a:any 
             {compNotes.map(([key, note]:any) => {
               const ok = note.status==="computed";
               return (
-                <div key={key} style={{ padding:"10px 12px", borderRadius:10, background:ok?"#F0FDF4":"#EFF6FF", border:`1px solid ${ok?"#86EFAC":"#BFDBFE"}` }}>
+                <div key={key} style={{ padding:"10px 12px", borderRadius:0, background:ok?"#F0FDF4":"#EFF6FF", border:`1px solid ${ok?"#86EFAC":"#BFDBFE"}` }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
                     <span style={{ fontSize:11, fontWeight:700, color:"#0B1F33" }}>{key.replace(/_/g," ").replace(/\b\w/g,(c:string)=>c.toUpperCase())}</span>
-                    <span style={{ fontSize:9, fontWeight:700, color:ok?"#059669":"#005EB8", background:"white", padding:"1px 6px", borderRadius:8 }}>{ok?"✓":"—"}</span>
+                    <span style={{ fontSize:9, fontWeight:700, color:ok?"#059669":"#005EB8", background:"white", padding:"1px 6px", borderRadius:0 }}>{ok?"✓":"—"}</span>
                   </div>
                   <div style={{ fontSize:16, fontWeight:900, color:ok?"#059669":"#94A3B8" }}>{note.value!==null&&note.value!==undefined?Number(note.value).toFixed(3):"N/A"}</div>
                   {note.library && <div style={{ fontSize:9, color:"#94A3B8", marginTop:3 }}>{note.library}</div>}
@@ -457,7 +457,7 @@ function AuditData({ a }: { a: any }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
       {/* Diagnostics */}
-      <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
+      <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
         <div style={{ fontSize:12, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Dataset Diagnostics</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:10 }}>
           {[
@@ -468,7 +468,7 @@ function AuditData({ a }: { a: any }) {
             { label:"Duplicates",      val:diag.duplicates??0 },
             { label:"Schema Conf.",    val:diag.schema_confidence!=null?`${(diag.schema_confidence*100).toFixed(0)}%`:"—" },
           ].map(s => (
-            <div key={s.label} style={{ padding:"10px 12px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
+            <div key={s.label} style={{ padding:"10px 12px", borderRadius:0, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
               <div style={{ fontSize:18, fontWeight:800, color:"#0B1F33" }}>{s.val}</div>
               <div style={{ fontSize:11, color:"#6B7C93", marginTop:3 }}>{s.label}</div>
             </div>
@@ -488,13 +488,13 @@ function AuditData({ a }: { a: any }) {
 
       {/* Model metrics */}
       {mm.length>0 && (
-        <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
+        <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
           <div style={{ fontSize:12, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Model-Specific Metrics</div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:10 }}>
             {mm.map(([key, m]:any) => {
               const mc = m.risk_level==="Low"?"#059669":m.risk_level==="Moderate"?"#D97706":"#DC2626";
               return (
-                <div key={key} style={{ padding:"12px 14px", borderRadius:10, background:sb(m.risk_level==="Low"?80:m.risk_level==="Moderate"?60:30), border:`1px solid ${mc}18` }}>
+                <div key={key} style={{ padding:"12px 14px", borderRadius:0, background:sb(m.risk_level==="Low"?80:m.risk_level==="Moderate"?60:30), border:`1px solid ${mc}18` }}>
                   <div style={{ fontSize:11, color:"#6B7C93", textTransform:"uppercase", letterSpacing:"0.05em", fontWeight:600, marginBottom:4 }}>{key.replace(/_/g," ")}</div>
                   <div style={{ fontSize:20, fontWeight:800, color:mc }}>{m.unit==="ms"?`${Math.round(m.value)}ms`:m.value.toFixed(3)}</div>
                   <div style={{ fontSize:10, color:mc, marginTop:3, fontWeight:700 }}>{m.risk_level}</div>
@@ -508,7 +508,7 @@ function AuditData({ a }: { a: any }) {
 
       {/* LLM Judge */}
       {a.llm_judge && (
-        <div style={{ background:"white", borderRadius:12, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
+        <div style={{ background:"white", borderRadius:0, border:"1px solid #E3EAF3", padding:"18px 20px" }}>
           <div style={{ fontSize:12, fontWeight:700, color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>LLM Judge Results</div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:10 }}>
             {[
@@ -517,7 +517,7 @@ function AuditData({ a }: { a: any }) {
               { label:"Correct",     val:a.llm_judge.correct??0 },
               { label:"Model",       val:a.llm_judge.model||"—" },
             ].map(s => (
-              <div key={s.label} style={{ padding:"10px 12px", borderRadius:10, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
+              <div key={s.label} style={{ padding:"10px 12px", borderRadius:0, background:"#F8FAFC", border:"1px solid #E3EAF3" }}>
                 <div style={{ fontSize:18, fontWeight:800, color:"#0B1F33" }}>{s.val}</div>
                 <div style={{ fontSize:11, color:"#6B7C93", marginTop:3 }}>{s.label}</div>
               </div>
