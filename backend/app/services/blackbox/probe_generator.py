@@ -1123,7 +1123,7 @@ async def _call_groq(meta_prompt: str, api_key: str, max_tokens: int = 4096) -> 
         "Content-Type":  "application/json",
     }
     payload = {
-        "model":       "llama-3.3-70b-versatile",
+        "model":       "openai/gpt-oss-120b",
         "messages":    [{"role": "user", "content": meta_prompt}],
         "max_tokens":  max_tokens,
         "temperature": 0.7,
@@ -1526,7 +1526,7 @@ async def generate_dynamic_probes(
 
     return probes, {
         "source":               "groq_dynamic",
-        "model_used":           "llama-3.3-70b-versatile",
+        "model_used":           "openai/gpt-oss-120b",
         "ai_description":       ai_description,
         "ai_domain":            ai_domain,
         "probes_generated":     len(probes),

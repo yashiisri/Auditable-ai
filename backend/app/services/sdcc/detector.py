@@ -29,7 +29,7 @@ Phase 3 — Semantic token matching
 
 Phase 4 — Groq LLM tiebreaker (optional)
   When Phases 1-3 are ambiguous (top-2 gap < 0.15), sends a compact
-  data sample to Groq llama-3.1-8b-instant for a structured JSON answer.
+  data sample to Groq openai/gpt-oss-20b for a structured JSON answer.
   Requires GROQ_API_KEY env var or explicit api_key parameter.
   Gracefully skipped if unavailable.
 """
@@ -456,7 +456,7 @@ def _score_from_tokens(df: pd.DataFrame, roles: dict[str, str]) -> dict[str, flo
 # ─────────────────────────────────────────────────────────────────────────────
 
 _GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MDL = "llama-3.1-8b-instant"
+_GROQ_MDL = "openai/gpt-oss-20b"
 
 _GROQ_SYS = """You are an expert AI system analyst. Identify what kind of AI model produced the data shown.
 

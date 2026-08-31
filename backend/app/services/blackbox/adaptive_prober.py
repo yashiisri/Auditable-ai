@@ -193,7 +193,7 @@ async def generate_wave_probes(
     url     = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {
-        "model":       "llama-3.1-8b-instant",
+        "model":       "openai/gpt-oss-20b",
         "messages":    [{"role": "user", "content": prompt}],
         "max_tokens":  1800,
         "temperature": 0.8,

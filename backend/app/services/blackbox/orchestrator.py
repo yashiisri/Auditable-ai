@@ -108,7 +108,7 @@ _PROVIDER_MODELS: dict[str, str] = {
     "anthropic":     "claude-3-haiku-20240307",
     "openai":        "gpt-3.5-turbo",
     "mistral":       "mistral-small-latest",
-    "groq":          "llama-3.3-70b-versatile",
+    "groq":          "openai/gpt-oss-120b",
     "openrouter":    "openai/gpt-3.5-turbo",
     "cohere":        "command-r",
     "together":      "mistralai/Mixtral-8x7B-Instruct-v0.1",
@@ -238,15 +238,30 @@ async def _call_api(
         except Exception as exc:
             return f"[ERROR] {exc}", round((time.perf_counter() - t0) * 1000, 1)
 
-    # Discovery: try all auth × format combinations until one works
+    # Discovery: try all auth × format combinations until one works.
+    # Track every attempt so a failed discovery can report *why* it failed
+    # instead of a bare "could not discover a working configuration".
+    attempts = 0
+    last_failure: Optional[dict] = None
+    auth_failure_seen = False
+
     for auth_name, auth_template in _AUTH_HEADER_VARIANTS:
+        # Once we've seen a clean 401/403 for this auth header, every format
+        # under it will fail identically (the key itself was rejected before
+        # the body was ever parsed) — no point burning 6 more requests on it.
         auth_value = auth_template.format(key=api_key)
         headers = {"Content-Type": "application/json", auth_name: auth_value}
         if provider == "anthropic":
             headers["anthropic-version"] = "2023-06-01"
 
+        auth_rejected_this_header = False
+
         for fmt in _ALTERNATIVE_FORMATS:
+            if auth_rejected_this_header:
+                break
+
             payload = _build_payload(prompt, provider, fmt)
+            attempts += 1
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     r = await client.post(endpoint, json=payload, headers=headers)
@@ -265,11 +280,69 @@ async def _call_api(
                                 auth_name, fmt,
                             )
                             return text, latency
-            except (httpx.ConnectError, httpx.TimeoutException, Exception):
-                pass
+
+                    body_snippet = r.text[:300] if r.text else ""
+                    last_failure = {
+                        "status": r.status_code,
+                        "auth":   auth_name,
+                        "format": fmt,
+                        "body":   body_snippet,
+                    }
+
+                    # 401/403 means the credential was rejected outright —
+                    # every other payload format under this same auth header
+                    # will fail the exact same way, so stop trying them.
+                    if r.status_code in (401, 403):
+                        auth_rejected_this_header = True
+                        auth_failure_seen = True
+
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
+                last_failure = {
+                    "status": None,
+                    "auth":   auth_name,
+                    "format": fmt,
+                    "body":   f"{type(exc).__name__}: {exc}",
+                }
+            except Exception as exc:
+                last_failure = {
+                    "status": None,
+                    "auth":   auth_name,
+                    "format": fmt,
+                    "body":   f"{type(exc).__name__}: {exc}",
+                }
+
+        # If every format under this auth header was rejected as an auth
+        # failure, there's no reason to try the *other* auth header variants
+        # either — they all wrap the same bad key.
+        if auth_failure_seen:
+            break
 
     latency = round((time.perf_counter() - t0) * 1000, 1)
-    return "[CONNECTION ERROR] Could not discover a working configuration.", latency
+
+    if last_failure and last_failure["status"] in (401, 403):
+        return (
+            f"[HTTP {last_failure['status']}] Invalid API key "
+            f"(auth={last_failure['auth']}, format={last_failure['format']}): "
+            f"{last_failure['body']}"
+        ), latency
+
+    if last_failure:
+        detail = (
+            f"(auth={last_failure['auth']}, format={last_failure['format']}): "
+            f"{last_failure['body']}"
+        )
+        return (
+            f"[CONNECTION ERROR] Could not discover a working configuration "
+            f"after {attempts} attempts. Last failure: HTTP {last_failure['status']} {detail}"
+            if last_failure["status"] is not None
+            else f"[CONNECTION ERROR] Could not discover a working configuration "
+                 f"after {attempts} attempts. Last failure: {detail}"
+        ), latency
+
+    return (
+        f"[CONNECTION ERROR] Could not discover a working configuration "
+        f"after {attempts} attempts."
+    ), latency
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -282,12 +355,12 @@ async def validate_connection(endpoint: str, api_key: str) -> dict:
 
     text, _latency = await _call_api(resolved, api_key, "Hello, respond with one word.", provider, timeout=15)
 
+    if text.startswith("[HTTP 401") or text.startswith("[HTTP 403"):
+        return {"ok": False, "code": 401, "reason": text, "provider": provider, "resolved_endpoint": resolved}
     if text.startswith("[CONNECTION ERROR]"):
         return {"ok": False, "code": 503, "reason": text, "provider": provider, "resolved_endpoint": resolved}
     if text.startswith("[TIMEOUT]"):
         return {"ok": False, "code": 504, "reason": text, "provider": provider, "resolved_endpoint": resolved}
-    if text.startswith("[HTTP 401") or text.startswith("[HTTP 403"):
-        return {"ok": False, "code": 401, "reason": "Authentication failed. Check your API key.", "provider": provider, "resolved_endpoint": resolved}
 
     result: dict = {"ok": True, "provider": provider, "resolved_endpoint": resolved}
     if text.startswith("[HTTP"):

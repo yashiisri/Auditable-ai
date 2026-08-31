@@ -1,5 +1,3 @@
-
-
 """
 app/routes/report_audit_routes.py  ─  PRODUCTION v2
 =====================================================
@@ -287,7 +285,7 @@ def _groq_call(client: Groq, messages: list, max_tokens: int = 4_000, temp: floa
     for attempt in range(MAX_RETRIES):
         try:
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="openai/gpt-oss-120b",
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temp,

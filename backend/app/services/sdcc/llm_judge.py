@@ -1,4 +1,3 @@
-
 """
 services/sdcc/llm_judge.py
 ===========================
@@ -23,7 +22,7 @@ FIXES vs previous version
 
 JUDGE PANEL
 -----------
-  Judge 1 — Groq         : llama-3.3-70b-versatile   (fast, open-weight)
+  Judge 1 — Groq         : openai/gpt-oss-120b       (fast, open-weight)
   Judge 2 — OpenRouter   : mistralai/mistral-large    (different architecture)
   Judge 3 — Together AI  : Qwen/Qwen2.5-72B-Instruct (different training data)
 
@@ -47,7 +46,7 @@ import pandas as pd
 
 # ── Model identifiers ──────────────────────────────────────────────────────────
 _GROQ_URL         = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MODEL       = "llama-3.3-70b-versatile"
+_GROQ_MODEL       = "openai/gpt-oss-120b"
 
 _OPENROUTER_URL   = "https://openrouter.ai/api/v1/chat/completions"
 _OPENROUTER_MODEL = "mistralai/mistral-large"
@@ -282,7 +281,7 @@ class JudgePanel:
         tog_key  = together_api_key   or os.environ.get("TOGETHER_API_KEY", "")
 
         if groq_key:
-            self.judges.append({"name": "Groq/Llama-3.3-70B",        "url": _GROQ_URL,        "key": groq_key, "model": _GROQ_MODEL})
+            self.judges.append({"name": "Groq/GPT-OSS-120B",         "url": _GROQ_URL,        "key": groq_key, "model": _GROQ_MODEL})
         if or_key:
             self.judges.append({"name": "OpenRouter/Mistral-Large",   "url": _OPENROUTER_URL,  "key": or_key,   "model": _OPENROUTER_MODEL})
         if tog_key:

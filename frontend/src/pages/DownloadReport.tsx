@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const M = "#005EB8", B = "#00338D";
@@ -51,15 +51,29 @@ export default function DownloadReport() {
     } finally { setPdfLoading(false); }
   };
 
+  const Icon = ({ path, viewBox = "0 0 24 24" }: { path: ReactNode; viewBox?: string }) => (
+    <svg width="18" height="18" viewBox={viewBox} fill="none" stroke={M} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {path}
+    </svg>
+  );
+
   const SECTIONS = [
-    { icon:"◈", title:"Executive Summary",        desc:"Overall governance score, risk level, AI system metadata, model type, detection confidence, and deployment readiness assessment." },
-    { icon:"⊕", title:"Regulatory Alignment",     desc:"Alignment with EU AI Act, ISO 42001, NIST AI RMF, and KPMG Trusted AI Framework — with sub-parameter policy mapping." },
-    { icon:"⚠", title:"Risk Intelligence",        desc:"Complete findings breakdown by severity (High/Medium/Low), deployment blockers, governance exposure, and regulatory risk indicators." },
-    { icon:"◎", title:"LLM Judge Analysis",       desc:"Triple-judge accuracy panel results, confidence breakdown, KB groundedness, disputed rows, and evaluation methodology." },
-    { icon:"⬡", title:"Governance Principles",    desc:"10-dimension Trusted AI assessment with spider chart, principle scores, sub-parameter drill-down, and scoring formulas." },
-    { icon:"◉", title:"Agent Behaviour",          desc:"Model-specific metrics, data structural integrity, schema coverage, computation notes, and metric traceability." },
-    { icon:"✦", title:"Recommendations",          desc:"Per-principle remediation guidance for all 10 Trusted AI dimensions with prioritised action plans and implementation roadmap." },
-    { icon:"📊", title:"Framework Compliance",    desc:"Detailed compliance status across all four governance frameworks with alignment scores and maturity indicators." },
+    { icon:<Icon path={<><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="0.5"/><rect x="12.5" y="8" width="3" height="10" rx="0.5"/><rect x="18" y="5" width="3" height="13" rx="0.5"/></>}/>,
+      title:"Executive Summary",        desc:"Overall governance score, risk level, AI system metadata, model type, detection confidence, and deployment readiness assessment." },
+    { icon:<Icon path={<><path d="M12 3 4 6.5v5c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10v-5L12 3z"/><path d="m9.5 12 1.8 1.8L15 10"/></>}/>,
+      title:"Regulatory Alignment",     desc:"Alignment with EU AI Act, ISO 42001, NIST AI RMF, and KPMG Trusted AI Framework — with sub-parameter policy mapping." },
+    { icon:<Icon path={<><path d="m12 3 9.5 17H2.5L12 3z"/><line x1="12" y1="10" x2="12" y2="14.5"/><line x1="12" y1="17" x2="12" y2="17.01"/></>}/>,
+      title:"Risk Intelligence",        desc:"Complete findings breakdown by severity (High/Medium/Low), deployment blockers, governance exposure, and regulatory risk indicators." },
+    { icon:<Icon path={<><path d="M12 2v3"/><path d="M12 19v3"/><path d="m5 6 3.5 2"/><path d="m15.5 16 3.5 2"/><path d="m5 18 3.5-2"/><path d="m15.5 8 3.5-2"/><circle cx="12" cy="12" r="3.2"/></>}/>,
+      title:"LLM Judge Analysis",       desc:"Triple-judge accuracy panel results, confidence breakdown, KB groundedness, disputed rows, and evaluation methodology." },
+    { icon:<Icon path={<polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"/>}/>,
+      title:"Governance Principles",    desc:"10-dimension Trusted AI assessment with spider chart, principle scores, sub-parameter drill-down, and scoring formulas." },
+    { icon:<Icon path={<><rect x="7" y="7" width="10" height="10" rx="1"/><rect x="10" y="10" width="4" height="4" rx="0.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></>}/>,
+      title:"Agent Behaviour",          desc:"Model-specific metrics, data structural integrity, schema coverage, computation notes, and metric traceability." },
+    { icon:<Icon path={<path d="m12 2 2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z"/>}/>,
+      title:"Recommendations",          desc:"Per-principle remediation guidance for all 10 Trusted AI dimensions with prioritised action plans and implementation roadmap." },
+    { icon:<Icon path={<><rect x="3" y="12" width="4" height="9" rx="0.5"/><rect x="10" y="7" width="4" height="14" rx="0.5"/><rect x="17" y="3" width="4" height="18" rx="0.5"/></>}/>,
+      title:"Framework Compliance",     desc:"Detailed compliance status across all four governance frameworks with alignment scores and maturity indicators." },
   ];
 
   return (
