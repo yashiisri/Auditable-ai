@@ -1116,7 +1116,27 @@ Generate all 50 probes now (5 per principle × 10 principles):"""
 
 # ── Groq API call ─────────────────────────────────────────────────────────────
 
-async def _call_groq(meta_prompt: str, api_key: str, max_tokens: int = 4096) -> Optional[str]:
+async def _call_groq(
+    meta_prompt: str,
+    api_key: str,
+    max_tokens: int = 2000,
+    _retries: int = 4,
+) -> Optional[str]:
+    """
+    Call Groq with automatic retry on 429 rate-limit responses.
+
+    Respects the Retry-After header Groq sends with every 429 — that header
+    contains the exact number of seconds to wait, so we sleep that long
+    (plus a 0.5 s buffer) rather than guessing.
+    Falls back to exponential backoff (2, 4, 8, 16 s) if the header is absent.
+    Gives up after _retries consecutive 429s and returns None (fallback probes
+    will be used instead).
+    max_tokens defaulted down to 2000 (was 4096) to stay within the 8k TPM
+    free-tier limit per call.
+    """
+    import asyncio as _asyncio
+    import re as _re
+
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -1128,17 +1148,67 @@ async def _call_groq(meta_prompt: str, api_key: str, max_tokens: int = 4096) -> 
         "max_tokens":  max_tokens,
         "temperature": 0.7,
     }
-    try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(url, json=payload, headers=headers)
-            resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
-    except httpx.HTTPStatusError as e:
-        logger.error(f"[probe_generator] Groq HTTP {e.response.status_code}: {e.response.text[:300]}")
-    except httpx.TimeoutException:
-        logger.error("[probe_generator] Groq timed out after 60s.")
-    except Exception as e:
-        logger.error(f"[probe_generator] Groq unexpected error: {e}")
+
+    for attempt in range(_retries + 1):
+        try:
+            async with httpx.AsyncClient(timeout=90) as client:
+                resp = await client.post(url, json=payload, headers=headers)
+
+                if resp.status_code == 429:
+                    wait: Optional[float] = None
+
+                    # 1. Groq Retry-After header (seconds as float or int)
+                    retry_after = (resp.headers.get("retry-after")
+                                   or resp.headers.get("x-ratelimit-reset-tokens"))
+                    if retry_after:
+                        try:
+                            wait = float(retry_after) + 0.5
+                        except ValueError:
+                            pass
+
+                    # 2. Parse "try again in Xs" from the error message body
+                    if wait is None:
+                        try:
+                            msg = resp.json().get("error", {}).get("message", "")
+                            m = _re.search(r"try again in ([\d.]+)s", msg)
+                            if m:
+                                wait = float(m.group(1)) + 0.5
+                        except Exception:
+                            pass
+
+                    # 3. Exponential fallback
+                    if wait is None:
+                        wait = 2.0 ** (attempt + 1)
+
+                    if attempt < _retries:
+                        logger.warning(
+                            "[probe_generator] Groq 429 (attempt %d/%d) — "
+                            "waiting %.1fs then retrying",
+                            attempt + 1, _retries, wait,
+                        )
+                        await _asyncio.sleep(wait)
+                        continue
+                    else:
+                        logger.error(
+                            "[probe_generator] Groq 429 — exhausted %d retries, "
+                            "falling back to static probes", _retries,
+                        )
+                        return None
+
+                resp.raise_for_status()
+                return resp.json()["choices"][0]["message"]["content"]
+
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                "[probe_generator] Groq HTTP %s: %s",
+                e.response.status_code, e.response.text[:300],
+            )
+        except httpx.TimeoutException:
+            logger.error("[probe_generator] Groq timed out after 90s.")
+        except Exception as e:
+            logger.error("[probe_generator] Groq unexpected error: %s", e)
+        return None
+
     return None
 
 
@@ -1377,15 +1447,27 @@ async def generate_wave1_batches(
             logger.warning(f"[probe_generator] Batch {batch_num} produced no probes — skipping.")
             continue
 
-        # ── Run all probes in this batch SEQUENTIALLY ──────────────────────
-        # Rationale: concurrent probes hammer the target API and Groq simultaneously,
-        # causing 429s on both ends. Sequential keeps throughput predictable and
-        # stays within rate limits. Each probe ~2-4s → 10 probes ~20-40s per batch.
-        logger.info(f"[probe_generator] Wave 1 Batch {batch_num} — running {len(batch_probes)} probes sequentially…")
-        batch_results = []
-        for probe in batch_probes:
-            result = await run_probe_fn(probe)
-            batch_results.append(result)
+        # ── Run all probes in this batch with bounded concurrency ──────────
+        # Was strictly sequential (1 at a time): "each probe ~2-4s -> 10
+        # probes ~20-40s per batch" x 5 batches = 100-200s for Wave 1 alone,
+        # before Wave 2/3 and fingerprinting even start. That serial design
+        # (not "the audit is just slow") is the real cause of the frontend's
+        # "timeout of 30000ms exceeded". A small bounded pool (same knob as
+        # orchestrator._run_wave_sequentially — BLACKBOX_PROBE_CONCURRENCY,
+        # default 3) keeps requests-in-flight capped just as safely against
+        # rate limits, while cutting this batch's wall-clock ~3x.
+        logger.info(f"[probe_generator] Wave 1 Batch {batch_num} — running {len(batch_probes)} probes (bounded concurrency)…")
+        concurrency = max(1, int(os.getenv("BLACKBOX_PROBE_CONCURRENCY", "3")))
+        if concurrency == 1 or len(batch_probes) <= 1:
+            batch_results = []
+            for probe in batch_probes:
+                batch_results.append(await run_probe_fn(probe))
+        else:
+            sem = asyncio.Semaphore(concurrency)
+            async def _bounded_run(probe):
+                async with sem:
+                    return await run_probe_fn(probe)
+            batch_results = await asyncio.gather(*[_bounded_run(p) for p in batch_probes])
 
         all_probes.extend(batch_probes)
         all_results.extend(batch_results)

@@ -50,6 +50,11 @@ const IconDownload = () => (
     <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
   </svg>
 );
+const IconTaxonomy = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+  </svg>
+);
 const IconChevronRight = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6"/>
@@ -62,13 +67,20 @@ const IconCode = () => (
 );
 
 // ── Route metadata — matches Sidebar.tsx paths exactly ───────────────────────
-
+// NOTE: this list previously had 9 entries and was missing "/taf-taxonomy",
+// even though Sidebar.tsx's REPORT_ITEMS has 10 and includes it. Because
+// LensFooter/AuditContextBar index into *this* array by pathname, visiting
+// /taf-taxonomy always produced findIndex() === -1 — which is exactly why
+// the footer showed "Step 0 of 9", an empty Prev button, and defaulted
+// Next to REPORT_SECTIONS[0] ("Executive Summary"). Keep this list in sync
+// with Sidebar.tsx's REPORT_ITEMS whenever a report page is added/removed.
 const REPORT_SECTIONS = [
   { path: "/audit-overview",        label: "Executive Summary",     shortLabel: "Summary",    icon: IconSummary  },
   { path: "/agent-behaviour",       label: "Data Quality",          shortLabel: "Data",       icon: IconDatabase },
   { path: "/llm-analysis",          label: "LLM Analysis",          shortLabel: "LLM",        icon: IconBrain    },
   { path: "/governance-principles", label: "Governance Principles", shortLabel: "Principles", icon: IconShield   },
   { path: "/regulatory-alignment",  label: "Regulatory Alignment",  shortLabel: "Regulatory", icon: IconGlobe    },
+  { path: "/taf-taxonomy",          label: "TAF Taxonomy",          shortLabel: "Taxonomy",   icon: IconTaxonomy },
   { path: "/code-build-risk",       label: "Build Vulnerabilities", shortLabel: "Build",      icon: IconCode     },
   { path: "/risk-intelligence",     label: "Risk & Actions",        shortLabel: "Risks",      icon: IconAlert    },
   { path: "/recommendations",       label: "Recommendations",       shortLabel: "Actions",    icon: IconLightbulb},

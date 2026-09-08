@@ -261,6 +261,7 @@ export default function RiskIntelligence() {
   // Code & Build Risk — display-only signal layer (build_risk.py)
   const buildRisk: any = r.code_build_risk || null;
   const hasBuildRisk = !!(buildRisk && buildRisk.applicable);
+  const buildRiskNarrative: string = buildRisk?.ai_narrative || "";
 
   // Quantitative model-quality metrics (base_evaluator.model_metrics) — distinct
   // evidence from the LLM-judged findings above: real computed values + thresholds.

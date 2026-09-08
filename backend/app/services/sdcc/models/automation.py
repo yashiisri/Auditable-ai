@@ -1,4 +1,3 @@
-
 """
 services/sdcc/models/automation.py
 =====================================
@@ -258,3 +257,27 @@ class AutomationEvaluator(BaseEvaluator):
             "avg_retry_rate":       "Add idempotency and circuit breaker patterns.",
             "avg_step_latency_ms":  "Profile bottlenecks; add async execution.",
         }.get(m, f"Investigate elevated risk in '{m}'.")
+
+    def _context_for_rec(self, principle: str, worst_param: str) -> str:
+        """Model-type-specific context for the Groq recommendation prompt."""
+        if principle == "Fairness":
+            return "Agentic automation systems may discriminate in who they route tasks to or whose requests they prioritise."
+        if principle == "Security":
+            return "Agentic systems with tool access are high-value targets — prompt injection can cause them to exfiltrate data or take destructive actions."
+        if principle == "Privacy":
+            return "Agentic systems often access multiple data sources — they can aggregate PII from several systems in ways that violate data minimisation."
+        if principle == "Transparency":
+            return "Agentic systems take sequences of autonomous actions — each action should be logged and explainable to affected users."
+        if principle == "Explainability":
+            return "Agentic systems' multi-step reasoning chains are often opaque — the connection between an input and a final action is hard to trace."
+        if principle == "Accountability":
+            return "Agentic systems that take real-world actions (send emails, book appointments) must have clear escalation paths and human override."
+        if principle == "Reliability":
+            return "Agentic systems can get stuck in loops or fail silently when a tool call fails — error handling and retry logic are commonly weak."
+        if principle == "Data Integrity":
+            return "Agentic systems may write to databases or external services — incorrect data written by an agent is harder to remediate than a wrong text output."
+        if principle == "Safety":
+            return "Agentic systems can cause irreversible harm through autonomous actions — a safety guardrail must exist before any write or external call."
+        if principle == "Sustainability":
+            return "Agentic systems make multiple LLM calls per task — the compound inference cost is significantly higher than a single-shot system."
+        return ""

@@ -22,6 +22,39 @@ const DOMAIN_OPTS = [
   "Agriculture & Environment", "Other",
 ];
 
+// ── TAF Risk Category capabilities ──────────────────────────────────────────
+// GAI (Generative AI) is always included — we only audit generative systems.
+// The user picks which additional risk categories apply based on what the AI
+// system does. Each option maps 1-to-1 with a category in taf_taxonomy.json.
+// The code values (PAI, PD, DM, DP) are what gets stored and sent to the backend.
+
+const TAF_CAPABILITY_OPTS: { code: string; label: string; sublabel: string; icon: string }[] = [
+  {
+    code:     "PAI",
+    label:    "Predictive AI",
+    sublabel: "Classifies, scores, or forecasts outcomes (e.g. credit scoring, fraud detection, churn prediction)",
+    icon:     "M3 3h18v4H3zM3 10h12v4H3zM3 17h8v4H3z",  // bar-chart shape
+  },
+  {
+    code:     "PD",
+    label:    "Pattern Discovery",
+    sublabel: "Clusters, segments, or detects anomalies without predefined labels (e.g. customer segmentation, anomaly detection)",
+    icon:     "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 4v4l3 3",  // search / discover
+  },
+  {
+    code:     "DM",
+    label:    "Decision-Making / Agentic AI",
+    sublabel: "Takes autonomous actions, routes workflows, or makes binding decisions (e.g. booking agents, approval systems)",
+    icon:     "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
+  },
+  {
+    code:     "DP",
+    label:    "Data Personalisation",
+    sublabel: "Recommends or personalises content, products, or experiences for individual users",
+    icon:     "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
+  },
+];
+
 const END_USER_OPTS = [
   "Internal Employees", "External Customers (B2C)", "Business Clients (B2B)",
   "Healthcare Professionals", "Students & Learners", "Government Officials",
@@ -192,32 +225,38 @@ function buildOptions(domain: string, field: FieldKey, generic: string[]): strin
 // ── Steps ─────────────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, label: "About the Agent",   sub: "Name, domain & system prompt", icon: "◈" },
-  { id: 2, label: "Target Users",        sub: "Define Scope and users",  icon: "⊕" },
-  { id: 3, label: "Risk & Oversight",  sub: "Controls, stakes & compliance", icon: "⬡" },
-  { id: 4, label: "Review & Register", sub: "Confirm and submit",            icon: "✦" },
+  { id: 1, label: "Basic info",         sub: "Name, domain & description"        },
+  { id: 2, label: "Users & data",       sub: "Who uses it and what it handles"   },
+  { id: 3, label: "Capabilities",       sub: "What else does it do?"             },
+  { id: 4, label: "Risk & oversight",   sub: "Controls and worst-case scenarios" },
+  { id: 5, label: "Review & register",  sub: "Confirm and submit"                },
 ];
 
 const SIDEBAR_CONTENT: Record<number, { heading: string; body: string; facts: string[] }> = {
   1: {
-    heading: "What are we registering?",
-    body:    "Your agent's name and domain set the context for the entire audit. The description and system prompt are used directly by the LLM Judge panel to understand the agent's intended behaviour.",
-    facts:   ["Domain shapes which probes are generated", "System prompt improves LLM Judge accuracy by ~20%", "Name appears on your final PDF report"],
+    heading: "Start with the basics",
+    body:    "The name and description travel with your agent through the whole audit — they show up on the final PDF report and help the AI judge panel understand what the system is supposed to do. Domain helps us tailor the probes. System prompt is optional but makes the judge noticeably sharper.",
+    facts:   ["Name appears on your final PDF report", "Domain tailors which probes are generated", "System prompt boosts judge accuracy by ~20%"],
   },
   2: {
-    heading: "Why does deployment context matter?",
-    body:    "Who uses the agent, what data it touches, and how it influences decisions directly shapes which governance probes are generated — and how hard they are. An agent processing medical records gets different adversarial scenarios than one answering FAQs.",
-    facts:   ["End-user type adjusts safety probe intensity", "Data types activate privacy-specific probes", "Decision influence sets the accountability bar", "Jurisdictions trigger regulation-specific checks"],
+    heading: "Context shapes the whole audit",
+    body:    "Who's on the receiving end of this AI, what data it handles, and where it's deployed directly affects which checks get run and how strict the thresholds are. A chatbot handling medical records gets very different tests than one answering FAQs.",
+    facts:   ["End-user type adjusts safety probe intensity", "Data types activate privacy-specific probes", "Jurisdictions trigger regulation-specific checks"],
   },
   3: {
-    heading: "What's the highest-stakes failure?",
-    body:    "Describing the worst realistic failure case lets the auditor target the exact risk scenarios that matter for your agent — rather than generic adversarial tests. Oversight level directly affects Accountability and Safety TAF scores.",
-    facts:   ["Stakes description improves probe specificity", "Oversight level influences 3 of 10 TAF principles", "Bias testing history affects Fairness scoring", "Autonomous actions activate agentic safety probes"],
+    heading: "What risk controls apply?",
+    body:    "Generative AI risk checks run for every system — that's automatic. This step is about telling us if your system also does anything extra: predicting outcomes, making autonomous decisions, personalising content, or finding patterns in data. Each one unlocks its own set of additional audit controls.",
+    facts:   ["Generative AI controls always run — already included", "Each capability adds its own TAF risk controls", "You can pick multiple if the system does several things"],
   },
   4: {
-    heading: "What happens after registration?",
-    body:    "Your agent is added to the AI Register. From the dashboard you can upload inference logs or trigger a black box audit to begin the full evaluation pipeline. You'll provide connection credentials there — they're audit-time secrets, not stored config.",
-    facts:   ["Appears in your AI Register immediately", "Upload logs or run Black Box Audit from dashboard", "Full TAF report generated in minutes", "Connection details entered fresh per audit (never stored)"],
+    heading: "What's the worst that could happen?",
+    body:    "The oversight level and worst-case failure description let us target the exact risk scenarios that matter — instead of running generic tests. The build provenance section powers the Code & Build Risk tab.",
+    facts:   ["Oversight level affects 3 of 10 TAF principles", "Failure description sharpens probe targeting", "Build provenance enables Code & Build Risk checks"],
+  },
+  5: {
+    heading: "Almost there",
+    body:    "Your agent gets added to the AI Register right away. To run the audit, head to the Dashboard — you'll enter your API key and endpoint there each time. Credentials are never stored here.",
+    facts:   ["Appears in your AI Register immediately", "Run the Black Box Audit from the Dashboard", "Connection details entered fresh each time — never stored"],
   },
 };
 
@@ -531,35 +570,24 @@ export default function RegisterAi() {
   const [error, setError]     = useState("");
 
   // Step 1 — Identity
-  const [name, setName]       = useState("");
-  const [domain, setDomain]   = useState("");
-  const [desc, setDesc]       = useState("");
-  const [sysPrompt, setSysPr] = useState("");
+  const [name, setName]             = useState("");
+  const [domain, setDomain]         = useState("");
+  const [desc, setDesc]             = useState("");
+  const [sysPrompt, setSysPr]       = useState("");
+  // TAF risk category scope (GAI always implicit; user picks extras here)
+  const [tafCategories, setTafCategories] = useState<string[]>([]);
 
-  // Step 2 — Deployment context
-  //   These map directly to the fields _extract_registration_value() reads:
-  //   end_users → "users" dimension
-  //   decision_influence → enriched description context
-  //   data_types → "sensitive_data" dimension (multi-select)
-  //   jurisdictions → "jurisdiction" dimension (multi-select)
-  //   deployment_status → enriched description context
-  //   real_time_data → "data_access" dimension
-  //   autonomous_actions → "autonomous_actions" dimension
+  // Step 3 — Users & data
   const [endUsers, setEndUsers]                 = useState("");
-  const [decisionInfluence, setDecisionInfl]    = useState("");
   const [dataTypes, setDataTypes]               = useState<string[]>([]);
   const [jurisdictions, setJurisdictions]       = useState<string[]>([]);
   const [deploymentStatus, setDeploymentStatus] = useState("");
-  const [realTimeData, setRealTimeData]         = useState("");
-  const [autonomousActions, setAutonomousActions] = useState("");
+  // Merged field: what the AI can do autonomously (real-time data + actions)
+  const [agentCapabilities, setAgentCapabilities] = useState("");
 
-  // Step 3 — Governance
-  //   oversight_model → Accountability / Safety TAF scores
-  //   highestStakes → "refusals" dimension in fingerprinter
-  //   outputVisibility → transparency probes
-  //   biasTested → Fairness scoring context
+  // Step 4 — Risk & oversight
+  const [decisionInfluence, setDecisionInfl]    = useState("");
   const [oversight, setOversight]               = useState("");
-  const [outputVisibility, setOutputVisibility] = useState("");
   const [highestStakes, setHighestStakes]       = useState("");
   const [biasTested, setBiasTested]             = useState("");
 
@@ -570,8 +598,9 @@ export default function RegisterAi() {
 
   const canNext = () => {
     if (step === 1) return name.trim().length > 1 && Boolean(domain);
-    if (step === 2) return Boolean(endUsers) && Boolean(decisionInfluence) && Boolean(deploymentStatus);
-    if (step === 3) return Boolean(oversight);
+    if (step === 2) return Boolean(endUsers) && Boolean(deploymentStatus);
+    if (step === 3) return true; // capability picker — all optional beyond GAI
+    if (step === 4) return Boolean(oversight);
     return true;
   };
 
@@ -582,30 +611,30 @@ export default function RegisterAi() {
         name:        name.trim(),
         description: desc.trim() || `${name} — ${domain} AI agent`,
         domain,
-        // Connector is a stub — real credentials are entered per-audit in the Dashboard.
-        // The backend schema requires the field, so we send an empty placeholder.
         connector: { type: "", endpoint: "", headers: {} },
-        // All context fields feed into the behavioral fingerprinter and probe generator.
         profile: {
           end_users:              endUsers,
           decision_influence:     decisionInfluence,
           data_types:             dataTypes,
           jurisdictions,
           deployment_status:      deploymentStatus,
-          real_time_data:         realTimeData,
-          autonomous_actions:     autonomousActions,
+          // agentCapabilities is a merged free-text field covering both what
+          // the agent can access (real-time data/tools) and what it can act on.
+          // We send the same value to both backend slots so existing fingerprinter
+          // logic that reads either field continues to work.
+          real_time_data:         agentCapabilities,
+          autonomous_actions:     agentCapabilities,
           oversight_model:        oversight,
-          output_visibility:      outputVisibility,
+          output_visibility:      "",   // removed from UI — no longer collected
           highest_stakes_failure: highestStakes,
           bias_tested:            biasTested,
-          // Build provenance — gates the Code & Build Risk checks/tab.
-          // Normalised to the short tokens the backend expects.
           ai_generated:           aiGenerated.startsWith("Yes") ? "Yes"
                                  : aiGenerated.startsWith("Partially") ? "Partially"
                                  : aiGenerated.startsWith("No") ? "No" : "Unknown",
           ai_codegen_tools:       aiCodegenTools,
           human_review_gate:      reviewGate.startsWith("Yes") ? "Yes"
                                  : reviewGate.startsWith("No") ? "No" : "Unknown",
+          taf_applicable_categories: tafCategories,
         },
       });
       localStorage.setItem("activeAI", name.trim());
@@ -678,40 +707,42 @@ export default function RegisterAi() {
               <div style={{ marginBottom:28 }}>
                 <div style={{ fontSize:11, fontWeight:800, color:M, letterSpacing:"2px", textTransform:"uppercase" as const, marginBottom:8 }}>Step {step} of {STEPS.length}</div>
                 <div style={{ fontSize:22, fontWeight:900, color:"#0B1F33", letterSpacing:"-0.4px", marginBottom:6 }}>
-                  {step === 1 && "About your AI agent"}
-                  {step === 2 && "Deployment & risk scope"}
-                  {step === 3 && "Governance & oversight"}
-                  {step === 4 && "Review & confirm"}
+                  {step === 1 && "Tell us about your AI agent"}
+                  {step === 2 && "Who uses it and what data does it handle?"}
+                  {step === 3 && "What else does it do?"}
+                  {step === 4 && "Risk, oversight & build context"}
+                  {step === 5 && "Review & confirm"}
                 </div>
                 <div style={{ fontSize:14, color:"#7A90A8", lineHeight:1.6 }}>
-                  {step === 1 && "Give your agent a name and context. This shapes the probes and informs the LLM Judge panel."}
-                  {step === 2 && "Who uses this agent, what data it handles, and how it makes decisions. This determines the probe types and risk thresholds."}
-                  {step === 3 && "Oversight model, highest-stakes failure mode, and compliance context. These directly affect Accountability and Safety scores."}
-                  {step === 4 && "Confirm all details before registering your agent. Connection credentials are provided fresh at audit time from the Dashboard."}
+                  {step === 1 && "Give it a name, pick the industry, and describe what it does. This is the foundation of your audit record."}
+                  {step === 2 && "This shapes which probes get generated and how hard the thresholds are. Be as specific as you can."}
+                  {step === 3 && "Generative AI controls always run automatically. Tick anything extra that applies — each one adds its own risk controls to the audit."}
+                  {step === 4 && "A few questions about oversight, failure modes, and how the system was built. These directly affect accountability and safety scoring."}
+                  {step === 5 && "Everything looks good? Hit register — you can always update details later from the Dashboard."}
                 </div>
               </div>
 
-              {/* ── STEP 1: Identity ── */}
+              {/* ── STEP 1: Basic info ── */}
               {step === 1 && (
                 <div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 20px" }}>
-                    <Field label="Agent Name" required>
+                    <Field label="Agent name" required hint="What do you call it? This appears on your audit report.">
                       <input className="rai-inp" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Acme Customer Support Bot" />
                     </Field>
-                    <Field label="Industry Domain" required>
+                    <Field label="Industry" required hint="Pick the sector this agent operates in.">
                       <div className="rai-sel-wrap">
                         <select className="rai-sel" value={domain} onChange={e => setDomain(e.target.value)} style={{ color: domain ? "#0F172A" : "#B0C0D4" }}>
-                          <option value="">Select domain…</option>
+                          <option value="">Select industry…</option>
                           {DOMAIN_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                         </select>
                         <ChevronDown />
                       </div>
                     </Field>
                   </div>
-                  <Field label="Description" hint="What does this agent do? Used as the audit record description and fed to the LLM Judge.">
-                    <textarea className="rai-ta" value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g. Handles inbound customer queries for billing and returns…" />
+                  <Field label="What does it do?" hint="Plain English is fine — one or two sentences. This description goes into the audit record and helps the judge panel understand the agent's purpose.">
+                    <textarea className="rai-ta" value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g. Answers billing and returns questions for Acme's online store. Escalates to a human agent if it can't resolve the query." />
                   </Field>
-                  <Field label="System Prompt" hint="Optional — but significantly improves LLM Judge accuracy. Paste the actual system prompt your agent uses.">
+                  <Field label="System prompt" hint="Optional, but it makes the AI judge panel noticeably more accurate. Paste the actual prompt if you have it.">
                     <textarea className="rai-ta" value={sysPrompt} onChange={e => setSysPr(e.target.value)}
                       placeholder="You are a helpful assistant for Acme Corp. You help customers with…"
                       style={{ minHeight:80, fontFamily:"'Fira Code', 'JetBrains Mono', monospace", fontSize:12.5 }} />
@@ -719,97 +750,160 @@ export default function RegisterAi() {
                 </div>
               )}
 
-              {/* ── STEP 2: Deployment & risk scope ── */}
+              {/* ── STEP 2: Users & data ── */}
               {step === 2 && (
                 <div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
-                    <Field label="Primary End Users" required hint="Affects safety probe intensity and vulnerability risk classification.">
+                    <Field label="Who uses this agent?" required hint="Pick the closest match. This adjusts how hard the safety probes hit.">
                       <OptionCards options={buildOptions(domain, "endUsers", END_USER_OPTS)} value={endUsers} onChange={setEndUsers} />
                     </Field>
-                    <Field label="Decision Influence" required hint="How much does this agent influence real decisions? Sets the accountability bar.">
-                      <OptionCards options={[...DECISION_INFLUENCE_OPTS, OTHER_OPT]} value={decisionInfluence} onChange={setDecisionInfl} />
+                    <Field label="Where is it deployed?" required hint="Affects how risk thresholds are weighted.">
+                      <OptionCards options={[...DEPLOYMENT_STATUS_OPTS, OTHER_OPT]} value={deploymentStatus} onChange={setDeploymentStatus} />
                     </Field>
                   </div>
 
-                  <Field label="Sensitive Data Processed" hint="Select all that apply. Activates privacy and data protection probes.">
+                  <Field label="What kind of data does it process?" hint="Tick everything that applies — this activates the relevant privacy and data-protection probes.">
                     <CheckCards options={buildOptions(domain, "dataTypes", DATA_TYPE_OPTS)} values={dataTypes} onChange={setDataTypes} />
                   </Field>
 
-                  <Field label="Regulatory Jurisdictions" hint="Select all that apply. Triggers regulation-specific compliance probes.">
+                  <Field label="Which regulations apply?" hint="Tick all that apply. Each one triggers its own compliance checks.">
                     <CheckCards options={buildOptions(domain, "jurisdictions", JURISDICTION_OPTS)} values={jurisdictions} onChange={setJurisdictions} />
                   </Field>
 
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
-                    <Field label="Deployment Status" required hint="Affects how audit results are weighted for production risk.">
-                      <OptionCards options={[...DEPLOYMENT_STATUS_OPTS, OTHER_OPT]} value={deploymentStatus} onChange={setDeploymentStatus} />
-                    </Field>
-                    <Field label="Output Visibility" hint="Who sees this agent's outputs?">
-                      <OptionCards options={[...OUTPUT_VISIBILITY_OPTS, OTHER_OPT]} value={outputVisibility} onChange={setOutputVisibility} />
-                    </Field>
-                  </div>
-
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 20px" }}>
-                    <Field label="Real-time Data / Tool Access" hint="Does it query live APIs, databases, or search? Activates agentic data-access probes.">
-                      <input className="rai-inp" value={realTimeData} onChange={e => setRealTimeData(e.target.value)} placeholder="e.g. Queries customer CRM, weather API, internal KB" />
-                    </Field>
-                    <Field label="Autonomous Actions" hint="Can it send emails, modify records, make payments, or call external services?">
-                      <input className="rai-inp" value={autonomousActions} onChange={e => setAutonomousActions(e.target.value)} placeholder="e.g. Books appointments, sends confirmation emails" />
-                    </Field>
-                  </div>
+                  <Field label="Can it take actions on its own?" hint="e.g. sending emails, querying live databases, booking appointments, calling external APIs. Leave blank if it only reads and responds.">
+                    <input className="rai-inp" value={agentCapabilities} onChange={e => setAgentCapabilities(e.target.value)}
+                      placeholder="e.g. Queries the CRM, sends confirmation emails, books appointments" />
+                  </Field>
                 </div>
               )}
 
-              {/* ── STEP 3: Governance ── */}
+              {/* ── STEP 3: Capability picker (TAF risk scope) ── */}
               {step === 3 && (
                 <div>
+                  {/* Intro strip */}
+                  <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.15)", marginBottom:24 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style={{ fontSize:13, color:"#1E3A5F", lineHeight:1.65 }}>
+                      <strong>Generative AI risk controls are already included for every audit.</strong>{" "}
+                      If your system also predicts outcomes, makes autonomous decisions, recommends content, or spots patterns in data — tick those below. Each one adds its own set of audit controls. Leave everything blank if it's purely a generative assistant.
+                    </span>
+                  </div>
+
+                  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                    {TAF_CAPABILITY_OPTS.map(opt => {
+                      const checked = tafCategories.includes(opt.code);
+                      return (
+                        <button key={opt.code} type="button"
+                          onClick={() => setTafCategories(prev =>
+                            prev.includes(opt.code) ? prev.filter(c => c !== opt.code) : [...prev, opt.code]
+                          )}
+                          style={{
+                            display:"flex", alignItems:"center", gap:16,
+                            padding:"16px 20px", border:`1.5px solid ${checked ? M : "#DDE5EF"}`,
+                            background: checked ? "rgba(0,94,184,0.04)" : "#FAFBFD",
+                            cursor:"pointer", textAlign:"left", width:"100%",
+                            transition:"all 0.18s", fontFamily:FF,
+                          }}
+                        >
+                          {/* Checkbox */}
+                          <div style={{
+                            width:22, height:22, borderRadius:"50%", flexShrink:0,
+                            border:`2px solid ${checked ? M : "#CBD5E1"}`,
+                            background: checked ? M : "transparent",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            transition:"all 0.18s",
+                          }}>
+                            {checked && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                          </div>
+
+                          {/* Text */}
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontSize:14, fontWeight:700, color: checked ? B : "#1E293B", marginBottom:3 }}>{opt.label}</div>
+                            <div style={{ fontSize:12.5, color:"#64748B", lineHeight:1.55 }}>{opt.sublabel}</div>
+                          </div>
+
+                          {/* Code badge */}
+                          <div style={{
+                            padding:"3px 9px", fontSize:10.5, fontWeight:800,
+                            letterSpacing:"0.5px", fontFamily:"'Fira Code', monospace",
+                            color: checked ? M : "#94A3B8",
+                            border:`1.5px solid ${checked ? M : "#E2E8F0"}`,
+                            background: checked ? "rgba(0,94,184,0.06)" : "#F8FAFC",
+                            transition:"all 0.18s", flexShrink:0,
+                          }}>{opt.code}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {tafCategories.length === 0 && (
+                    <div style={{ marginTop:16, fontSize:12.5, color:"#94A3B8", textAlign:"center", padding:"10px 0" }}>
+                      Nothing selected — only Generative AI controls will run. That's fine for a pure chatbot or assistant.
+                    </div>
+                  )}
+                  {tafCategories.length > 0 && (
+                    <div style={{ marginTop:16, padding:"10px 16px", background:"#F0FDF4", border:"1px solid #BBF7D0", fontSize:12.5, color:"#065F46" }}>
+                      {tafCategories.length} additional {tafCategories.length === 1 ? "category" : "categories"} selected — those controls will be included in your audit alongside the Generative AI baseline.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── STEP 4: Risk & oversight ── */}
+              {step === 4 && (
+                <div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
-                    <Field label="Human Oversight Level" required hint="Directly affects Accountability and Safety TAF scores.">
+                    <Field label="How much human oversight is there?" required hint="This directly affects Accountability and Safety scores in your TAF report.">
                       <OptionCards options={buildOptions(domain, "oversight", OVERSIGHT_OPTS)} value={oversight} onChange={setOversight} />
                     </Field>
                     <div>
-                      <Field label="Highest-Stakes Failure Mode" hint="One sentence: what's the worst realistic failure? Used to generate targeted adversarial probes.">
-                        <textarea className="rai-ta" value={highestStakes} onChange={e => setHighestStakes(e.target.value)}
-                          placeholder="e.g. Misclassifies a fraud case as legitimate, causing financial loss to a customer"
-                          style={{ minHeight:90 }} />
-                      </Field>
-                      <Field label="Has Bias Testing Been Done?" hint="Affects how the Fairness principle is scored.">
-                        <OptionCards options={[...BIAS_TESTED_OPTS, OTHER_OPT]} value={biasTested} onChange={setBiasTested} />
+                      <Field label="How does it influence decisions?" hint="Pick the option that best describes what happens when the AI produces an output.">
+                        <OptionCards options={[...DECISION_INFLUENCE_OPTS, OTHER_OPT]} value={decisionInfluence} onChange={setDecisionInfl} />
                       </Field>
                     </div>
                   </div>
 
-                  {/* Build provenance — powers the Code & Build Risk tab */}
-                  <div style={{ marginTop:20, paddingTop:20, borderTop:"1.5px solid #EEF2F7" }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:"#0B1F33", marginBottom:2 }}>How was this app built?</div>
-                    <div style={{ fontSize:12.5, color:"#7A90A8", marginBottom:16, lineHeight:1.55 }}>
-                      Used to run build-quality checks and populate the Code &amp; Build Risk tab. Leave as "No / Unknown" to skip those checks.
+                  <Field label="What's the worst realistic failure?" hint="One sentence is enough. This is used to generate targeted adversarial probes — the more specific, the better.">
+                    <textarea className="rai-ta" value={highestStakes} onChange={e => setHighestStakes(e.target.value)}
+                      placeholder="e.g. Marks a legitimate transaction as fraud and locks a customer's account without human review"
+                      style={{ minHeight:80 }} />
+                  </Field>
+
+                  <Field label="Has bias testing been done?" hint="Affects how the Fairness principle is scored.">
+                    <OptionCards options={[...BIAS_TESTED_OPTS, OTHER_OPT]} value={biasTested} onChange={setBiasTested} />
+                  </Field>
+
+                  {/* Build provenance */}
+                  <div style={{ marginTop:24, paddingTop:20, borderTop:"1.5px solid #EEF2F7" }}>
+                    <div style={{ fontSize:14, fontWeight:800, color:"#0B1F33", marginBottom:4 }}>How was this system built?</div>
+                    <div style={{ fontSize:13, color:"#7A90A8", marginBottom:18, lineHeight:1.6 }}>
+                      Powers the Code &amp; Build Risk tab. Skip this section (leave as No / Unknown) if it's not relevant.
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 32px" }}>
-                      <Field label="Built with AI code-gen tools?" hint="e.g. Cursor, Copilot, Claude Code, Lovable, v0. Enables the build-risk probes.">
+                      <Field label="Was AI used to write the code?">
                         <OptionCards options={AI_GENERATED_OPTS} value={aiGenerated} onChange={setAiGenerated} />
                       </Field>
                       <div>
-                        <Field label="Which tool(s)?" hint="Optional. Shown as context on the Code & Build Risk tab.">
+                        <Field label="Which tools?" hint="Optional — just for context on the report.">
                           <input className="rai-inp" value={aiCodegenTools} onChange={e => setAiCodegenTools(e.target.value)}
-                            placeholder="e.g. Cursor + Lovable" />
+                            placeholder="e.g. Cursor + GitHub Copilot" />
                         </Field>
-                        <Field label="Human code review before deploy?" hint="A missing review gate is itself a governance finding.">
+                        <Field label="Is there a human code review before deploy?">
                           <OptionCards options={REVIEW_GATE_OPTS} value={reviewGate} onChange={setReviewGate} />
                         </Field>
                       </div>
                     </div>
                   </div>
 
-                  {/* Connection callout — explains where credentials go */}
-                  <div style={{ marginTop:8, display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", borderRadius:0, fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
+                  <div style={{ marginTop:12, display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:2 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <span><strong>Connection details (API key, endpoint URL) are not stored here.</strong> You'll enter them each time you run a Black Box Audit from the Dashboard — keeping credentials out of the registration record entirely.</span>
+                    <span><strong>API keys and endpoint URLs aren't stored here.</strong> You enter them each time you kick off a Black Box Audit from the Dashboard.</span>
                   </div>
                 </div>
               )}
 
-              {/* ── STEP 4: Review ── */}
-              {step === 4 && (
+              {/* ── STEP 5: Review ── */}
+              {step === 5 && (
                 <div>
                   <div style={{ borderRadius:0, border:"1.5px solid #E2EAF4", overflow:"hidden", marginBottom:22 }}>
                     <div style={{ background:B, padding:"12px 20px" }}>
@@ -818,30 +912,29 @@ export default function RegisterAi() {
                     </div>
                     <div style={{ padding:"4px 20px 12px", background:"#FAFBFD" }}>
                       {([
-                        ["Domain",               domain],
-                        ["Description",          desc || `${name} — ${domain} agent`],
-                        ["End Users",            endUsers],
-                        ["Decision Influence",   decisionInfluence],
-                        ["Data Types",           dataTypes.join(", ") || "—"],
-                        ["Jurisdictions",        jurisdictions.join(", ") || "—"],
-                        ["Deployment Status",    deploymentStatus],
-                        ["Real-time Data",       realTimeData || "—"],
-                        ["Autonomous Actions",   autonomousActions || "—"],
-                        ["Output Visibility",    outputVisibility || "—"],
-                        ["Human Oversight",      oversight],
-                        ["Highest-Stakes Risk",  highestStakes || "—"],
-                        ["Bias Testing",         biasTested || "—"],
+                        ["Industry",          domain],
+                        ["Description",       desc || `${name} — ${domain} agent`],
+                        ["Who uses it",       endUsers],
+                        ["Deployed",          deploymentStatus],
+                        ["Data processed",    dataTypes.join(", ") || "—"],
+                        ["Regulations",       jurisdictions.join(", ") || "—"],
+                        ["Agent actions",     agentCapabilities || "—"],
+                        ["Risk categories",   ["Generative AI (always)", ...tafCategories.map(c => TAF_CAPABILITY_OPTS.find(o => o.code === c)?.label ?? c)].join(", ")],
+                        ["Decision influence",decisionInfluence || "—"],
+                        ["Human oversight",   oversight],
+                        ["Worst-case failure",highestStakes || "—"],
+                        ["Bias testing",      biasTested || "—"],
                       ] as [string, string][]).map(([k, v]) => (
                         <div className="rai-review-row" key={k}>
                           <span style={{ color:"#64748B", fontWeight:500, flexShrink:0 }}>{k}</span>
-                          <span style={{ color:"#0F172A", fontWeight:600, textAlign:"right", maxWidth:"60%", wordBreak:"break-all" }}>{v || "—"}</span>
+                          <span style={{ color:"#0F172A", fontWeight:600, textAlign:"right", maxWidth:"60%", wordBreak:"break-word" }}>{v || "—"}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div style={{ display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", borderRadius:0, fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
+                  <div style={{ display:"flex", gap:12, padding:"14px 18px", background:"#F0F6FF", border:"1.5px solid rgba(0,94,184,0.18)", fontSize:13, color:"#1E3A5F", lineHeight:1.7 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:2 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <span>After registering, go to <strong style={{ color:B }}>Run Audit</strong> on the Dashboard. You'll enter your API key and endpoint there to start the Black Box Audit.</span>
+                    <span>After registering, go to <strong style={{ color:B }}>Run Audit</strong> on the Dashboard. You'll enter your API key and endpoint there to kick off the Black Box Audit.</span>
                   </div>
                 </div>
               )}
@@ -861,7 +954,7 @@ export default function RegisterAi() {
                   Back
                 </button>
               ) : <div />}
-              {step < 4 ? (
+              {step < 5 ? (
                 <button className="rai-btn-p" onClick={() => canNext() && setStep(step + 1)} disabled={!canNext()}>
                   Continue
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -910,18 +1003,17 @@ export default function RegisterAi() {
                   desc.trim().length > 0,
                   sysPrompt.trim().length > 0,
                   Boolean(endUsers),
-                  Boolean(decisionInfluence),
+                  Boolean(deploymentStatus),
                   dataTypes.length > 0,
                   jurisdictions.length > 0,
-                  Boolean(deploymentStatus),
-                  Boolean(outputVisibility),
-                  realTimeData.trim().length > 0,
-                  autonomousActions.trim().length > 0,
+                  agentCapabilities.trim().length > 0,
+                  tafCategories.length > 0,
+                  Boolean(decisionInfluence),
                   Boolean(oversight),
                   highestStakes.trim().length > 0,
                   Boolean(biasTested),
                 ].filter(Boolean).length;
-                const total = 15;
+                const total = 14;
                 const pct = Math.round((answered / total) * 100);
                 return (
                   <>

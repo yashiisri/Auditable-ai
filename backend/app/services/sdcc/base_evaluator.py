@@ -307,6 +307,7 @@ class BaseEvaluator(ABC):
     # ── Structural helpers ────────────────────────────────────────────────────
 
     def _structural(self, diagnostics: dict, logs_count: int) -> dict:
+        diagnostics = diagnostics or {}  # guard against None
         missing  = diagnostics.get("missing_ratio", 0.0)
         dupes    = diagnostics.get("duplicates", 0)
         schema_c = diagnostics.get("schema_confidence", 0.8)
@@ -471,7 +472,20 @@ class BaseEvaluator(ABC):
             "high_model_metric_risks": high_metrics,
         }
 
-    def generate_findings(self, principles, model_metrics) -> list:
+    def generate_findings(
+        self,
+        principles: dict,
+        model_metrics: dict,
+        finding_recommendations: Optional[dict] = None,
+    ) -> list:
+        """
+        Generate per-principle and per-metric findings.
+
+        finding_recommendations: optional dict from rec_synthesizer (Call 1).
+        When present, uses the Groq-generated specific recommendation;
+        falls back to the generic _rec_for_principle() when absent.
+        """
+        fr = finding_recommendations or {}
         findings = []
         for name, data in principles.items():
             if data["score"] < 60:
@@ -480,10 +494,10 @@ class BaseEvaluator(ABC):
                     "type":           "structural",
                     "severity":       "High" if data["score"] < 40 else "Medium",
                     "issue":          f"{name} score is {data['score']}/100 — governance gap detected.",
-                    "recommendation": self._rec_for_principle(name, data.get("parameters", {})),
+                    "recommendation": fr.get(name) or self._rec_for_principle(name, data.get("parameters", {})),
                 })
         for metric_name, metric_data in model_metrics.items():
-            if metric_data.get("risk_level")=="High" and metric_data.get("value") is not None:
+            if metric_data.get("risk_level") == "High" and metric_data.get("value") is not None:
                 findings.append({
                     "category":   metric_name,
                     "type":       "model_metric",
@@ -491,9 +505,9 @@ class BaseEvaluator(ABC):
                     "issue":      (
                         f"{metric_data['description']} is at risk "
                         f"(value: {metric_data['value']:.3f}"
-                        f"{' '+metric_data['unit'] if metric_data.get('unit') else ''})."
+                        f"{' ' + metric_data['unit'] if metric_data.get('unit') else ''})."
                     ),
-                    "recommendation": self._rec_for_metric(metric_name),
+                    "recommendation": fr.get(metric_name) or self._rec_for_metric(metric_name),
                 })
         return findings
 
@@ -504,10 +518,37 @@ class BaseEvaluator(ABC):
     def param_score(self, params: dict) -> int:
         return self.clamp(sum(params.values()) / max(len(params), 1))
 
-    # Subclasses override _STRUCTURAL_RECS with their own principle recs
+    # ── Recommendation hooks ───────────────────────────────────────────────────
+    # _STRUCTURAL_RECS is kept for backward compat but is no longer the primary
+    # path — rec_synthesizer.py generates tailored recommendations via Groq.
+    # Subclasses should also implement _context_for_rec() which provides a
+    # model-type-specific context sentence that feeds the Groq prompt, making
+    # Groq's output aware of model-type nuances without hardcoding the rec text.
     _STRUCTURAL_RECS: dict[str, dict[str, str]] = {}
 
+    def _context_for_rec(self, principle: str, worst_param: str) -> str:
+        """
+        Return a SHORT context sentence for the Groq prompt that makes the
+        generated recommendation model-type-aware.
+
+        Subclasses override this. Base returns empty string (Groq still works,
+        just without model-type context).
+        """
+        return ""
+
+    def _context_for_rec_all(self, principles: dict) -> dict[str, str]:
+        """Build the context dict for all principles to feed into rec_synthesizer."""
+        out = {}
+        for name, data in principles.items():
+            params = data.get("parameters", {})
+            worst = min(params, key=lambda k: params[k]) if params else ""
+            ctx = self._context_for_rec(name, worst)
+            if ctx:
+                out[name] = ctx
+        return out
+
     def _rec_for_principle(self, principle: str, params: dict) -> str:
+        """Generic fallback — used when Groq is unavailable."""
         worst = min(params, key=lambda k: params[k]) if params else None
         table = self._STRUCTURAL_RECS.get(principle, {})
         if worst and worst in table:
@@ -515,4 +556,5 @@ class BaseEvaluator(ABC):
         return f"Review and strengthen {principle.lower()} controls across all sub-parameters."
 
     def _rec_for_metric(self, metric_name: str) -> str:
+        """Generic fallback — used when Groq is unavailable."""
         return f"Investigate elevated risk in metric '{metric_name}' and review model outputs."

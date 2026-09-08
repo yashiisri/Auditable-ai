@@ -1,6 +1,3 @@
-
-
-
 """
 services/sdcc/models/general_llm.py
 ======================================
@@ -250,3 +247,27 @@ class GeneralLLMEvaluator(BaseEvaluator):
             "avg_perplexity":     "Consider domain fine-tuning or a better base model.",
             "avg_latency_ms":     "Add caching, use streaming, or switch to a faster model.",
         }.get(m, f"Investigate elevated risk in '{m}'.")
+
+    def _context_for_rec(self, principle: str, worst_param: str) -> str:
+        """Model-type-specific context for the Groq recommendation prompt."""
+        if principle == "Fairness":
+            return "General LLMs often produce subtly different response quality for queries mentioning different demographic groups — look for tone and length disparities in outputs."
+        if principle == "Security":
+            return "General LLMs are the primary target of prompt injection — the model may comply with adversarial instructions embedded in user input."
+        if principle == "Privacy":
+            return "General LLMs can inadvertently reconstruct or infer PII from training data, especially when asked about specific individuals."
+        if principle == "Transparency":
+            return "General LLMs tend to express overconfidence — they often state uncertain things as facts without hedging language."
+        if principle == "Explainability":
+            return "General LLMs frequently give conclusions without visible reasoning chains, making outputs hard to verify."
+        if principle == "Accountability":
+            return "General LLMs rarely escalate autonomously — they may attempt to answer high-stakes questions that should be deferred."
+        if principle == "Reliability":
+            return "General LLMs are sensitive to prompt phrasing — semantically identical questions can produce inconsistent outputs."
+        if principle == "Data Integrity":
+            return "General LLMs can hallucinate citations and fabricate data points, especially for niche or recent topics."
+        if principle == "Safety":
+            return "General LLMs can be steered toward harmful content through multi-turn jailbreaking or roleplay escalation."
+        if principle == "Sustainability":
+            return "General LLMs tend toward verbose outputs — they often over-answer simple queries, wasting inference compute."
+        return ""

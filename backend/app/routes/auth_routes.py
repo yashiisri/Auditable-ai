@@ -1,3 +1,10 @@
+"""
+app/routes/auth_routes.py
+=========================
+Authentication endpoints — identical business logic, now backed by PostgreSQL
+via the PgCollection shim.  Adds toast-friendly error responses: every 4xx
+detail is a short human-readable string the frontend can display in a toast.
+"""
 
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
@@ -12,14 +19,15 @@ from app.dependencies import get_current_user
 router = APIRouter()
 
 
-# ── Register (auditor) ────────────────────────────────────────────────────
+# ── Register (auditor) ────────────────────────────────────────────────────────
 @router.post("/register")
 def register(user: RegisterSchema):
-    existing_user = users_collection.find_one({"email": user.email})
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already exists")
-
-    new_user = {
+    if users_collection.find_one({"email": user.email}):
+        raise HTTPException(
+            status_code=400,
+            detail="An account with this email already exists.",   # toast-ready
+        )
+    users_collection.insert_one({
         "name":        user.name,
         "email":       user.email,
         "password":    hash_password(user.password),
@@ -28,22 +36,22 @@ def register(user: RegisterSchema):
         "created_at":  datetime.utcnow(),
         "last_login":  None,
         "audit_count": 0,
-    }
-    users_collection.insert_one(new_user)
+    })
     return {"message": "User registered successfully"}
 
 
-# ── Register Admin ────────────────────────────────────────────────────────
+# ── Register Admin ─────────────────────────────────────────────────────────────
 class AdminRegisterSchema(BaseModel):
-    name: str = Field(..., min_length=2, max_length=100)
-    email: EmailStr
-    password: str = Field(..., min_length=8)
+    name:     str   = Field(..., min_length=2, max_length=100)
+    email:    EmailStr
+    password: str   = Field(..., min_length=8)
+
 
 @router.post("/register-admin")
 def register_admin(user: AdminRegisterSchema):
     if users_collection.find_one({"email": user.email}):
-        raise HTTPException(status_code=400, detail="Email already exists")
-    new_user = {
+        raise HTTPException(status_code=400, detail="An account with this email already exists.")
+    users_collection.insert_one({
         "name":        user.name,
         "email":       user.email,
         "password":    hash_password(user.password),
@@ -52,45 +60,46 @@ def register_admin(user: AdminRegisterSchema):
         "created_at":  datetime.utcnow(),
         "last_login":  None,
         "audit_count": 0,
-    }
-    users_collection.insert_one(new_user)
+    })
     return {"message": "Admin registered successfully"}
 
 
-# ── Login ─────────────────────────────────────────────────────────────────
+# ── Login ──────────────────────────────────────────────────────────────────────
 @router.post("/login", response_model=TokenResponse)
 def login(user: LoginSchema):
     db_user = users_collection.find_one({"email": user.email})
     if not db_user:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Invalid email or password.")
 
     stored = db_user.get("password", "")
     if not stored.startswith("$2b$") and not stored.startswith("$2a$"):
-        raise HTTPException(status_code=400, detail="Corrupted password. Please re-register.")
-
+        raise HTTPException(
+            status_code=400,
+            detail="Account password is corrupted — please re-register.",
+        )
     if not verify_password(user.password, stored):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Invalid email or password.")
 
     users_collection.update_one(
-        {"_id": db_user["_id"]},
+        {"email": user.email},
         {"$set": {"last_login": datetime.utcnow()}},
     )
 
     token = create_access_token({
         "sub":     db_user["email"],
-        "user_id": str(db_user["_id"]),
+        "user_id": str(db_user.get("id") or db_user.get("_id")),
         "role":    db_user["role"],
     })
     return {"access_token": token, "token_type": "bearer"}
 
 
-# ── Get Profile ───────────────────────────────────────────────────────────
+# ── Get Profile ────────────────────────────────────────────────────────────────
 @router.get("/me")
 def get_profile(current_user=Depends(get_current_user)):
     created = current_user.get("created_at")
     last    = current_user.get("last_login")
     return {
-        "id":          str(current_user["_id"]),
+        "id":          str(current_user.get("id") or current_user.get("_id")),
         "name":        current_user["name"],
         "email":       current_user["email"],
         "role":        current_user["role"],
@@ -100,7 +109,7 @@ def get_profile(current_user=Depends(get_current_user)):
     }
 
 
-# ── Update Profile (name) ─────────────────────────────────────────────────
+# ── Update Profile ─────────────────────────────────────────────────────────────
 class UpdateProfileSchema(BaseModel):
     name: Optional[str] = None
 
@@ -115,12 +124,9 @@ def update_profile(payload: UpdateProfileSchema, current_user=Depends(get_curren
         updates["name"] = name
     if not updates:
         raise HTTPException(status_code=400, detail="Nothing to update.")
-    users_collection.update_one({"_id": current_user["_id"]}, {"$set": updates})
+
+    users_collection.update_one(
+        {"email": current_user["email"]},
+        {"$set": updates},
+    )
     return {"message": "Profile updated successfully", **updates}
-
-
-
-
-
-
-

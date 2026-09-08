@@ -622,6 +622,7 @@ async def run_rerun_pipeline(
             started_at=started_at,
             rerun_sequence=rerun_sequence,
             prior_fingerprint_statuses=prior_fingerprint_statuses,
+            owner_id=owner_id,
         )
         logger.info("[rerun_orchestrator] Phase 1 CSV saved: %s", phase1_csv_path)
 
@@ -883,6 +884,7 @@ async def run_rerun_pipeline(
             probe_results=probe_results,
             started_at=started_at,
             rerun_sequence=rerun_sequence,
+            owner_id=owner_id,
         )
         logger.info("[rerun_orchestrator] Phase 2 CSV saved: %s", phase2_csv_path)
 

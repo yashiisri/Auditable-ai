@@ -1,5 +1,3 @@
-
-
 """
 services/sdcc/orchestrator.py
 ==============================
@@ -32,7 +30,7 @@ from app.services.sdcc.detector import detect_model_type
 
 # ── Supported document formats for direct document upload ────────────────────
 _DOCUMENT_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
-_LOG_EXTENSIONS      = {".csv", ".json"}
+_LOG_EXTENSIONS      = {".csv", ".json", ".jsonl", ".ndjson", ".xlsx", ".xls", ".tsv", ".txt", ".sql", ".parquet"}
 
 
 def is_document_upload(filename: str) -> bool:

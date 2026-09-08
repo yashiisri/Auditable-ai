@@ -1,5 +1,3 @@
-
-
 """
 services/sdcc/models/classification.py
 ==========================================
@@ -270,3 +268,27 @@ class ClassificationEvaluator(BaseEvaluator):
             "class_balance":  "Apply SMOTE or class weighting; collect more minority class samples.",
             "avg_confidence": "Recalibrate model; check for distribution shift.",
         }.get(m, f"Investigate elevated risk in '{m}'.")
+
+    def _context_for_rec(self, principle: str, worst_param: str) -> str:
+        """Model-type-specific context for the Groq recommendation prompt."""
+        if principle == "Fairness":
+            return "Classification models frequently show disparate error rates across demographic groups due to training data imbalance."
+        if principle == "Security":
+            return "Classification models are vulnerable to adversarial examples — small input perturbations can flip the predicted class."
+        if principle == "Privacy":
+            return "Classification models trained on sensitive data can leak membership information through prediction confidence scores."
+        if principle == "Transparency":
+            return "Classification models that output only a class label give users no insight into what features drove the decision."
+        if principle == "Explainability":
+            return "Classification models require feature importance analysis (SHAP/LIME) to explain individual predictions, which is rarely surfaced."
+        if principle == "Accountability":
+            return "Classification models making automated decisions (credit, hiring) without human review violate accountability requirements."
+        if principle == "Reliability":
+            return "Classification models can experience calibration drift — the predicted confidence scores become poorly calibrated over time."
+        if principle == "Data Integrity":
+            return "Classification model performance is directly tied to label quality — mislabelled training examples propagate into systematic errors."
+        if principle == "Safety":
+            return "Classification models making high-stakes decisions (medical, fraud) can cause serious harm when they produce false negatives."
+        if principle == "Sustainability":
+            return "Classification models at scale require batching optimisation — per-request inference without batching wastes GPU utilisation."
+        return ""

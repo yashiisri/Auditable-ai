@@ -8,6 +8,7 @@ from app.routes.audit_extension_route import router as extension_router
 from app.routes.chat_routes import router as chat_router
 from app.routes.report_audit_routes import router as report_audit_router
 from app.routes.admin_routes import router as admin_router
+from app.routes.taf_routes import router as taf_router
 
 app = FastAPI(title="Auditable AI Backend")
 
@@ -27,6 +28,7 @@ app.include_router(blackbox_router)
 app.include_router(extension_router)
 app.include_router(chat_router)
 app.include_router(report_audit_router)
+app.include_router(taf_router, prefix="/taf", tags=["TAF Taxonomy"])
 
 
 @app.get("/")

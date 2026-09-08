@@ -7,130 +7,19 @@ const sc = (s: number) => s >= 75 ? "#059669" : s >= 50 ? M : "#64748B";
 const sb = (s: number) => s >= 75 ? "#F0FDF4" : s >= 50 ? "#EFF6FF" : "#F1F5F9";
 const band = (s: number) => s >= 75 ? "Strong" : s >= 50 ? "Watch" : "Critical";
 
-type RecAction = { text: string; effort: "Low" | "Medium" | "High"; impact: "Quick win" | "Structural" | "Ongoing" };
-type PrincipleRec = { icon: string; what: string; owner: string; actions: RecAction[]; priority: "High" | "Medium" | "Low" };
-
-const PRINCIPLE_RECS: Record<string, PrincipleRec> = {
-  Fairness: {
-    icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-    what: "Ensure the AI treats all demographic groups with equal quality, tone, and response length.",
-    owner: "Data Science & Fairness Council",
-    actions: [
-      { text: "Add demographic group labels to your inference logs to enable differential fairness testing.", effort: "Medium", impact: "Structural" },
-      { text: "Run bias evaluation across protected attributes (gender, age, ethnicity) using your log data.", effort: "Low", impact: "Quick win" },
-      { text: "Implement output length monitoring to detect unequal effort across user groups.", effort: "Medium", impact: "Structural" },
-      { text: "Establish a quarterly fairness review process with documented findings.", effort: "Low", impact: "Ongoing" },
-    ],
-    priority: "High",
-  },
-  Transparency: {
-    icon: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z",
-    what: "Make the AI open about its knowledge boundaries, uncertainty, and reasoning process.",
-    owner: "Product & Engineering",
-    actions: [
-      { text: "Add model version tracking to every inference log record.", effort: "Low", impact: "Quick win" },
-      { text: "Implement uncertainty disclosure — the AI should say 'I'm not sure' when it isn't.", effort: "Medium", impact: "Structural" },
-      { text: "Ensure the AI addresses the specific question asked, not just related content.", effort: "Medium", impact: "Structural" },
-      { text: "Log causal reasoning language rates to track whether the AI explains its conclusions.", effort: "Low", impact: "Quick win" },
-    ],
-    priority: "Medium",
-  },
-  Explainability: {
-    icon: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3",
-    what: "Ensure AI outputs can be understood, interpreted, and verified by non-technical users.",
-    owner: "ML Engineering",
-    actions: [
-      { text: "Implement step-by-step reasoning in AI responses for complex decisions.", effort: "Medium", impact: "Structural" },
-      { text: "Add source citation to AI outputs — especially for factual claims.", effort: "Medium", impact: "Structural" },
-      { text: "Monitor Flesch readability scores to ensure outputs are accessible.", effort: "Low", impact: "Quick win" },
-      { text: "Require confidence expression in all outputs so users can calibrate trust.", effort: "Low", impact: "Quick win" },
-    ],
-    priority: "Medium",
-  },
-  Accountability: {
-    icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
-    what: "Establish a clear, auditable chain of responsibility for every AI decision.",
-    owner: "Governance & Compliance",
-    actions: [
-      { text: "Implement human escalation triggers for high-stakes or uncertain outputs.", effort: "High", impact: "Structural" },
-      { text: "Add timestamp and user attribution columns to all inference logs.", effort: "Low", impact: "Quick win" },
-      { text: "Ensure the AI acknowledges errors and provides guidance when it cannot answer.", effort: "Medium", impact: "Structural" },
-      { text: "Document governance ownership and incident response procedures.", effort: "Low", impact: "Ongoing" },
-    ],
-    priority: "High",
-  },
-  "Data Integrity": {
-    icon: "M22 12h-4l-3 9L9 3l-3 9H2",
-    what: "Ensure the data used for evaluation is complete, consistent, and trustworthy.",
-    owner: "Data Engineering",
-    actions: [
-      { text: "Remove duplicate records from inference logs before re-running the audit.", effort: "Low", impact: "Quick win" },
-      { text: "Ensure all required columns (task_id, input, output, latency) are populated.", effort: "Low", impact: "Quick win" },
-      { text: "Implement output format consistency checks in your AI pipeline.", effort: "Medium", impact: "Structural" },
-      { text: "Add coherence scoring to detect incoherent or low-quality responses.", effort: "Medium", impact: "Structural" },
-    ],
-    priority: "Medium",
-  },
-  Reliability: {
-    icon: "M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83",
-    what: "Ensure the AI performs consistently and predictably across all queries.",
-    owner: "ML Engineering & SRE",
-    actions: [
-      { text: "Monitor response consistency — similar queries should produce similar answers.", effort: "Medium", impact: "Structural" },
-      { text: "Implement token efficiency tracking to detect over- or under-answering.", effort: "Low", impact: "Quick win" },
-      { text: "Add error rate monitoring to your observability stack.", effort: "Low", impact: "Quick win" },
-      { text: "Run A/B consistency tests across model versions before deployment.", effort: "High", impact: "Structural" },
-    ],
-    priority: "Medium",
-  },
-  Security: {
-    icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-    what: "Protect the AI system against adversarial attacks, misuse, and data exposure.",
-    owner: "Security Engineering",
-    actions: [
-      { text: "Implement prompt injection detection on all incoming requests.", effort: "High", impact: "Structural" },
-      { text: "Add content moderation to filter harmful outputs before they reach users.", effort: "Medium", impact: "Structural" },
-      { text: "Monitor input anomaly rates — empty or malformed inputs are a security signal.", effort: "Low", impact: "Quick win" },
-      { text: "Implement PII scanning on all AI outputs before delivery.", effort: "Medium", impact: "Structural" },
-    ],
-    priority: "High",
-  },
-  Privacy: {
-    icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
-    what: "Ensure the AI handles personal data responsibly and in compliance with GDPR.",
-    owner: "Privacy & Legal",
-    actions: [
-      { text: "Implement PII detection and redaction in the AI output pipeline.", effort: "High", impact: "Structural" },
-      { text: "Add data minimisation controls — the AI should not volunteer unnecessary information.", effort: "Medium", impact: "Structural" },
-      { text: "Ensure the AI demonstrates awareness of data retention rights in relevant contexts.", effort: "Low", impact: "Quick win" },
-      { text: "Anonymise all personal identifiers before they appear in AI outputs.", effort: "Medium", impact: "Structural" },
-    ],
-    priority: "High",
-  },
-  Safety: {
-    icon: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
-    what: "Prevent the AI from generating harmful, dangerous, or misleading outputs.",
-    owner: "AI Safety Team",
-    actions: [
-      { text: "Implement the Triple LLM Judge panel for ongoing safety evaluation.", effort: "High", impact: "Structural" },
-      { text: "Add hallucination detection — especially critical for medical, legal, or financial use cases.", effort: "High", impact: "Structural" },
-      { text: "Ensure human override mechanisms are in place for all high-stakes decisions.", effort: "Medium", impact: "Structural" },
-      { text: "Run regular red-team exercises to test safety controls under adversarial conditions.", effort: "Medium", impact: "Ongoing" },
-    ],
-    priority: "High",
-  },
-  Sustainability: {
-    icon: "M12 22V12M12 12C12 12 7 8 7 5a5 5 0 0 1 10 0c0 3-5 7-5 7z",
-    what: "Optimise the AI for computational efficiency and minimal environmental impact.",
-    owner: "Platform Engineering",
-    actions: [
-      { text: "Monitor token economy — responses should be concise and information-dense.", effort: "Low", impact: "Quick win" },
-      { text: "Implement response deduplication to avoid pattern-matching instead of reasoning.", effort: "Medium", impact: "Structural" },
-      { text: "Reduce lexical complexity where possible — simpler language is faster to generate.", effort: "Low", impact: "Quick win" },
-      { text: "Track and report compute costs per inference as part of your governance metrics.", effort: "Low", impact: "Ongoing" },
-    ],
-    priority: "Low",
-  },
+type RecAction = {
+  text: string;
+  effort: "Low" | "Medium" | "High";
+  impact: "Quick win" | "Structural" | "Ongoing";
+  day_target: number;
+  phase: number;
+  owner_team: string;
+};
+type PrincipleRec = {
+  what: string;
+  owner: string;
+  root_cause: string;
+  actions: RecAction[];
 };
 
 // ── Effort / impact chip styling ──────────────────────────────────────────────
@@ -163,6 +52,36 @@ export default function Recommendations() {
   const prn = r.trusted_ai_principles || {};
   const pkeys = Object.keys(prn);
   const _ = anim;
+
+  // ── AI-generated recommendation data ────────────────────────────────────────
+  // recommended_actions is a flat array from rec_synthesizer.py.
+  // We group it by principle for the per-principle cards.
+  const rawActions: RecAction[] = r.recommended_actions || [];
+  const recsGenerated: boolean = r.recs_generated ?? rawActions.length > 0;
+  const overallNarrative: string = r.overall_narrative || "";
+  const verdictContext: string = r.deployment_verdict_context || "";
+
+  // Group actions by principle
+  const recsByPrinciple: Record<string, PrincipleRec> = {};
+  for (const action of rawActions) {
+    const p = (action as any).principle;
+    if (!p) continue;
+    if (!recsByPrinciple[p]) {
+      // Pull what/owner/root_cause from the principles payload if Groq stored it there
+      const groqPrinciple = (r.rec_principles || {})[p] || {};
+      recsByPrinciple[p] = {
+        what:       groqPrinciple.what || "",
+        owner:      groqPrinciple.owner || "",
+        root_cause: groqPrinciple.root_cause || "",
+        actions:    [],
+      };
+    }
+    recsByPrinciple[p].actions.push(action);
+  }
+  // Sort actions within each principle by day_target ascending
+  for (const p of Object.keys(recsByPrinciple)) {
+    recsByPrinciple[p].actions.sort((a, b) => (a.day_target || 0) - (b.day_target || 0));
+  }
 
   // Findings actually produced by this audit, linkable back to a principle
   const findingsAll: any[] = r.findings || [];
@@ -211,19 +130,21 @@ export default function Recommendations() {
   });
 
   // Portfolio view across every recommended action, for the header strip
-  const allActions = sorted.flatMap(k => PRINCIPLE_RECS[k]?.actions || []);
+  const allActions: RecAction[] = rawActions;
   const quickWinCount   = allActions.filter(a => a.impact === "Quick win").length;
   const structuralCount = allActions.filter(a => a.impact === "Structural").length;
   const ongoingCount    = allActions.filter(a => a.impact === "Ongoing").length;
   const highFindings = (r.findings || []).filter((f: any) => f.severity === "High").length;
   const weakCount = pkeys.filter(k => (prn[k]?.score || 0) < 60).length;
-  const overallRec = r.overall_score >= 80 && highFindings === 0
+  // Use Groq-generated narrative when available; fall back to deterministic template
+  const overallRec = overallNarrative ||
+    (r.overall_score >= 80 && highFindings === 0
     ? `${r.ai_name} demonstrates strong governance posture with an overall score of ${r.overall_score}/100. No high-severity findings were detected. Continue monitoring and schedule quarterly re-assessments to maintain compliance.`
     : highFindings > 0
     ? `${r.ai_name} has ${highFindings} high-severity finding(s) that require immediate remediation before production deployment. ${weakCount > 0 ? `Additionally, ${weakCount} principle(s) are critically low and need urgent attention.` : ""} Implement the recommended controls below and re-run the audit after remediation.`
     : r.overall_score >= 60
     ? `${r.ai_name} meets baseline governance requirements with a score of ${r.overall_score}/100. ${weakCount > 0 ? `Focus remediation on the ${weakCount} principle(s) scoring below 60.` : "Address the identified gaps within 60 days."} Re-assess to achieve full alignment with governance standards.`
-    : `${r.ai_name} requires significant governance improvements before deployment. Score of ${r.overall_score}/100 indicates critical gaps. Engage your AI governance team to implement a structured remediation plan.`;
+    : `${r.ai_name} requires significant governance improvements before deployment. Score of ${r.overall_score}/100 indicates critical gaps. Engage your AI governance team to implement a structured remediation plan.`);
 
   return (
     <div style={{ minHeight:"100vh", background:"#F4F7FB", fontFamily:"'Plus Jakarta Sans',sans-serif", color:"#0F172A", paddingBottom:80 }}>
@@ -254,6 +175,17 @@ export default function Recommendations() {
           <div style={{ padding:"16px 20px", background:`linear-gradient(135deg,${B}08,${M}05)`, border:`1.5px solid ${M}25`, borderRadius:0 }}>
             <p style={{ margin:0, color:"#1E293B", lineHeight:1.85, fontSize:14 }}>{overallRec}</p>
           </div>
+          {verdictContext && (
+            <div style={{ marginTop:10, padding:"10px 16px", background:"#F8FAFC", border:"1px solid #E2E8F0", fontSize:12.5, color:"#475569", lineHeight:1.6 }}>
+              <strong style={{ color:M }}>Deployment readiness: </strong>{verdictContext}
+            </div>
+          )}
+          {!recsGenerated && (
+            <div style={{ marginTop:10, padding:"10px 16px", background:"#FFF7ED", border:"1px solid #FED7AA", fontSize:12, color:"#92400E", display:"flex", alignItems:"center", gap:8 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              AI-tailored recommendations were not generated for this audit (Groq was unavailable). Re-run the audit to generate specific actions and day targets.
+            </div>
+          )}
 
           {/* Action portfolio — the shape of the remediation effort, not just a score */}
           <div style={{ display:"flex", gap:10, marginTop:16 }}>
@@ -280,12 +212,13 @@ export default function Recommendations() {
             <div style={{ paddingLeft:168, marginBottom:6 }}>
               <div style={{ position:"relative", height:18 }}>
                 {[
-                  { label:"Today",    pct:0   },
-                  { label:"2 weeks",  pct:20  },
-                  { label:"30 days",  pct:40  },
-                  { label:"45 days",  pct:60  },
-                  { label:"60 days",  pct:80  },
-                  { label:"Ongoing",  pct:100 },
+                  { label:"Day 0",    pct:0   },
+                  { label:"Day 7",    pct:8   },
+                  { label:"Day 14",   pct:16  },
+                  { label:"Day 30",   pct:33  },
+                  { label:"Day 45",   pct:50  },
+                  { label:"Day 60",   pct:67  },
+                  { label:"Day 90+",  pct:100 },
                 ].map(t => (
                   <span key={t.label} style={{ position:"absolute", left:`${t.pct}%`, transform:t.pct===100?"translateX(-100%)":t.pct===0?"none":"translateX(-50%)", fontSize:10, fontWeight:600, color:"#94A3B8", whiteSpace:"nowrap" as const }}>
                     {t.label}
@@ -313,13 +246,18 @@ export default function Recommendations() {
               <div style={{ display:"flex", flexDirection:"column" as const, gap:3, position:"relative", zIndex:1 }}>
                 {sorted.map((k) => {
                   const score = prn[k]?.score || 0;
-                  const rec = PRINCIPLE_RECS[k];
+                  const rec = recsByPrinciple[k];
                   const phase = phaseFor(k, score);
-                  const startPct = phase === 0 ? 0   : phase === 1 ? 40  : 80;
-                  const widthPct = phase === 0 ? 38  : phase === 1 ? 38  : 20;
                   const barColor = phase === 0 ? "#00338D" : phase === 1 ? "#005EB8" : "#0091DA";
                   const escalated = isEscalated(k, score);
-                  const action   = rec?.actions?.[0]?.text || "Review and remediate.";
+                  // Use day_target from first action for Gantt bar endpoint
+                  // Phase bands: 0→0-30d (0-33% of 90), 1→31-60d (33-67%), 2→61-90d (67-100%)
+                  const firstAction = rec?.actions?.[0];
+                  const dayTarget = firstAction?.day_target || (phase === 0 ? 21 : phase === 1 ? 45 : 80);
+                  const endPct   = Math.round((dayTarget / 90) * 100);
+                  const startPct = phase === 0 ? 0 : phase === 1 ? 34 : 68;
+                  const widthPct = Math.max(4, endPct - startPct);
+                  const action   = firstAction?.text || "Review and remediate.";
                   const shortAction = (escalated ? `⚠ ${escalated} — ` : "") + (action.length > 55 ? action.slice(0, 52) + "…" : action);
 
                   return (
@@ -390,7 +328,7 @@ export default function Recommendations() {
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           {sorted.map(k => {
             const score = prn[k]?.score || 0;
-            const rec = PRINCIPLE_RECS[k];
+            const rec = recsByPrinciple[k];
             const isOpen = expanded === k;
             const priorityColor = score < 50 ? "#64748B" : score < 75 ? "#2563EB" : "#059669";
             const priorityBg    = score < 50 ? "#F1F5F9" : score < 75 ? "#EFF6FF" : "#DCFCE7";

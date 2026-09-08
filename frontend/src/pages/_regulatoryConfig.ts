@@ -89,12 +89,7 @@ export const FW_META: Record<string, FrameworkMeta> = {
     desc:      "A voluntary framework to help organisations identify, assess, and manage AI risks across four core functions: Govern, Map, Measure, and Manage.",
     scope:     "Designed for voluntary adoption by any organisation developing, deploying, evaluating, or acquiring AI systems in any sector.",
   },
-  KPMG_TAF: {
-    label:     "KPMG Trusted AI Framework",
-    authority: "KPMG International · 10 Trusted AI Principles",
-    desc:      "KPMG's enterprise governance framework assessing AI systems across 10 principles: Fairness, Transparency, Explainability, Accountability, Data Integrity, Reliability, Security, Safety, Privacy, and Sustainability.",
-    scope:     "Applied to AI systems during governance reviews, vendor due diligence, and regulatory preparation. Scores reflect evidence gathered from logs, probes, and structural analysis.",
-  },
+
 };
 
 // ─── Field resolver ───────────────────────────────────────────────────────────
@@ -616,9 +611,7 @@ const KPMG_CLAUSES: ClauseDef[] = [
 export const CLAUSES: Record<string, ClauseDef[]> = {
   EU_AI_Act:   EU_CLAUSES,
   ISO_42001:   ISO_CLAUSES,
-  NIST_AI_RMF: NIST_CLAUSES,
-  KPMG_TAF:    KPMG_CLAUSES,
-};
+  NIST_AI_RMF: NIST_CLAUSES,};
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 

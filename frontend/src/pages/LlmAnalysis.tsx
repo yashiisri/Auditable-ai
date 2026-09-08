@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import AuditContextBar, { LensFooter } from "../components/AuditContextBar";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getJudgePanel } from "../services/api";
 
 const B = "#00338D", M = "#005EB8";
 
@@ -14,6 +15,19 @@ export default function LlmAnalysis() {
   const [anim, setAnim] = useState(false);
   useEffect(() => { setTimeout(() => setAnim(true), 60); }, []);
   void anim;
+
+  const [panelRows, setPanelRows] = useState<any[] | null>(null);
+  const [panelLoading, setPanelLoading] = useState(false);
+  const [panelExpanded, setPanelExpanded] = useState<number | null>(null);
+  const reportIdForPanel = raw?.report_id;
+  useEffect(() => {
+    if (!reportIdForPanel) return;
+    setPanelLoading(true);
+    getJudgePanel(reportIdForPanel)
+      .then((res) => setPanelRows(res.data?.rows ?? []))
+      .catch(() => setPanelRows(null))
+      .finally(() => setPanelLoading(false));
+  }, [reportIdForPanel]);
 
   if (!raw) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
@@ -104,9 +118,9 @@ export default function LlmAnalysis() {
             <div style={{ fontSize:12, color:"#94A3B8", marginBottom:16 }}>Three architecturally different models from three different providers</div>
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {[
-                { name:"Judge 1", color:"#7C3AED", bg:"#F3E8FF", specialty:"Broad factual knowledge, structured output" },
-                { name:"Judge 2", color:"#0091DA", bg:"#E0F2FE", specialty:"Reasoning, code, European-domain knowledge" },
-                { name:"Judge 3", color:"#059669", bg:"#DCFCE7", specialty:"Scientific, technical, multilingual domains" },
+                { name: llm.judge_panel?.[0] || "Judge 1", color:"#7C3AED", bg:"#F3E8FF", specialty:"Broad factual knowledge, structured output" },
+                { name: llm.judge_panel?.[1] || "Judge 2", color:"#0091DA", bg:"#E0F2FE", specialty:"Reasoning, code, European-domain knowledge" },
+                { name: llm.judge_panel?.[2] || "Judge 3", color:"#059669", bg:"#DCFCE7", specialty:"Scientific, technical, multilingual domains" },
               ].map((j, idx) => {
                 const active = panelSize > 0 ? idx < panelSize : llm.rows_judged > 0;
                 return (
@@ -214,6 +228,75 @@ export default function LlmAnalysis() {
               </div>
             )}
           </div>
+        </div>
+        {/* Panel Deliberation — per-row, per-judge votes/reasons/latency */}
+        <div className="la-card" style={{ padding:"22px 24px", marginTop:20 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:4 }}>
+            <div style={{ fontSize:14, fontWeight:800, color:"#0F172A" }}>Panel Deliberation</div>
+            {panelRows && <div style={{ fontSize:11, color:"#94A3B8" }}>{panelRows.length} rows</div>}
+          </div>
+          <div style={{ fontSize:12, color:"#94A3B8", marginBottom:16 }}>What each judge actually said about each response, including their individual reply latency</div>
+
+          {panelLoading && <div style={{ fontSize:12.5, color:"#64748B" }}>Loading panel deliberation…</div>}
+          {!panelLoading && (!panelRows || panelRows.length === 0) && (
+            <div style={{ fontSize:12.5, color:"#94A3B8" }}>No per-row panel deliberation is available for this report.</div>
+          )}
+
+          {!panelLoading && panelRows && panelRows.length > 0 && (
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {panelRows.map((row: any, i: number) => {
+                const isOpen = panelExpanded === i;
+                const vColor = row.final_correct ? "#059669" : "#DC2626";
+                const vBg    = row.final_correct ? "#F0FDF4" : "#FEF2F2";
+                return (
+                  <div key={i} style={{ border:"1px solid #E2E8F0", borderRadius:0 }}>
+                    <div
+                      onClick={() => setPanelExpanded(isOpen ? null : i)}
+                      style={{ padding:"12px 14px", display:"flex", alignItems:"center", gap:10, cursor:"pointer", background: isOpen ? "#F8FAFC" : "white" }}
+                    >
+                      <span style={{ fontSize:10, padding:"2px 8px", borderRadius:0, background:vBg, color:vColor, fontWeight:700, border:`1px solid ${vColor}30` }}>
+                        {row.final_correct ? "Correct" : "Incorrect"}
+                      </span>
+                      {row.disputed && <span style={{ fontSize:10, padding:"2px 8px", borderRadius:0, background:"#EFF6FF", color:"#2563EB", fontWeight:700 }}>Disputed</span>}
+                      {row.kb_used && <span style={{ fontSize:10, padding:"2px 8px", borderRadius:0, background:"#F0FDF4", color:"#059669", fontWeight:700 }}>KB-grounded</span>}
+                      <span style={{ fontSize:12.5, color:"#334155", flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {row.input || `Row ${row.row_index}`}
+                      </span>
+                      <span style={{ fontSize:11, color:"#94A3B8" }}>{isOpen ? "▲" : "▼"}</span>
+                    </div>
+                    {isOpen && (
+                      <div style={{ padding:"4px 14px 14px", borderTop:"1px solid #E2E8F0" }}>
+                        {row.input && (
+                          <div style={{ margin:"10px 0 6px", fontSize:12, color:"#475569" }}>
+                            <span style={{ fontWeight:700 }}>Input: </span>{row.input}
+                          </div>
+                        )}
+                        {row.output && (
+                          <div style={{ margin:"0 0 12px", fontSize:12, color:"#475569" }}>
+                            <span style={{ fontWeight:700 }}>Output: </span>{row.output}
+                          </div>
+                        )}
+                        <div style={{ display:"grid", gridTemplateColumns:`repeat(${Math.max(row.judges?.length || 1, 1)}, 1fr)`, gap:10 }}>
+                          {(row.judges || []).map((j: any, ji: number) => (
+                            <div key={ji} style={{ padding:"10px 12px", background: j.vote ? "#F0FDF4" : "#FEF2F2", border:`1px solid ${j.vote ? "#05966930" : "#DC262630"}` }}>
+                              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                                <span style={{ fontSize:11.5, fontWeight:700, color:"#1E293B" }}>{j.judge_name}</span>
+                                <span style={{ fontSize:10, fontWeight:700, color: j.vote ? "#059669" : "#DC2626" }}>{j.vote ? "Correct" : "Incorrect"}</span>
+                              </div>
+                              {j.reason && <div style={{ fontSize:11.5, color:"#475569", lineHeight:1.5, marginBottom:6 }}>{j.reason}</div>}
+                              {j.latency_ms != null && (
+                                <div style={{ fontSize:10.5, color:"#94A3B8" }}>{Math.round(j.latency_ms)} ms round-trip</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

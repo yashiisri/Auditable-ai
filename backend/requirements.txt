@@ -1,13 +1,34 @@
 fastapi
 uvicorn
-pymongo
-python-dotenv
+# PostgreSQL (replaces pymongo)
+psycopg2-binary
+sqlalchemy>=2.0
+alembic
+# Auth / security (unchanged)
 passlib[bcrypt]
 python-jose[cryptography]
+python-dotenv
 pydantic[email]
+# Data / analysis (unchanged)
 pandas
 python-multipart
 httpx
+# PDF generation (unchanged)
 reportlab
 rlPyCairo
+# AI / LLM (unchanged)
 groq
+
+openpyxl
+xlrd
+pyarrow
+
+# ── Analysis engine upgrades (free) ────────────────────────────────
+# Always worth it — tiny, pure-python, no model download:
+vaderSentiment
+textstat
+# Optional real-model tiers (heavier — install to upgrade toxicity/PII):
+# detoxify                    # real toxicity (needs torch ~2GB)
+# presidio-analyzer           # real PII NER (needs spacy en_core_web_lg)
+# presidio-anonymizer
+fairlearn  # free — demographic parity, equalized odds, real fairness metrics

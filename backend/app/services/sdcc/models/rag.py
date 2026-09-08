@@ -1,5 +1,3 @@
-
-        
 """
 services/sdcc/models/rag.py
 ============================
@@ -277,3 +275,27 @@ class RAGEvaluator(BaseEvaluator):
             "context_coverage":   "Ensure context is logged or embeddable in input prompts.",
             "avg_latency_ms":     "Add caching, reduce chunk count, use faster encoder.",
         }.get(m, f"Investigate elevated risk in '{m}'.")
+
+    def _context_for_rec(self, principle: str, worst_param: str) -> str:
+        """Model-type-specific context for the Groq recommendation prompt."""
+        if principle == "Fairness":
+            return "RAG systems can amplify existing biases in the retrieval corpus — if the knowledge base skews toward certain demographics, outputs will too."
+        if principle == "Security":
+            return "RAG systems face RAG poisoning attacks — adversarial documents in the knowledge base can manipulate outputs."
+        if principle == "Privacy":
+            return "RAG systems may retrieve and surface PII embedded in knowledge base documents that was never intended for end-user display."
+        if principle == "Transparency":
+            return "RAG systems should cite retrieved sources — when they don't, users have no way to verify whether the output is grounded."
+        if principle == "Explainability":
+            return "RAG systems' answers depend on which chunks were retrieved — without showing retrieval evidence, explanations are incomplete."
+        if principle == "Accountability":
+            return "RAG systems make autonomous retrieval decisions — when a wrong chunk is retrieved, there is no clear accountability path."
+        if principle == "Reliability":
+            return "RAG systems can produce inconsistent outputs if retrieval quality varies — the same query may retrieve different chunks on different runs."
+        if principle == "Data Integrity":
+            return "RAG systems are only as accurate as their knowledge base — stale, duplicate, or contradictory source documents degrade accuracy."
+        if principle == "Safety":
+            return "RAG systems can surface harmful content that was inadvertently included in the knowledge base."
+        if principle == "Sustainability":
+            return "RAG systems run two inference steps (retrieval + generation) — retrieval latency and chunking overhead add to compute cost."
+        return ""

@@ -29,8 +29,9 @@ Phase 3 — Semantic token matching
 
 Phase 4 — Groq LLM tiebreaker (optional)
   When Phases 1-3 are ambiguous (top-2 gap < 0.15), sends a compact
-  data sample to Groq openai/gpt-oss-20b for a structured JSON answer.
+  data sample to Groq (settings.DETECTOR_GROQ_MODEL) for a structured JSON answer.
   Requires GROQ_API_KEY env var or explicit api_key parameter.
+  Change DETECTOR_GROQ_MODEL in .env to swap this model without touching code.
   Gracefully skipped if unavailable.
 """
 
@@ -39,6 +40,8 @@ import difflib, json, math, os, re, statistics, string
 from collections import Counter
 from typing import Optional, Tuple
 import pandas as pd
+
+from app.config.settings import settings
 
 # ── Known model types ─────────────────────────────────────────────────────────
 MODEL_TYPES = [
@@ -70,13 +73,11 @@ _ROLE_ANCHORS: dict[str, list[str]] = {
                    "response_time", "elapsed"],
     "image":      ["image", "photo", "picture", "frame", "screenshot",
                    "img", "pixel", "visual"],
-    "step":       ["step", "action", "task", "stage", "phase", "operation"],
-    "workflow":   ["workflow", "pipeline", "job", "process", "agent",
-                   "run", "execution", "retry"],
+    "step":       ["step", "action", "stage", "operation"],  # "task" removed — fires on task_id in every log
+    "workflow":   ["workflow", "pipeline", "job", "agent", "retry"],
     "bbox":       ["bbox", "bounding_box", "box", "coordinates", "region",
                    "annotation", "detection"],
-    "error":      ["error", "exception", "failed", "failure", "status",
-                   "success", "result_code"],
+    "error":      ["error", "exception", "failure"],
 }
 
 # Role presence → model-type contribution
@@ -89,7 +90,7 @@ _ROLE_TO_MODEL: dict[str, dict[str, float]] = {
     "context":    {"rag": 0.9, "summarization": 0.2},
     "label":      {"classification": 0.9, "image_classification": 0.5},
     "confidence": {"classification": 0.5, "image_classification": 0.5},
-    "latency":    {"automation": 0.4, "image_classification": 0.3},
+    "latency":    {"general_llm": 0.05, "rag": 0.05, "summarization": 0.05},
     "image":      {"image_classification": 2.0},  # image path/file is uniquely CV
     "step":       {"automation": 0.8},
     "workflow":   {"automation": 0.9},
@@ -306,15 +307,17 @@ def _score_from_signals(sig: dict[str, float]) -> dict[str, float]:
     # This prevents spam/ham labels from being mistaken for summaries
     label_penalty = min(1.0, (1.0 - ent) * mcf * 3)  # high when low-entropy + repetitive
     effective_cr  = cr * (1.0 + label_penalty)        # make cr appear larger for label-like outputs
-    if effective_cr < 0.6:
+    # Summarization: input must be long (a real document), not a short question
+    if effective_cr < 0.6 and il > 60:  # need long input
         scores["summarization"] += (1.0 - effective_cr) * 0.8
-    if effective_cr < 0.4:
+    if effective_cr < 0.4 and il > 80:
         scores["summarization"] += 0.3
-    scores["summarization"] += vo * 0.4
-    scores["summarization"] += sig.get("has_reference_role", 0) * 0.5
-    if il > 100:
-        scores["summarization"] += min((il - 100) / 500, 0.3)
-    # Further penalty: if output vocabulary is tiny (< 5 unique values), not a summary
+    scores["summarization"] += vo * 0.3
+    scores["summarization"] += sig.get("has_reference_role", 0) * 0.6  # strong signal
+    if il > 80:
+        scores["summarization"] += min((il - 80) / 400, 0.45)  # long input is key
+    if il > 50 and ol > 0 and il > ol * 1.5:  # input meaningfully longer than output
+        scores["summarization"] += 0.25
     if ent < 0.4 and mcf > 0.3:
         scores["summarization"] *= 0.3
 
@@ -339,12 +342,14 @@ def _score_from_signals(sig: dict[str, float]) -> dict[str, float]:
     if sig.get("has_label_role", 0) and ovs > 0.5:
         scores["classification"] += 0.3
 
-    # Automation
-    scores["automation"] += sig.get("has_step_role",     0) * 0.7
-    scores["automation"] += sig.get("has_workflow_role", 0) * 0.8
-    scores["automation"] += sig.get("has_error_role",    0) * 0.4
-    scores["automation"] += obr * 0.5
-    if ncr > 0.3:
+    # Automation — requires SPECIFIC structural signals only
+    # step/workflow columns are unambiguous; error/latency/boolean are not
+    scores["automation"] += sig.get("has_step_role",     0) * 0.9
+    scores["automation"] += sig.get("has_workflow_role", 0) * 1.0
+    scores["automation"] += sig.get("has_error_role",    0) * 0.1  # very weak — "error" col is common
+    scores["automation"] += obr * 0.15  # boolean output is common in any log
+    # numeric col ratio only counts if step/workflow role also present
+    if ncr > 0.3 and (sig.get("has_step_role",0) or sig.get("has_workflow_role",0)):
         scores["automation"] += 0.2
 
     # Image CV
@@ -362,16 +367,18 @@ def _score_from_signals(sig: dict[str, float]) -> dict[str, float]:
     if sig.get("has_image_role", 0):
         scores["classification"] *= 0.3
 
-    # General LLM (residual)
-    if ent > 0.8:
-        scores["general_llm"] += 0.3
-    if 0.5 < cr < 2.0:
-        scores["general_llm"] += 0.2
-    if ovs < 0.2:
-        scores["general_llm"] += 0.15
+    # General LLM — default when no strong specialist signal
+    if ent > 0.75:
+        scores["general_llm"] += 0.40  # high entropy is the clearest conversational signal
+    if 0.3 < cr < 3.5:
+        scores["general_llm"] += 0.25  # moderate compression (not extreme like summ)
+    if ovs < 0.25:
+        scores["general_llm"] += 0.20  # outputs are not all short (not classification)
+    if iqr > 0.2:
+        scores["general_llm"] += 0.10  # question marks in input = conversational
     spec_max = max(scores[m] for m in MODEL_TYPES if m != "general_llm")
-    if spec_max > 0.4:
-        scores["general_llm"] *= 0.5
+    if spec_max > 0.65:  # only suppress if a STRONG specialist signal (was 0.4)
+        scores["general_llm"] *= 0.55
 
     return {mt: min(1.0, max(0.0, s)) for mt, s in scores.items()}
 
@@ -400,10 +407,10 @@ _TOKEN_FAMILIES: dict[str, list[str]] = {
         "false positive", "classify", "classification", "sentiment",
     ],
     "automation": [
-        "step", "workflow", "pipeline", "task", "action", "agent",
+        "workflow", "pipeline", "agent", "agentic",
         "tool call", "api call", "function call", "retry", "retried",
-        "success", "failure", "failed", "error", "execution",
-        "trigger", "invoked", "ran", "performed", "bot", "automation",
+        "trigger", "invoked", "bot", "automation", "orchestrat",
+        "multi-step", "rpa",
     ],
     "image_classification": [
         "image", "photo", "picture", "frame", "screenshot", "bounding box",
@@ -456,7 +463,8 @@ def _score_from_tokens(df: pd.DataFrame, roles: dict[str, str]) -> dict[str, flo
 # ─────────────────────────────────────────────────────────────────────────────
 
 _GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MDL = "openai/gpt-oss-20b"
+# Model sourced from settings — change DETECTOR_GROQ_MODEL in .env to swap
+_GROQ_MDL = settings.DETECTOR_GROQ_MODEL
 
 _GROQ_SYS = """You are an expert AI system analyst. Identify what kind of AI model produced the data shown.
 

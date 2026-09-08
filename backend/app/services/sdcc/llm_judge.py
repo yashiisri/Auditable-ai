@@ -22,9 +22,13 @@ FIXES vs previous version
 
 JUDGE PANEL
 -----------
-  Judge 1 — Groq         : openai/gpt-oss-120b       (fast, open-weight)
-  Judge 2 — OpenRouter   : mistralai/mistral-large    (different architecture)
-  Judge 3 — Together AI  : Qwen/Qwen2.5-72B-Instruct (different training data)
+  Judge 1 — Groq         : settings.JUDGE_GROQ_MODEL       (fast, open-weight)
+  Judge 2 — OpenRouter   : settings.JUDGE_OPENROUTER_MODEL  (different architecture)
+  Judge 3 — Together AI  : settings.JUDGE_TOGETHER_MODEL    (different training data)
+
+  Models are read from .env / environment variables at startup.
+  Change JUDGE_GROQ_MODEL, JUDGE_OPENROUTER_MODEL, JUDGE_TOGETHER_MODEL
+  in .env (or app/config/settings.py) to swap any judge without touching code.
 
 REQUIRED ENV VARS
 -----------------
@@ -44,15 +48,17 @@ from typing import Optional
 
 import pandas as pd
 
-# ── Model identifiers ──────────────────────────────────────────────────────────
+from app.config.settings import settings
+
+# ── Model identifiers — sourced from settings (single place to change) ─────────
 _GROQ_URL         = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MODEL       = "openai/gpt-oss-120b"
+_GROQ_MODEL       = settings.JUDGE_GROQ_MODEL
 
 _OPENROUTER_URL   = "https://openrouter.ai/api/v1/chat/completions"
-_OPENROUTER_MODEL = "mistralai/mistral-large"
+_OPENROUTER_MODEL = settings.JUDGE_OPENROUTER_MODEL
 
 _TOGETHER_URL     = "https://api.together.xyz/v1/chat/completions"
-_TOGETHER_MODEL   = "Qwen/Qwen2.5-72B-Instruct"
+_TOGETHER_MODEL   = settings.JUDGE_TOGETHER_MODEL
 
 # ── Thresholds ─────────────────────────────────────────────────────────────────
 _KB_RELEVANCE_THRESHOLD     = 0.12   # Jaccard: KB chunk vs question
@@ -291,31 +297,39 @@ class JudgePanel:
     def active_count(self) -> int:
         return len(self.judges)
 
-    def _call_one(self, judge: dict, system: str, user: str, expect_json: bool) -> Optional[str]:
-        return _call_openai_compat(
+    def _call_one(self, judge: dict, system: str, user: str, expect_json: bool) -> tuple[Optional[str], float]:
+        t0 = time.perf_counter()
+        raw = _call_openai_compat(
             url=judge["url"], api_key=judge["key"], model=judge["model"],
             system=system, user=user, expect_json=expect_json,
         )
+        latency_ms = round((time.perf_counter() - t0) * 1000, 1)
+        return raw, latency_ms
 
     def _run_parallel_judges(
         self, system: str, user: str, expect_json: bool
-    ) -> dict[str, Optional[str]]:
-        """Call all judges in parallel; return {name: raw_response}."""
-        results: dict[str, Optional[str]] = {}
+    ) -> tuple[dict[str, Optional[str]], dict[str, float]]:
+        """Call all judges in parallel; return ({name: raw_response}, {name: latency_ms})."""
+        results:   dict[str, Optional[str]] = {}
+        latencies: dict[str, float]         = {}
         with ThreadPoolExecutor(max_workers=_MAX_JUDGE_WORKERS) as pool:
             futures = {
                 pool.submit(self._call_one, j, system, user, expect_json): j["name"]
                 for j in self.judges
             }
             for future in as_completed(futures):
-                results[futures[future]] = future.result()
-        return results
+                name = futures[future]
+                raw, latency_ms = future.result()
+                results[name]   = raw
+                latencies[name] = latency_ms
+        return results, latencies
 
-    def _tally_votes(self, votes: dict[str, bool], reasons: dict[str, str]) -> dict:
+    def _tally_votes(self, votes: dict[str, bool], reasons: dict[str, str], latencies: dict[str, float] | None = None) -> dict:
         """Compute majority verdict from vote dict. FIX 4: partial panel is accepted."""
+        latencies = latencies or {}
         if not votes:
             return {
-                "votes": {}, "reasons": {}, "correct": False,
+                "votes": {}, "reasons": {}, "latencies": {}, "correct": False,
                 "confidence": "low", "vote_count": 0,
                 "total_votes": 0, "disputed": True,
             }
@@ -336,6 +350,7 @@ class JudgePanel:
         return {
             "votes":       votes,
             "reasons":     reasons,
+            "latencies":   {name: latencies.get(name) for name in votes},
             "correct":     majority,
             "confidence":  confidence,
             "vote_count":  correct_cnt,
@@ -345,7 +360,7 @@ class JudgePanel:
 
     def vote_direct(self, question: str, ai_output: str) -> dict:
         system, user = _build_direct_verdict_prompt(question, ai_output)
-        raw_results  = self._run_parallel_judges(system, user, expect_json=True)
+        raw_results, latencies = self._run_parallel_judges(system, user, expect_json=True)
 
         votes:   dict[str, bool] = {}
         reasons: dict[str, str]  = {}
@@ -355,13 +370,13 @@ class JudgePanel:
                 votes[name]   = bool(parsed.get("correct", False))
                 reasons[name] = parsed.get("reason", "")
 
-        return self._tally_votes(votes, reasons)
+        return self._tally_votes(votes, reasons, latencies)
 
     def vote_on_verdict(
         self, question: str, ai_output: str, reference: str, reference_source: str
     ) -> dict:
         system, user = _build_verdict_prompt(question, ai_output, reference, reference_source)
-        raw_results  = self._run_parallel_judges(system, user, expect_json=True)
+        raw_results, latencies = self._run_parallel_judges(system, user, expect_json=True)
 
         votes:   dict[str, bool] = {}
         reasons: dict[str, str]  = {}
@@ -371,11 +386,11 @@ class JudgePanel:
                 votes[name]   = bool(parsed.get("correct", False))
                 reasons[name] = parsed.get("reason", "")
 
-        return self._tally_votes(votes, reasons)
+        return self._tally_votes(votes, reasons, latencies)
 
     def generate_reference_answers(self, question: str) -> dict:
         system, user = _build_generate_answer_prompt(question)
-        raw_results  = self._run_parallel_judges(system, user, expect_json=False)
+        raw_results, _latencies = self._run_parallel_judges(system, user, expect_json=False)
         results      = {n: r.strip() for n, r in raw_results.items() if r and r.strip()}
 
         if not results:
@@ -429,6 +444,7 @@ def _evaluate_row(
             "confidence": verdict["confidence"],
             "reasons":    verdict["reasons"],
             "votes":      verdict["votes"],
+            "latencies":  verdict.get("latencies", {}),
             "kb_used":    kb_used,
             "disputed":   verdict["disputed"],
         }
@@ -531,12 +547,14 @@ def run_llm_judge(
             row_results[future_to_pos[future]] = future.result()
 
     # ── Collate results ────────────────────────────────────────────────────────
-    labels:        list[int]  = []
-    confidences:   list[str]  = []
-    reasons_list:  list[dict] = []
-    votes_list:    list[dict] = []
-    kb_flags:      list[bool] = []
-    disputed_rows: list[int]  = []
+    labels:        list[int]   = []
+    confidences:   list[str]   = []
+    reasons_list:  list[dict]  = []
+    votes_list:    list[dict]  = []
+    latencies_list: list[dict] = []   # {judge_name: latency_ms} per judged row
+    kb_flags:      list[bool]  = []
+    disputed_rows: list[int]   = []
+    row_indices:   list[int]   = []   # position within `rows` (pre-dropna-adjusted), for tying back to input/output text
     skipped = pre_skipped
 
     for res in row_results:
@@ -547,7 +565,9 @@ def run_llm_judge(
         confidences.append(res["confidence"])
         reasons_list.append(res["reasons"])
         votes_list.append(res["votes"])
+        latencies_list.append(res.get("latencies", {}))
         kb_flags.append(res["kb_used"])
+        row_indices.append(res["row_index"])
         if res["disputed"]:
             disputed_rows.append(res["row_index"])
 
@@ -559,6 +579,8 @@ def run_llm_judge(
         "confidence":      confidences,
         "reasons":         reasons_list,
         "votes":           votes_list,
+        "latencies":       latencies_list,
+        "row_indices":     row_indices,
         "kb_used":         kb_flags,
         "disputed_rows":   disputed_rows,
         "rows_judged":     len(labels),

@@ -28,6 +28,12 @@ from typing import Optional
 
 import numpy as np
 
+from app.services.sdcc.analysis_engines import (
+    sentiment_polarity as _ml_sentiment,
+    flesch_reading_ease as _ml_flesch,
+    toxicity_rate as _ml_toxicity,
+    pii_rate as _ml_pii_rate,
+)  # fairlearn_metrics used via analysis_engines directly when label+sensitive cols present
 from app.config.taf_config_loader import (
     cfg,
     compile_patterns,
@@ -196,11 +202,11 @@ def compute_bias_measurement_coverage(inputs: list[str], outputs: list[str]) -> 
     if not demo_outs or not other_outs:
         return 0.5
 
-    # Sentiment polarity
+    # Sentiment polarity — VADER when available, keyword-count fallback
     def _polarity(texts: list[str]) -> float:
-        pos = sum(1 for t in texts if any(w_ in _tokens(t) for w_ in pos_terms))
-        neg = sum(1 for t in texts if any(w_ in _tokens(t) for w_ in neg_terms))
-        return (pos - neg) / max(len(texts), 1)
+        if not texts:
+            return 0.0
+        return sum(_ml_sentiment(t, pos_terms, neg_terms)[0] for t in texts) / len(texts)
 
     sent_disp = abs(_polarity(demo_outs) - _polarity(other_outs)) / 2.0
 
@@ -504,10 +510,8 @@ def compute_human_readable_outputs(outputs: list[str]) -> float:
         if not words or not sents:
             scores.append(0.5)
             continue
-        syllables = sum(max(1, len(re.findall(r'[aeiouAEIOU]+', w))) for w in words)
-        avg_sl  = len(words) / len(sents)
-        avg_syl = syllables / len(words)
-        fre = coef.base - coef.sentence_len * avg_sl - coef.syllable_rate * avg_syl
+        # textstat Flesch when available, manual estimate as fallback
+        fre = _ml_flesch(out)[0]
         flesch_score = _clamp01(fre / 100.0)
 
         n_sents = len(sents)
@@ -1014,8 +1018,11 @@ def compute_all_sub_parameters(
     ref = references[:n] if references and len(references) >= n else None
     ctx = contexts[:n]   if contexts  and len(contexts)   >= n else None
 
-    raw_pii        = compute_pii_in_outputs(out)
-    raw_harmful    = compute_harmful_content_rate(out)
+    # PII: Presidio NER when available, enhanced regex fallback
+    raw_pii, _pii_eng = _ml_pii_rate(out)
+    # Harmful content: detoxify when available, VADER-neg / keyword fallback
+    c_harm = cfg.security.harmful_content_rate
+    raw_harmful, _harm_eng = _ml_toxicity(out, set(c_harm.harmful_terms))
     raw_injection  = compute_injection_rate(inp)
     raw_anomaly    = compute_input_anomaly_rate(inp)
     raw_error      = compute_error_rate_from_text(out)
@@ -1059,6 +1066,8 @@ def compute_all_sub_parameters(
         "anonymisation_score":         compute_anonymisation_score(out),
         "data_retention_signals":      compute_data_retention_signals(out),
         "output_redundancy":           raw_redundancy,
+        "_engine_pii":                 _pii_eng,
+        "_engine_toxicity":            _harm_eng,
         "token_economy":               compute_token_economy(out),
         "lexical_redundancy":          raw_lex_dup,
         "output_complexity_proxy":     compute_output_complexity_proxy(out),

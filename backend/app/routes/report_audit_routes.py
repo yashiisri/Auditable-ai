@@ -60,14 +60,9 @@ def get_groq() -> Groq:
         _groq_client = Groq(api_key=key)
     return _groq_client
 
-# ── MongoDB (optional — graceful fallback if not available) ───────────────────
-try:
-    from app.database import db
-    audit_results_collection = db["report_audit_results"]
-    _mongo_available = True
-except Exception:
-    audit_results_collection = None
-    _mongo_available = False
+# ── PostgreSQL (always available) ─────────────────────────────────────────────
+from app.database import audit_results_collection
+_mongo_available = True   # kept for compat with guard clauses below
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 MAX_PDF_BYTES  = 20 * 1024 * 1024   # 20 MB

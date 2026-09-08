@@ -243,7 +243,12 @@ def build_code_build_risk_section(
     built_with = (profile.get("ai_codegen_tools") or "").strip()
     generated_flag = (profile.get("ai_generated") or "").strip().lower()
 
-    applicable = generated_flag in ("yes", "partially") or bool(built_with)
+    # Build risk checks now run for ALL systems, regardless of ai_generated flag.
+    # When ai_generated is declared, we have richer probe context (build provenance).
+    # When not declared, probes still test security posture via conversation.
+    # probe_mode distinguishes these two evidence tiers for the frontend.
+    applicable = True
+    probe_mode = "full" if generated_flag in ("yes", "partially") or bool(built_with) else "conversational"
 
     checks = [_score_check(c, probe_results) for c in CHECK_DEFS]
     evaluated = [c for c in checks if c["status"] == "evaluated"]
@@ -257,6 +262,7 @@ def build_code_build_risk_section(
 
     return {
         "applicable": applicable,
+        "probe_mode": probe_mode,   # "full" | "conversational"
         "display_only": True,          # frontend renders the awareness banner from this
         "overall_score": overall,
         "overall_band": _band(overall) if overall is not None else None,

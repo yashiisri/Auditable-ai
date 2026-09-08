@@ -1,5 +1,3 @@
-
-
 """
 services/sdcc/models/summarization.py
 ==========================================
@@ -459,3 +457,27 @@ class SummarizationEvaluator(BaseEvaluator):
             "bertscore":          "BERTScore below threshold. Semantic drift detected; factual consistency training recommended.",
             "reference_coverage": "No reference summaries. Add human references for ≥ 85% of records.",
         }.get(m, f"Investigate elevated risk in '{m}'.")
+
+    def _context_for_rec(self, principle: str, worst_param: str) -> str:
+        """Model-type-specific context for the Groq recommendation prompt."""
+        if principle == "Fairness":
+            return "Summarization models can introduce bias by selectively omitting information about certain groups or perspectives present in the source."
+        if principle == "Security":
+            return "Summarization models can be manipulated via prompt injection embedded in the document being summarized."
+        if principle == "Privacy":
+            return "Summarization models may reproduce PII from source documents verbatim in the summary, amplifying exposure."
+        if principle == "Transparency":
+            return "Summarization models should indicate when they have omitted information — users may assume a summary is complete when it isn't."
+        if principle == "Explainability":
+            return "Summarization model outputs should be traceable to specific source passages — without this, factual errors are impossible to verify."
+        if principle == "Accountability":
+            return "Summarization models used in high-stakes decisions (medical notes, legal documents) require human review of the summary."
+        if principle == "Reliability":
+            return "Summarization models can produce different summaries for the same document on different runs — consistency matters for regulated workflows."
+        if principle == "Data Integrity":
+            return "Summarization models can hallucinate facts not present in the source document — this is especially dangerous for technical or factual documents."
+        if principle == "Safety":
+            return "Summarization models can amplify harmful content from source documents rather than neutralising it."
+        if principle == "Sustainability":
+            return "Summarization models processing long documents consume significant tokens — chunking strategy and context window management affect cost."
+        return ""

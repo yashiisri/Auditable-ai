@@ -1,5 +1,3 @@
-
-
 import asyncio
 import concurrent.futures
 import json
@@ -464,6 +462,7 @@ async def run_ui_blackbox_pipeline(
     stealth:        bool = False,
     ai_description: str  = "",   # ← NEW: from registered AI system
     ai_domain:      str  = "",   # ← NEW: from registered AI system
+    owner_id:       str  = None,
 ) -> dict:
     try:
         parsed_cookies = _parse_cookies(cookies)
@@ -519,6 +518,7 @@ async def run_ui_blackbox_pipeline(
         mode="ui",
         probe_results=probe_results,
         started_at=started_at,
+        owner_id=owner_id,
     )
 
     return {

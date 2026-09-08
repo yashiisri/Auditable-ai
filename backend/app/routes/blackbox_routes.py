@@ -28,8 +28,7 @@ from app.services.blackbox import ui_auditor as ui_auditor_module
 
 router = APIRouter(prefix="/blackbox", tags=["Black Box Audit"])
 
-blackbox_collection = db["blackbox_audits"]
-ai_collection       = db["ai_systems"]
+from app.database import blackbox_collection, ai_collection  # PostgreSQL-backed
 
 
 # ── Schema ─────────────────────────────────────────────────────────────────────
@@ -41,6 +40,10 @@ class BlackBoxRequest(BaseModel):
     api_key:  Optional[str] = ""
     ui_url:   Optional[str] = ""
     cookies:  Optional[str] = ""   # JSON array from Cookie-Editor (UI mode only)
+    # Effort tier for the consolidated pipeline: dev | standard | thorough.
+    # When set (and mode == "api"), routes through the unified taxonomy-seeded
+    # pipeline. Omitted → legacy wave-based pipeline (backward compatible).
+    tier:     Optional[str] = None
 
 
 class RerunRequest(BaseModel):
@@ -141,17 +144,33 @@ async def run_blackbox_audit(
 
     # ── Route to correct pipeline ──────────────────────────────────────────────
     if payload.mode == "api":
-        result = await run_blackbox_pipeline(
-            ai_name=payload.ai_name,
-            mode=payload.mode,
-            endpoint=payload.endpoint or "",
-            api_key=payload.api_key or "",
-            current_user=current_user,
-            ai_description=ctx["description"],
-            ai_domain=ctx["domain"],
-            registration_profile=ctx["registration_profile"],  # ← NEW
-            system_prompt=ctx["system_prompt"],                 # ← NEW
-        )
+        if payload.tier:
+            # Consolidated taxonomy-seeded pipeline (dev/standard/thorough)
+            from app.services.blackbox.unified_pipeline import run_unified_pipeline
+            result = await run_unified_pipeline(
+                ai_name=payload.ai_name,
+                mode=payload.mode,
+                tier=payload.tier,
+                endpoint=payload.endpoint or "",
+                api_key=payload.api_key or "",
+                current_user=current_user,
+                ai_description=ctx["description"],
+                ai_domain=ctx["domain"],
+                registration_profile=ctx["registration_profile"],
+                system_prompt=ctx["system_prompt"],
+            )
+        else:
+            result = await run_blackbox_pipeline(
+                ai_name=payload.ai_name,
+                mode=payload.mode,
+                endpoint=payload.endpoint or "",
+                api_key=payload.api_key or "",
+                current_user=current_user,
+                ai_description=ctx["description"],
+                ai_domain=ctx["domain"],
+                registration_profile=ctx["registration_profile"],
+                system_prompt=ctx["system_prompt"],
+            )
 
     elif payload.mode == "ui":
         profile = detect_platform(
@@ -170,6 +189,7 @@ async def run_blackbox_audit(
             ai_domain=ctx["domain"],
             registration_profile=ctx["registration_profile"],  # ← NEW
             system_prompt=ctx["system_prompt"],                 # ← NEW
+            owner_id=str(current_user["_id"]),
         )
 
         result["platform_detected"] = profile["label"]
@@ -183,7 +203,17 @@ async def run_blackbox_audit(
             )
 
     # ── Save to DB ─────────────────────────────────────────────────────────────
-    stored = {**result, "owner_id": str(current_user["_id"]), "created_at": datetime.utcnow(), "rerun_sequence": 1}
+    stored = {
+        **result,
+        "owner_id":              str(current_user["_id"]),
+        "created_at":            datetime.utcnow(),
+        "rerun_sequence":        1,
+        # Hoist new columns to top level so the schema columns are populated.
+        # PgCollection's insert_one maps dict keys to table columns by name;
+        # keys not matching any column land in `extra` JSONB automatically.
+        "tier":                  result.get("tier"),
+        "total_probes_expected": result.get("total_probes_expected"),
+    }
     stored.pop("api_key", None)
     blackbox_collection.insert_one(stored)
 
@@ -199,6 +229,94 @@ async def run_blackbox_audit(
 # ── History by AI name ─────────────────────────────────────────────────────────
 
 # @router.get("/history/{ai_name}")
+
+# ── Real-time probe progress ───────────────────────────────────────────────────
+# Called by the frontend every 2s during an active audit to get the real count
+# of probes logged so far. probe_logger writes each row as it completes, so
+# COUNT(*) on probe_logs gives the live probe count for this audit_id.
+
+@router.get("/progress/{ai_name}")
+def get_probe_progress(ai_name: str, current_user=Depends(get_current_user)):
+    """
+    Returns real-time probe count for the most recent in-progress or completed
+    audit of this AI system. Frontend polls this every 2s during a run.
+    """
+    from app.database import engine
+    from sqlalchemy import text as _text
+
+    owner_id = str(current_user.get("id") or current_user.get("_id"))
+
+    with engine.connect() as conn:
+        # Get the latest audit_id for this AI + owner from blackbox_audits
+        audit_row = conn.execute(
+            _text(
+                "SELECT audit_id, status, created_at FROM blackbox_audits "
+                "WHERE ai_name = :ai AND owner_id = CAST(:oid AS uuid) "
+                "ORDER BY created_at DESC LIMIT 1"
+            ),
+            {"ai": ai_name, "oid": owner_id},
+        ).fetchone()
+
+        if not audit_row:
+            return {"probes_logged": 0, "audit_id": None, "status": "no_audit"}
+
+        audit_id = audit_row.audit_id
+        status   = audit_row.status or "unknown"
+
+        # Count probe rows for this audit
+        count_row = conn.execute(
+            _text(
+                "SELECT COUNT(*) FROM probe_logs "
+                "WHERE audit_id = :aid AND log_type IN ('probe','fingerprint','rerun_1','rerun_2')"
+            ),
+            {"aid": audit_id},
+        ).fetchone()
+
+        probes_logged = count_row[0] if count_row else 0
+
+    # Get expected total — unified pipeline stores it in the result directly
+    expected_total = None
+    with engine.connect() as conn2:
+        # unified pipeline stores total_probes_expected as a top-level column
+        exp_row = conn2.execute(
+            _text(
+                "SELECT total_probes_expected, tier "
+                "FROM blackbox_audits WHERE audit_id = :aid"
+            ),
+            {"aid": audit_id},
+        ).fetchone()
+        if exp_row:
+            if exp_row._mapping.get("total_probes_expected"):
+                try:
+                    expected_total = int(exp_row._mapping["total_probes_expected"])
+                except (ValueError, TypeError):
+                    pass
+            if expected_total is None:
+                # Derive from stored tier when total not yet written
+                tier_defaults = {"dev": 107, "standard": 215, "thorough": 400}
+                tier_val = (exp_row._mapping.get("tier") or "standard")
+                expected_total = tier_defaults.get(tier_val, 215)
+        # Final fallback to JSONB extra column (legacy audits)
+        if expected_total is None:
+            extra_row = conn2.execute(
+                _text("SELECT extra->>'total_probes_expected' FROM blackbox_audits WHERE audit_id = :aid"),
+                {"aid": audit_id},
+            ).fetchone()
+            if extra_row and extra_row[0]:
+                try:
+                    expected_total = int(extra_row[0])
+                except (ValueError, TypeError):
+                    pass
+    expected_total = expected_total or 215
+
+    return {
+        "probes_logged":    probes_logged,
+        "probes_expected":  expected_total,
+        "progress_pct":     min(100, round(probes_logged / max(expected_total, 1) * 100)),
+        "audit_id":         audit_id,
+        "status":           status,
+    }
+
 # def get_blackbox_history(ai_name: str, current_user=Depends(get_current_user)):
 #     records = list(
 #         blackbox_collection.find(
